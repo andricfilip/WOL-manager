@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: computerrunner_db
+    network_mode: host
+    environment:
+      POSTGRES_DB: wol_db
+      POSTGRES_USER: wol_user
+      POSTGRES_PASSWORD: wol_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wol_user -d wol_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend Flask application
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: computerrunner_backend
+    network_mode: host
+    environment:
+      - FLASK_ENV=production
+      - SECRET_KEY=CR-WoL-SecretKey-2026-ChangeThisInProduction-89afd7b3c4e5
+      - DATABASE_URL=postgresql://wol_user:wol_password@localhost:5432/wol_db
+      - SESSION_COOKIE_SECURE=false
+      - SESSION_COOKIE_HTTPONLY=true
+      - SESSION_COOKIE_SAMESITE=Lax
+    volumes:
+      - ./backend:/app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Nginx frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: computerrunner_frontend
+    network_mode: host
+    restart: unless-stopped
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend/ssl:/etc/nginx/ssl:ro
+      - ./frontend/nginx.conf:/etc/nginx/nginx.conf:ro
+
+volumes:
+  postgres_data:
+    driver: local

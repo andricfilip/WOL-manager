@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Computer{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 0 auto;">
+    <h1 style="margin-bottom: 1.5rem;">Edit Computer</h1>
+
+    <div class="card">
+        <form method="post">
+            <div class="form-group">
+                <label for="name"><i class="fas fa-desktop"></i> Computer Name</label>
+                <input type="text" id="name" name="name" value="{{ computer.name }}" required>
+            </div>
+
+            <div class="form-group">
+                <label><i class="fas fa-ethernet"></i> MAC Address</label>
+                <input type="text" value="{{ computer.mac_address }}" disabled style="background: #f5f5f5;">
+                <small style="color: #999;">MAC address cannot be changed</small>
+            </div>
+
+            <div class="form-group">
+                <label for="ip_address"><i class="fas fa-network-wired"></i> IP Address</label>
+                <input type="text" id="ip_address" name="ip_address" value="{{ computer.ip_address or '' }}">
+            </div>
+
+            <div class="form-group">
+                <label for="description"><i class="fas fa-comment"></i> Description</label>
+                <textarea id="description" name="description" rows="3">{{ computer.description or '' }}</textarea>
+            </div>
+
+            <div style="display: flex; gap: 1rem;">
+                <button type="submit" class="btn btn-primary" style="flex: 1;">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+                <a href="{{ url_for('dashboard') }}" class="btn" style="flex: 1; background: #999; color: white; text-align: center;">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

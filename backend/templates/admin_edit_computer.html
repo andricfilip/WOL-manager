@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Izmeni Računar{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto;">
+    <h1 style="margin-bottom: 1.5rem;"><i class="fas fa-edit"></i> Izmeni Računar</h1>
+
+    <div class="card">
+        <form method="POST" action="{{ url_for('admin_edit_computer', computer_id=computer.id) }}">
+            <div class="form-group">
+                <label for="name"><i class="fas fa-tag"></i> Naziv Računara</label>
+                <input type="text" id="name" name="name" required value="{{ computer.name }}" autofocus>
+            </div>
+
+            <div class="form-group">
+                <label for="mac_address"><i class="fas fa-network-wired"></i> MAC Adresa</label>
+                <input type="text" id="mac_address" name="mac_address" required 
+                       value="{{ computer.mac_address }}"
+                       pattern="^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$"
+                       title="Format: AA:BB:CC:DD:EE:FF">
+                <small style="color: #666; display: block; margin-top: 0.5rem;">
+                    Format: AA:BB:CC:DD:EE:FF ili AA-BB-CC-DD-EE-FF
+                </small>
+            </div>
+
+            <div class="form-group">
+                <label for="ip_address"><i class="fas fa-globe"></i> IP Adresa (opciono)</label>
+                <input type="text" id="ip_address" name="ip_address" 
+                       value="{{ computer.ip_address or '' }}"
+                       pattern="^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$">
+            </div>
+
+            <div class="form-group">
+                <label for="description"><i class="fas fa-comment"></i> Opis (opciono)</label>
+                <textarea id="description" name="description" rows="3">{{ computer.description or '' }}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label><i class="fas fa-users"></i> Dodeli Korisnicima</label>
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 0.5rem; max-height: 300px; overflow-y: auto;">
+                    {% if users %}
+                        {% for user in users %}
+                            <div style="margin-bottom: 0.75rem;">
+                                <input type="checkbox" id="user_{{ user.id }}" name="assigned_users" value="{{ user.id }}"
+                                       {% if user in computer.assigned_users.all() %}checked{% endif %}>
+                                <label for="user_{{ user.id }}" style="margin: 0; font-weight: normal; cursor: pointer;">
+                                    <i class="fas fa-user"></i> {{ user.username }}
+                                    {% if user.is_admin %}
+                                        <span style="background: #d4edda; color: #155724; padding: 0.2rem 0.5rem; border-radius: 0.3rem; font-size: 0.8rem; margin-left: 0.5rem;">
+                                            <i class="fas fa-crown"></i> Admin
+                                        </span>
+                                    {% endif %}
+                                    <span style="color: #999; margin-left: 0.5rem;">({{ user.email }})</span>
+                                </label>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p style="color: #999; margin: 0;">Nema korisnika u sistemu</p>
+                    {% endif %}
+                </div>
+                <small style="color: #666; display: block; margin-top: 0.5rem;">
+                    Možete izabrati više korisnika. Računar će biti vidljiv samo izabranim korisnicima.
+                </small>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button type="submit" class="btn btn-primary" style="flex: 1;">
+                    <i class="fas fa-save"></i> Sačuvaj Izmene
+                </button>
+                <a href="{{ url_for('admin_computers') }}" class="btn" style="flex: 1; background: #999; color: white; text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-times"></i> Otkaži
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

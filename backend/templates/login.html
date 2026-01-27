@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - ComputerRunner</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #0066cc;
+            --secondary: #00a8e8;
+            --light: #f8f9fa;
+            --dark: #2c3e50;
+            --border: #dee2e6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-box {
+            background: white;
+            padding: 3rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-box h1 {
+            text-align: center;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            font-size: 1.8rem;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #999;
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+        }
+
+        .form-group.checkbox {
+            display: flex;
+            align-items: center;
+        }
+
+        .form-group.checkbox input {
+            width: auto;
+            margin-right: 0.5rem;
+        }
+
+        .form-group.checkbox label {
+            margin: 0;
+            font-weight: 400;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            background: #0052a3;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .register-link {
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .register-link a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .register-link a:hover {
+            text-decoration: underline;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border-color: #e63946;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <h1><i class="fas fa-desktop"></i> ComputerRunner</h1>
+        <p class="subtitle">Wake-on-LAN Menadžer</p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'error' if category == 'error' else category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('auth.login') }}">
+            <div class="form-group">
+                <label for="username"><i class="fas fa-user"></i> Korisničko ime</label>
+                <input type="text" id="username" name="username" required autofocus placeholder="Unesite korisničko ime">
+            </div>
+
+            <div class="form-group">
+                <label for="password"><i class="fas fa-lock"></i> Lozinka</label>
+                <input type="password" id="password" name="password" required placeholder="Unesite lozinku">
+            </div>
+
+            <div class="form-group checkbox">
+                <input type="checkbox" id="remember" name="remember">
+                <label for="remember">Zapamti me</label>
+            </div>
+
+            <button type="submit" class="btn">
+                <i class="fas fa-sign-in-alt"></i> Prijava
+            </button>
+        </form>
+
+        <p class="register-link" style="text-align: center; margin-top: 1rem; color: #999; font-size: 0.9rem;">
+            <i class="fas fa-info-circle"></i> Kontaktirajte administratora za pristup
+        </p>
+    </div>
+
+    <script>
+        // Sprečava slanje kredencijala u URL
+        document.querySelector('form').addEventListener('submit', function(e) {
+            // Forma će biti obrađena normalno sa POST metodom
+            // Kredencijali se nikada ne vide u URL-u jer je POST
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .computer-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .computer-card {
+        background: white;
+        border: 2px solid var(--border);
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        transition: all 0.3s;
+    }
+
+    .computer-card:hover {
+        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        border-color: var(--primary);
+        transform: translateY(-5px);
+    }
+
+    .computer-card h3 {
+        margin-bottom: 0.5rem;
+        color: var(--primary);
+    }
+
+    .computer-info {
+        font-size: 0.9rem;
+        color: #666;
+        margin-bottom: 0.3rem;
+    }
+
+    .computer-actions {
+        margin-top: 1rem;
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .wol-btn {
+        flex: 1;
+        background: linear-gradient(135deg, #2a9d8f, #1db8a2);
+        color: white;
+        padding: 0.75rem;
+        border: none;
+        border-radius: 0.3rem;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+
+    .wol-btn:hover:not(:disabled) {
+        transform: scale(1.05);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    .wol-btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+    }
+
+    .btn-sm {
+        flex: 1;
+        padding: 0.5rem;
+        font-size: 0.85rem;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #999;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h1>Moji Računari</h1>
+    {% if current_user.is_admin %}
+        <a href="{{ url_for('admin_computers') }}" class="btn btn-primary">
+            <i class="fas fa-cog"></i> Upravljanje Računarima
+        </a>
+    {% endif %}
+</div>
+
+{% if computers %}
+    <div class="computer-grid">
+        {% for computer in computers %}
+            <div class="computer-card">
+                <h3><i class="fas fa-desktop"></i> {{ computer.name }}</h3>
+                
+                <div class="computer-info">
+                    <strong>MAC:</strong> {{ computer.mac_address }}
+                </div>
+                
+                {% if computer.ip_address %}
+                    <div class="computer-info">
+                        <strong>IP:</strong> {{ computer.ip_address }}
+                    </div>
+                {% endif %}
+                
+                {% if computer.description %}
+                    <div class="computer-info">
+                        <strong>Description:</strong> {{ computer.description }}
+                    </div>
+                {% endif %}
+                
+                {% if computer.last_wol %}
+                    <div class="computer-info">
+                        <strong>Last WoL:</strong> {{ computer.last_wol.strftime('%Y-%m-%d %H:%M') }}
+                    </div>
+                {% endif %}
+                
+                <div class="computer-actions">
+                    <button class="wol-btn" data-wol-btn data-computer-id="{{ computer.id }}" data-computer-name="{{ computer.name }}">
+                        <i class="fas fa-power-off"></i> Probudi
+                    </button>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="card">
+        <div class="empty-state">
+            <i class="fas fa-desktop" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+            <p style="font-size: 1.1rem; margin-bottom: 1rem;">Nemate dodeljenih računara</p>
+            <p style="color: #999;">Kontaktirajte administratora da vam dodeli pristup računarima</p>
+        </div>
+    </div>
+{% endif %}
+
+<script>
+    function setupWOLButtons() {
+        const wolButtons = document.querySelectorAll('[data-wol-btn]');
+        
+        wolButtons.forEach(button => {
+            button.addEventListener('click', async (e) => {
+                e.preventDefault();
+                
+                const computerId = button.dataset.computerId;
+                const computerName = button.dataset.computerName;
+                
+                button.disabled = true;
+                const originalHTML = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+                
+                try {
+                    const response = await fetch('/dashboard', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            computer_id: parseInt(computerId)
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        alert(`✓ WoL paket poslat na ${computerName}!`);
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        alert(`✗ Greška: ${result.message}`);
+                    }
+                } catch (error) {
+                    alert(`✗ Greška: ${error.message}`);
+                } finally {
+                    button.disabled = false;
+                    button.innerHTML = originalHTML;
+                }
+            });
+        });
+    }
+    
+    document.addEventListener('DOMContentLoaded', setupWOLButtons);
+</script>
+{% endblock %}

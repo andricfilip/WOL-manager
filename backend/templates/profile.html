@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}Profile{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-container {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .profile-info {
+        display: grid;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        background: var(--light);
+        border-radius: 0.5rem;
+    }
+
+    .info-label {
+        font-weight: 600;
+        color: var(--dark);
+    }
+
+    .info-value {
+        color: #666;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <h1 style="margin-bottom: 1.5rem;">User Profile</h1>
+
+    <div class="card">
+        <div class="profile-info">
+            <div class="info-row">
+                <span class="info-label"><i class="fas fa-user"></i> Username</span>
+                <span class="info-value">{{ current_user.username }}</span>
+            </div>
+
+            <div class="info-row">
+                <span class="info-label"><i class="fas fa-envelope"></i> Email</span>
+                <span class="info-value">{{ current_user.email }}</span>
+            </div>
+
+            <div class="info-row">
+                <span class="info-label"><i class="fas fa-shield-alt"></i> Role</span>
+                <span class="info-value">
+                    {% if current_user.is_admin %}
+                        <span style="color: #2a9d8f; font-weight: 600;">
+                            <i class="fas fa-crown"></i> Administrator
+                        </span>
+                    {% else %}
+                        <span style="color: #0066cc; font-weight: 600;">
+                            <i class="fas fa-user"></i> Regular User
+                        </span>
+                    {% endif %}
+                </span>
+            </div>
+
+            <div class="info-row">
+                <span class="info-label"><i class="fas fa-calendar"></i> Member Since</span>
+                <span class="info-value">{{ current_user.created_at.strftime('%B %d, %Y') }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2 style="margin-bottom: 1.5rem;">Change Password</h2>
+
+        <div class="form-group">
+            <label for="oldPassword"><i class="fas fa-lock"></i> Current Password</label>
+            <input type="password" id="oldPassword" required>
+        </div>
+
+        <div class="form-group">
+            <label for="newPassword"><i class="fas fa-key"></i> New Password</label>
+            <input type="password" id="newPassword" required>
+        </div>
+
+        <div class="form-group">
+            <label for="confirmPassword"><i class="fas fa-key"></i> Confirm New Password</label>
+            <input type="password" id="confirmPassword" required>
+        </div>
+
+        <button type="button" class="btn btn-primary" onclick="changePassword()">
+            <i class="fas fa-save"></i> Update Password
+        </button>
+    </div>
+</div>
+
+<script>
+    async function changePassword() {
+        const oldPassword = document.getElementById('oldPassword').value;
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        
+        if (!oldPassword || !newPassword || !confirmPassword) {
+            alert('All fields are required');
+            return;
+        }
+        
+        if (newPassword !== confirmPassword) {
+            alert('New passwords do not match');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/profile/change-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    old_password: oldPassword,
+                    new_password: newPassword
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                alert(result.message);
+                document.getElementById('oldPassword').value = '';
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmPassword').value = '';
+            } else {
+                alert(`Error: ${result.message}`);
+            }
+        } catch (error) {
+            alert(`Error: ${error.message}`);
+        }
+    }
+</script>
+{% endblock %}
