@@ -3,7 +3,7 @@ from flask_login import LoginManager, login_required, current_user
 from datetime import datetime
 from config import config
 from models import db, User, Computer, WOLLog
-from wol import send_wol_packet, validate_mac_address
+from wol import send_wol_packet, validate_mac_address, check_host_status
 import auth
 import os
 
@@ -334,6 +334,65 @@ def change_password():
     db.session.commit()
     
     return jsonify({'success': True, 'message': 'Lozinka je promenjena uspešno'})
+
+@app.route('/api/computer/<int:computer_id>/status', methods=['GET'])
+@login_required
+def check_computer_status(computer_id):
+    """Check computer status via ping"""
+    computer = Computer.query.get_or_404(computer_id)
+    
+    # Check if user has access to this computer
+    if not current_user.is_admin and current_user not in computer.assigned_users:
+        return jsonify({'success': False, 'message': 'Pristup odbijen'}), 403
+    
+    # Check status
+    is_online, status = check_host_status(computer.ip_address)
+    
+    # Update database
+    computer.status = status
+    computer.last_checked = datetime.utcnow()
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'status': status,
+        'is_online': is_online,
+        'last_checked': computer.last_checked.isoformat() if computer.last_checked else None
+    })
+
+@app.route('/api/computers/status', methods=['GET'])
+@login_required
+def check_all_computers_status():
+    """Check status for all assigned computers"""
+    # Get computers assigned to current user
+    computers = current_user.computers if not current_user.is_admin else Computer.query.all()
+    
+    results = []
+    for computer in computers:
+        if computer.ip_address:
+            is_online, status = check_host_status(computer.ip_address)
+            computer.status = status
+            computer.last_checked = datetime.utcnow()
+            
+            results.append({
+                'id': computer.id,
+                'name': computer.name,
+                'status': status,
+                'is_online': is_online,
+                'last_checked': computer.last_checked.isoformat()
+            })
+        else:
+            results.append({
+                'id': computer.id,
+                'name': computer.name,
+                'status': 'unknown',
+                'is_online': False,
+                'last_checked': None
+            })
+    
+    db.session.commit()
+    
+    return jsonify({'success': True, 'computers': results})
 
 # Error handlers
 @app.errorhandler(404)

@@ -51,12 +51,126 @@
         margin: 0.2rem;
         font-size: 0.8rem;
     }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.3rem 0.7rem;
+        border-radius: 1rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .status-badge .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+    }
+
+    .status-online {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .status-online .status-dot {
+        background: #28a745;
+    }
+
+    .status-offline {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .status-offline .status-dot {
+        background: #dc3545;
+    }
+
+    .status-unknown {
+        background: #e2e3e5;
+        color: #6c757d;
+    }
+
+    .status-unknown .status-dot {
+        background: #6c757d;
+    }
+
+    /* Mobile Responsive Styles */
+    @media (max-width: 768px) {
+        .page-header {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: stretch !important;
+        }
+
+        .page-header h1 {
+            font-size: 1.5rem;
+        }
+
+        .page-header .btn {
+            width: 100%;
+        }
+
+        /* Hide table on mobile, show cards instead */
+        table {
+            display: none;
+        }
+
+        .mobile-computer-list {
+            display: block !important;
+        }
+
+        .mobile-computer-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .mobile-computer-card h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.1rem;
+            color: var(--primary);
+        }
+
+        .mobile-info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--light);
+        }
+
+        .mobile-info-row:last-child {
+            border-bottom: none;
+        }
+
+        .mobile-info-label {
+            font-weight: 600;
+            color: #666;
+        }
+
+        .mobile-actions {
+            margin-top: 1rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .mobile-actions .btn {
+            flex: 1;
+        }
+    }
+
+    /* Desktop: hide mobile cards */
+    .mobile-computer-list {
+        display: none;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <div>
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
         <h1>Upravljanje Računarima</h1>
         <a href="{{ url_for('admin_add_computer') }}" class="btn btn-primary">
             <i class="fas fa-plus"></i> Dodaj Računar
@@ -64,11 +178,13 @@
     </div>
 
     {% if computers %}
+        <!-- Desktop Table View -->
         <div class="card">
             <table>
                 <thead>
                     <tr>
                         <th>Naziv</th>
+                        <th>Status</th>
                         <th>MAC Adresa</th>
                         <th>IP Adresa</th>
                         <th>Dodeljeni Korisnici</th>
@@ -79,6 +195,18 @@
                     {% for computer in computers %}
                         <tr>
                             <td><strong>{{ computer.name }}</strong></td>
+                            <td>
+                                <span class="status-badge status-{{ computer.status if computer.status else 'unknown' }}">
+                                    <span class="status-dot"></span>
+                                    {% if computer.status == 'online' %}
+                                        Online
+                                    {% elif computer.status == 'offline' %}
+                                        Offline
+                                    {% else %}
+                                        Nepoznato
+                                    {% endif %}
+                                </span>
+                            </td>
                             <td><code>{{ computer.mac_address }}</code></td>
                             <td>{{ computer.ip_address or '-' }}</td>
                             <td class="assigned-users">
@@ -106,6 +234,63 @@
                     {% endfor %}
                 </tbody>
             </table>
+        </div>
+
+        <!-- Mobile Card View -->
+        <div class="mobile-computer-list">
+            {% for computer in computers %}
+                <div class="mobile-computer-card">
+                    <h3><i class="fas fa-desktop"></i> {{ computer.name }}</h3>
+                    
+                    <div class="mobile-info-row">
+                        <span class="mobile-info-label">Status:</span>
+                        <span class="status-badge status-{{ computer.status if computer.status else 'unknown' }}">
+                            <span class="status-dot"></span>
+                            {% if computer.status == 'online' %}
+                                Online
+                            {% elif computer.status == 'offline' %}
+                                Offline
+                            {% else %}
+                                Nepoznato
+                            {% endif %}
+                        </span>
+                    </div>
+                    
+                    <div class="mobile-info-row">
+                        <span class="mobile-info-label">MAC:</span>
+                        <code>{{ computer.mac_address }}</code>
+                    </div>
+                    
+                    <div class="mobile-info-row">
+                        <span class="mobile-info-label">IP:</span>
+                        <span>{{ computer.ip_address or '-' }}</span>
+                    </div>
+                    
+                    <div class="mobile-info-row">
+                        <span class="mobile-info-label">Korisnici:</span>
+                        <div class="assigned-users">
+                            {% if computer.assigned_users.all() %}
+                                {% for user in computer.assigned_users %}
+                                    <span class="user-badge">
+                                        <i class="fas fa-user"></i> {{ user.username }}
+                                    </span>
+                                {% endfor %}
+                            {% else %}
+                                <span style="color: #999; font-size: 0.85rem;"><i>Nema</i></span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mobile-actions">
+                        <a href="{{ url_for('admin_edit_computer', computer_id=computer.id) }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-edit"></i> Izmeni
+                        </a>
+                        <button class="btn btn-danger btn-sm" onclick="deleteComputer({{ computer.id }}, '{{ computer.name }}')">
+                            <i class="fas fa-trash"></i> Obriši
+                        </button>
+                    </div>
+                </div>
+            {% endfor %}
         </div>
     {% else %}
         <div class="card">

@@ -42,6 +42,8 @@ class Computer(db.Model):
     description = db.Column(db.String(500))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_wol = db.Column(db.DateTime)
+    status = db.Column(db.String(20), default='unknown')  # 'online', 'offline', 'unknown'
+    last_checked = db.Column(db.DateTime)
     
     # Remove owner_id - now using many-to-many relationship
     logs = db.relationship('WOLLog', backref='computer', lazy=True, cascade='all, delete-orphan')

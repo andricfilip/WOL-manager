@@ -2,6 +2,62 @@
 
 {% block title %}Dodaj Računar{% endblock %}
 
+{% block extra_css %}
+<style>
+    .user-checkbox-list {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .user-checkbox-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+        padding: 0.5rem;
+        border-radius: 0.3rem;
+        transition: background 0.2s;
+    }
+
+    .user-checkbox-item:hover {
+        background: #e9ecef;
+    }
+
+    .user-checkbox-item input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+    .user-checkbox-item label {
+        margin: 0;
+        font-weight: normal;
+        cursor: pointer;
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .user-badge {
+        background: #d4edda;
+        color: #155724;
+        padding: 0.2rem 0.5rem;
+        border-radius: 0.3rem;
+        font-size: 0.8rem;
+    }
+
+    .user-email {
+        color: #999;
+        font-size: 0.9rem;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div style="max-width: 800px; margin: 0 auto;">
     <h1 style="margin-bottom: 1.5rem;"><i class="fas fa-desktop"></i> Dodaj Novi Računar</h1>
@@ -39,19 +95,20 @@
 
             <div class="form-group">
                 <label><i class="fas fa-users"></i> Dodeli Korisnicima</label>
-                <div style="background: #f8f9fa; padding: 1rem; border-radius: 0.5rem; max-height: 300px; overflow-y: auto;">
+                <div class="user-checkbox-list">
                     {% if users %}
                         {% for user in users %}
-                            <div style="margin-bottom: 0.75rem;">
+                            <div class="user-checkbox-item">
                                 <input type="checkbox" id="user_{{ user.id }}" name="assigned_users" value="{{ user.id }}">
-                                <label for="user_{{ user.id }}" style="margin: 0; font-weight: normal; cursor: pointer;">
-                                    <i class="fas fa-user"></i> {{ user.username }}
+                                <label for="user_{{ user.id }}">
+                                    <i class="fas fa-user"></i>
+                                    <span>{{ user.username }}</span>
                                     {% if user.is_admin %}
-                                        <span style="background: #d4edda; color: #155724; padding: 0.2rem 0.5rem; border-radius: 0.3rem; font-size: 0.8rem; margin-left: 0.5rem;">
+                                        <span class="user-badge">
                                             <i class="fas fa-crown"></i> Admin
                                         </span>
                                     {% endif %}
-                                    <span style="color: #999; margin-left: 0.5rem;">({{ user.email }})</span>
+                                    <span class="user-email">({{ user.email }})</span>
                                 </label>
                             </div>
                         {% endfor %}

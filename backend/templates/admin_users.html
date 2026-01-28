@@ -54,12 +54,84 @@
         padding: 0.5rem 1rem;
         font-size: 0.85rem;
     }
+
+    /* Mobile Responsive Styles */
+    @media (max-width: 768px) {
+        .page-header {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: stretch !important;
+        }
+
+        .page-header h1 {
+            font-size: 1.5rem;
+        }
+
+        .page-header .btn {
+            width: 100%;
+        }
+
+        /* Hide table on mobile, show cards instead */
+        table {
+            display: none;
+        }
+
+        .mobile-user-list {
+            display: block !important;
+        }
+
+        .mobile-user-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .mobile-user-card h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.1rem;
+            color: var(--primary);
+        }
+
+        .mobile-info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--light);
+        }
+
+        .mobile-info-row:last-of-type {
+            border-bottom: none;
+        }
+
+        .mobile-info-label {
+            font-weight: 600;
+            color: #666;
+        }
+
+        .mobile-actions {
+            margin-top: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .mobile-actions .btn {
+            width: 100%;
+        }
+    }
+
+    /* Desktop: hide mobile cards */
+    .mobile-user-list {
+        display: none;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <div>
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
         <h1>Upravljanje Korisnicima</h1>
         <a href="{{ url_for('admin_add_user') }}" class="btn btn-primary">
             <i class="fas fa-user-plus"></i> Dodaj Korisnika
@@ -68,6 +140,7 @@
 
     <div class="card">
         {% if users %}
+            <!-- Desktop Table View -->
             <table>
                 <thead>
                     <tr>
@@ -98,6 +171,64 @@
                                     {% if user.id != current_user.id %}
                                         <button class="btn btn-warning btn-sm" onclick="toggleAdminStatus({{ user.id }})" title="Promeni admin status">
                                             <i class="fas fa-exchange-alt"></i> Promeni Ulogu
+                                        </button>
+                                        <button class="btn btn-danger btn-sm" onclick="deleteUser({{ user.id }}, '{{ user.username }}')" title="Obriši korisnika">
+                                            <i class="fas fa-trash"></i> Obriši
+                                        </button>
+                                    {% else %}
+                                        <span style="color: #999; font-size: 0.9rem;"><i class="fas fa-user-shield"></i> Vaš nalog</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Mobile Card View -->
+            <div class="mobile-user-list">
+                {% for user in users %}
+                    <div class="mobile-user-card">
+                        <h3><i class="fas fa-user"></i> {{ user.username }}</h3>
+                        
+                        <div class="mobile-info-row">
+                            <span class="mobile-info-label">Email:</span>
+                            <span>{{ user.email }}</span>
+                        </div>
+                        
+                        <div class="mobile-info-row">
+                            <span class="mobile-info-label">Uloga:</span>
+                            <span class="badge {% if user.is_admin %}badge-admin{% else %}badge-user{% endif %}">
+                                {% if user.is_admin %}
+                                    <i class="fas fa-crown"></i> Admin
+                                {% else %}
+                                    <i class="fas fa-user"></i> Korisnik
+                                {% endif %}
+                            </span>
+                        </div>
+                        
+                        <div class="mobile-info-row">
+                            <span class="mobile-info-label">Joined:</span>
+                            <span style="font-size: 0.9rem;">{{ user.created_at.strftime('%Y-%m-%d') }}</span>
+                        </div>
+                        
+                        {% if user.id != current_user.id %}
+                            <div class="mobile-actions">
+                                <button class="btn btn-warning btn-sm" onclick="toggleAdminStatus({{ user.id }})">
+                                    <i class="fas fa-exchange-alt"></i> Promeni Ulogu
+                                </button>
+                                <button class="btn btn-danger btn-sm" onclick="deleteUser({{ user.id }}, '{{ user.username }}')">
+                                    <i class="fas fa-trash"></i> Obriši
+                                </button>
+                            </div>
+                        {% else %}
+                            <div style="margin-top: 1rem; text-align: center; color: #999; font-size: 0.9rem;">
+                                <i class="fas fa-user-shield"></i> Vaš nalog
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
                                         </button>
                                         <button class="btn btn-danger btn-sm" onclick="deleteUser({{ user.id }}, '{{ user.username }}')" title="Obriši korisnika">
                                             <i class="fas fa-trash"></i> Obriši

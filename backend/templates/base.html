@@ -1,9 +1,22 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="sr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}ComputerRunner{% endblock %} - Wake-on-LAN Manager</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta name="description" content="WOL Manager - Upravljanje računarima i Wake-on-LAN">
+    <meta name="theme-color" content="#0066cc">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="WOL Manager">
+    
+    <title>{% block title %}WOL Manager{% endblock %} - Wake-on-LAN</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%230066cc;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%2300a8e8;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='100' fill='url(%23grad)'/%3E%3Cg fill='white'%3E%3Crect x='120' y='140' width='272' height='200' rx='12' stroke='white' stroke-width='12' fill='none'/%3E%3Crect x='220' y='340' width='72' height='60' rx='6'/%3E%3Crect x='180' y='390' width='152' height='16' rx='8'/%3E%3Ccircle cx='256' cy='240' r='50' stroke='white' stroke-width='14' fill='none' stroke-dasharray='220 90' stroke-dashoffset='45'/%3E%3Cline x1='256' y1='190' x2='256' y2='240' stroke='white' stroke-width='14' stroke-linecap='round'/%3E%3C/g%3E%3C/svg%3E">
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -28,102 +41,112 @@
             background: var(--light);
             color: var(--dark);
             line-height: 1.6;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         .navbar {
             background: white;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            padding: 1rem 2rem;
-            margin-bottom: 2rem;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1.5rem;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
         }
 
         .navbar-content {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
         }
 
         .navbar-brand {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             font-weight: 700;
             color: var(--primary);
             text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .navbar-brand i {
+            font-size: 1.5rem;
         }
 
         .navbar-menu {
             display: flex;
-            gap: 1.5rem;
+            gap: 0.5rem;
             list-style: none;
+            align-items: center;
+            flex-wrap: wrap;
         }
 
         .navbar-menu a {
             color: var(--dark);
             text-decoration: none;
-            font-weight: 500;
-            transition: color 0.3s;
+            padding: 0.5rem 1rem;
+            border-radius: 0.3rem;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+            white-space: nowrap;
         }
 
         .navbar-menu a:hover {
+            background: var(--light);
             color: var(--primary);
         }
 
-        .navbar-menu .logout {
-            color: var(--danger);
+        .navbar-menu a.active {
+            background: var(--primary);
+            color: white;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
-            padding: 0 2rem;
+            padding: 0 1rem 2rem 1rem;
         }
 
         .card {
             background: white;
             border-radius: 0.5rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             margin-bottom: 1.5rem;
         }
 
-        .alert {
-            padding: 1rem;
-            border-radius: 0.5rem;
-            margin-bottom: 1rem;
-            border-left: 4px solid;
-        }
-
-        .alert-success {
-            background: #d4edda;
-            color: #155724;
-            border-color: var(--success);
-        }
-
-        .alert-error {
-            background: #f8d7da;
-            color: #721c24;
-            border-color: var(--danger);
-        }
-
         .btn {
-            padding: 0.5rem 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.25rem;
             border: none;
             border-radius: 0.3rem;
             cursor: pointer;
             font-weight: 600;
             transition: all 0.3s;
             text-decoration: none;
-            display: inline-block;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            justify-content: center;
+            min-height: 44px; /* Touch-friendly */
         }
 
         .btn-primary {
-            background: var(--primary);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
             color: white;
         }
 
         .btn-primary:hover {
-            background: #0052a3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,102,204,0.3);
         }
 
         .btn-danger {
@@ -132,62 +155,211 @@
         }
 
         .btn-danger:hover {
-            background: #d62828;
+            background: #d62839;
         }
 
-        .btn-block {
-            width: 100%;
+        .btn-success {
+            background: var(--success);
+            color: white;
         }
 
-        .form-group {
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        /* Alerts */
+        .alert {
+            padding: 1rem 1.25rem;
+            border-radius: 0.3rem;
             margin-bottom: 1rem;
+            border-left: 4px solid;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border-color: #28a745;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border-color: #dc3545;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-color: #17a2b8;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border-color: #ffc107;
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 1.25rem;
         }
 
         .form-group label {
             display: block;
             margin-bottom: 0.5rem;
             font-weight: 600;
+            color: var(--dark);
         }
 
         .form-group input,
+        .form-group select,
         .form-group textarea {
             width: 100%;
             padding: 0.75rem;
             border: 1px solid var(--border);
             border-radius: 0.3rem;
             font-size: 1rem;
+            transition: border-color 0.3s;
+            min-height: 44px; /* Touch-friendly */
         }
 
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0,102,204,0.1);
+        }
+
+        /* Responsive Table */
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--light);
+            font-weight: 600;
+        }
+
+        /* Mobile Optimizations */
         @media (max-width: 768px) {
+            .navbar {
+                padding: 0.5rem;
+            }
+
             .navbar-content {
                 flex-direction: column;
-                gap: 1rem;
+                align-items: stretch;
+            }
+
+            .navbar-brand {
+                font-size: 1.1rem;
+                justify-content: center;
             }
 
             .navbar-menu {
-                flex-direction: column;
-                gap: 0.5rem;
+                width: 100%;
+                justify-content: center;
+                gap: 0.25rem;
+            }
+
+            .navbar-menu a {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.85rem;
+            }
+
+            .container {
+                padding: 0 0.75rem 1rem 0.75rem;
+            }
+
+            .card {
+                padding: 1rem;
+                border-radius: 0.4rem;
+            }
+
+            h1 {
+                font-size: 1.5rem !important;
+            }
+
+            h2 {
+                font-size: 1.25rem !important;
+            }
+
+            .btn {
+                width: 100%;
+                margin-bottom: 0.5rem;
+            }
+
+            table {
+                font-size: 0.85rem;
+            }
+
+            th, td {
+                padding: 0.5rem 0.25rem;
             }
         }
+
+        @media (max-width: 480px) {
+            .navbar-brand {
+                font-size: 1rem;
+            }
+
+            .navbar-menu a {
+                font-size: 0.8rem;
+                padding: 0.4rem 0.5rem;
+            }
+
+            .card {
+                padding: 0.75rem;
+            }
+
+            h1 {
+                font-size: 1.25rem !important;
+            }
+        }
+
+        {% block extra_css %}{% endblock %}
     </style>
-    {% block extra_css %}{% endblock %}
 </head>
 <body>
     {% if current_user.is_authenticated %}
     <nav class="navbar">
         <div class="navbar-content">
             <a href="{{ url_for('dashboard') }}" class="navbar-brand">
-                <i class="fas fa-desktop"></i> ComputerRunner
+                <i class="fas fa-power-off"></i>
+                <span>WOL Manager</span>
             </a>
             <ul class="navbar-menu">
-                <li><a href="{{ url_for('dashboard') }}"><i class="fas fa-home"></i> Dashboard</a></li>
-                <li><a href="{{ url_for('history') }}"><i class="fas fa-history"></i> Istorija</a></li>
+                <li><a href="{{ url_for('dashboard') }}" {% if request.endpoint == 'dashboard' %}class="active"{% endif %}>
+                    <i class="fas fa-home"></i> Dashboard
+                </a></li>
                 {% if current_user.is_admin %}
-                <li><a href="{{ url_for('admin_computers') }}"><i class="fas fa-cog"></i> Računari</a></li>
-                <li><a href="{{ url_for('admin_users') }}"><i class="fas fa-users-cog"></i> Korisnici</a></li>
+                <li><a href="{{ url_for('admin_computers') }}" {% if 'admin' in request.endpoint %}class="active"{% endif %}>
+                    <i class="fas fa-cog"></i> Admin
+                </a></li>
                 {% endif %}
-                <li><a href="{{ url_for('profile') }}"><i class="fas fa-user"></i> Profil</a></li>
-                <li><a href="{{ url_for('auth.logout') }}" class="logout"><i class="fas fa-sign-out-alt"></i> Odjava</a></li>
+                <li><a href="{{ url_for('history') }}" {% if request.endpoint == 'history' %}class="active"{% endif %}>
+                    <i class="fas fa-history"></i> <span class="hide-mobile">Istorija</span>
+                </a></li>
+                <li><a href="{{ url_for('profile') }}" {% if request.endpoint == 'profile' %}class="active"{% endif %}>
+                    <i class="fas fa-user"></i> <span class="hide-mobile">{{ current_user.username }}</span>
+                </a></li>
+                <li><a href="{{ url_for('auth.logout') }}">
+                    <i class="fas fa-sign-out-alt"></i> <span class="hide-mobile">Odjava</span>
+                </a></li>
             </ul>
         </div>
     </nav>
@@ -207,7 +379,14 @@
         {% block content %}{% endblock %}
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <style>
+        @media (max-width: 768px) {
+            .hide-mobile {
+                display: none;
+            }
+        }
+    </style>
+
     {% block extra_js %}{% endblock %}
 </body>
 </html>

@@ -32,6 +32,45 @@
     .info-value {
         color: #666;
     }
+
+    /* Mobile Responsive Styles */
+    @media (max-width: 768px) {
+        .profile-container {
+            max-width: 100%;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+        }
+
+        h2 {
+            font-size: 1.2rem;
+        }
+
+        .info-row {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .info-label {
+            font-size: 0.9rem;
+        }
+
+        .info-value {
+            font-size: 0.95rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .info-row {
+            padding: 0.75rem;
+        }
+
+        .btn {
+            width: 100%;
+        }
+    }
 </style>
 {% endblock %}
 
