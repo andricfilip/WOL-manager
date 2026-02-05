@@ -94,6 +94,56 @@
             </div>
 
             <div class="form-group">
+                <label for="os_type"><i class="fas fa-laptop"></i> Operativni sistem</label>
+                <select id="os_type" name="os_type" required>
+                    <option value="linux" selected>Linux</option>
+                    <option value="windows">Windows</option>
+                    <option value="unknown">Nepoznat</option>
+                </select>
+                <small style="color: #666; display: block; margin-top: 0.5rem;">
+                    <i class="fas fa-info-circle"></i> Bitno za SSH shutdown komande
+                </small>
+            </div>
+
+            <hr style="margin: 2rem 0; border: none; border-top: 2px solid #e9ecef;">
+            
+            <h3 style="margin-bottom: 1rem; color: var(--primary);">
+                <i class="fas fa-terminal"></i> SSH Konfiguracija (za gašenje računara)
+            </h3>
+            
+            <div class="form-group">
+                <label for="ssh_host"><i class="fas fa-server"></i> SSH Host</label>
+                <input type="text" id="ssh_host" name="ssh_host" 
+                       placeholder="npr. 192.168.1.100 ili računar.local">
+                <small style="color: #666; display: block; margin-top: 0.5rem;">
+                    Ostavi prazno ako SSH koristi istu adresu kao IP adresa
+                </small>
+            </div>
+
+            <div class="form-group">
+                <label for="ssh_port"><i class="fas fa-ethernet"></i> SSH Port</label>
+                <input type="number" id="ssh_port" name="ssh_port" 
+                       value="22" min="1" max="65535">
+            </div>
+
+            <div class="form-group">
+                <label for="ssh_username"><i class="fas fa-user"></i> SSH Korisničko ime</label>
+                <input type="text" id="ssh_username" name="ssh_username" 
+                       autocomplete="off" placeholder="Administrator ili username">
+            </div>
+
+            <div class="form-group">
+                <label for="ssh_password"><i class="fas fa-key"></i> SSH Lozinka</label>
+                <input type="password" id="ssh_password" name="ssh_password" 
+                       autocomplete="new-password" placeholder="••••••••">
+                <small style="color: #e63946; display: block; margin-top: 0.5rem;">
+                    <i class="fas fa-exclamation-triangle"></i> Lozinka se čuva enkriptovano u bazi
+                </small>
+            </div>
+
+            <hr style="margin: 2rem 0; border: none; border-top: 2px solid #e9ecef;">
+
+            <div class="form-group">
                 <label><i class="fas fa-users"></i> Dodeli Korisnicima</label>
                 <div class="user-checkbox-list">
                     {% if users %}

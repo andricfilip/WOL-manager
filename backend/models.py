@@ -2,6 +2,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
+from encryption import encrypt_password, decrypt_password
 
 db = SQLAlchemy()
 
@@ -42,11 +43,44 @@ class Computer(db.Model):
     description = db.Column(db.String(500))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_wol = db.Column(db.DateTime)
+    last_shutdown = db.Column(db.DateTime)
     status = db.Column(db.String(20), default='unknown')  # 'online', 'offline', 'unknown'
     last_checked = db.Column(db.DateTime)
+    os_type = db.Column(db.String(20), default='linux')  # 'windows', 'linux', 'unknown'
+    
+    # SSH credentials for shutdown functionality (ENCRYPTED)
+    ssh_host = db.Column(db.String(255))  # Can be different from ip_address
+    ssh_port = db.Column(db.Integer, default=22)
+    ssh_username = db.Column(db.String(100))
+    _ssh_password_encrypted = db.Column('ssh_password', db.String(500))  # Encrypted storage
     
     # Remove owner_id - now using many-to-many relationship
     logs = db.relationship('WOLLog', backref='computer', lazy=True, cascade='all, delete-orphan')
+    shutdown_logs = db.relationship('ShutdownLog', backref='computer', lazy=True, cascade='all, delete-orphan')
+    
+    @property
+    def ssh_password(self):
+        """Decrypt SSH password when reading"""
+        if self._ssh_password_encrypted:
+            try:
+                return decrypt_password(self._ssh_password_encrypted)
+            except Exception:
+                # If decryption fails, return None (e.g., wrong encryption key)
+                return None
+        return None
+    
+    @ssh_password.setter
+    def ssh_password(self, value):
+        """Encrypt SSH password when writing"""
+        if value:
+            try:
+                self._ssh_password_encrypted = encrypt_password(value)
+            except ValueError:
+                # If encryption is not configured, store as plaintext (development only!)
+                logger.warning("Encryption not configured - storing SSH password as plaintext!")
+                self._ssh_password_encrypted = value
+        else:
+            self._ssh_password_encrypted = None
     
     def __repr__(self):
         return f'<Computer {self.name}>'
@@ -61,3 +95,60 @@ class WOLLog(db.Model):
     
     def __repr__(self):
         return f'<WOLLog {self.user.username} -> {self.computer.name}>'
+
+class ShutdownLog(db.Model):
+    """Shutdown action log"""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    computer_id = db.Column(db.Integer, db.ForeignKey('computer.id'), nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    status = db.Column(db.String(20), default='success')  # 'success', 'failed'
+    error_message = db.Column(db.String(500))
+    
+    user = db.relationship('User', backref='shutdown_logs')
+    
+    def __repr__(self):
+        return f'<ShutdownLog {self.user.username} -> {self.computer.name}>'
+
+class AuditLog(db.Model):
+    """Security audit log for sensitive actions"""
+    id = db.Column(db.Integer, primary_key=True)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    username = db.Column(db.String(80))  # Stored for history even if user deleted
+    action = db.Column(db.String(50), nullable=False, index=True)  # 'login', 'logout', 'shutdown', 'wol', etc.
+    resource_type = db.Column(db.String(50))  # 'computer', 'user', etc.
+    resource_id = db.Column(db.Integer)
+    ip_address = db.Column(db.String(45))  # IPv4 or IPv6
+    user_agent = db.Column(db.String(255))
+    status = db.Column(db.String(20))  # 'success', 'failed', 'denied'
+    details = db.Column(db.Text)  # JSON or additional info
+    
+    user = db.relationship('User', backref='audit_logs')
+    
+    def __repr__(self):
+        return f'<AuditLog {self.action} by {self.username} at {self.timestamp}>'
+    
+    @staticmethod
+    def log_action(action, user=None, resource_type=None, resource_id=None, 
+                   status='success', details=None, ip_address=None, user_agent=None):
+        """Helper method to create audit log entry"""
+        log = AuditLog(
+            user_id=user.id if user else None,
+            username=user.username if user else 'anonymous',
+            action=action,
+            resource_type=resource_type,
+            resource_id=resource_id,
+            status=status,
+            details=details,
+            ip_address=ip_address,
+            user_agent=user_agent
+        )
+        db.session.add(log)
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            # Log to file if database logging fails
+            import logging
+            logging.error(f"Failed to create audit log: {e}")

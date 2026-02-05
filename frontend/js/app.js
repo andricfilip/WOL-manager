@@ -28,6 +28,57 @@ const API = {
     })
 };
 
+// ==================== WEBSOCKET CONNECTION ====================
+let socket = null;
+let computerStatuses = {};
+
+function initWebSocket() {
+    // Connect to WebSocket server
+    socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port);
+    
+    socket.on('connect', function() {
+        console.log('WebSocket connected');
+    });
+    
+    socket.on('disconnect', function() {
+        console.log('WebSocket disconnected');
+    });
+    
+    socket.on('status_update', function(data) {
+        console.log('Status update:', data);
+        updateComputerStatus(data.computer_id, data.status);
+        computerStatuses[data.computer_id] = data.status;
+    });
+}
+
+function updateComputerStatus(computerId, status) {
+    // Update status badge
+    const statusBadge = document.querySelector(`[data-status-badge="${computerId}"]`);
+    if (statusBadge) {
+        statusBadge.className = 'status-badge status-' + status;
+        statusBadge.textContent = status === 'online' ? '🟢 Online' : 
+                                   status === 'offline' ? '🔴 Offline' : '⚪ Unknown';
+    }
+    
+    // Update button states
+    const wakeBtn = document.querySelector(`[data-wake-btn="${computerId}"]`);
+    const shutdownBtn = document.querySelector(`[data-shutdown-btn="${computerId}"]`);
+    
+    if (wakeBtn && shutdownBtn) {
+        if (status === 'online') {
+            wakeBtn.disabled = true;
+            wakeBtn.classList.add('btn-disabled');
+            shutdownBtn.disabled = false;
+            shutdownBtn.classList.remove('btn-disabled');
+        } else {
+            wakeBtn.disabled = false;
+            wakeBtn.classList.remove('btn-disabled');
+            shutdownBtn.disabled = true;
+            shutdownBtn.classList.add('btn-disabled');
+        }
+    }
+}
+
 // Show notification
 function showNotification(message, type = 'info') {
     const alertClass = {
@@ -82,6 +133,47 @@ function setupWOLButtons() {
             } finally {
                 button.disabled = false;
                 button.innerHTML = '🔌 Wake Up';
+            }
+        });
+    });
+}
+
+// Shutdown Button Handler
+function setupShutdownButtons() {
+    const shutdownButtons = document.querySelectorAll('[data-shutdown-btn]');
+    
+    shutdownButtons.forEach(button => {
+        button.addEventListener('click', async (e) => {
+            e.preventDefault();
+            
+            const computerId = button.dataset.computerId;
+            const computerName = button.dataset.computerName;
+            
+            if (!confirm(`Da li ste sigurni da želite da ugasite računar "${computerName}"?`)) {
+                return;
+            }
+            
+            button.disabled = true;
+            const originalHTML = button.innerHTML;
+            button.innerHTML = '<span class="spinner"></span> Gašenje...';
+            
+            try {
+                const result = await API.post('/api/shutdown', {
+                    computer_id: computerId
+                });
+                
+                if (result.success) {
+                    showNotification(`Računar ${computerName} se gasi!`, 'success');
+                    // Update status immediately
+                    updateComputerStatus(computerId, 'offline');
+                } else {
+                    showNotification(`Greška: ${result.message}`, 'error');
+                }
+            } catch (error) {
+                showNotification(`Greška: ${error.message}`, 'error');
+            } finally {
+                button.disabled = false;
+                button.innerHTML = originalHTML;
             }
         });
     });
@@ -212,7 +304,9 @@ async function changePassword() {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+    initWebSocket();
     setupWOLButtons();
+    setupShutdownButtons();
     
     // Close modals on outside click
     window.addEventListener('click', (e) => {

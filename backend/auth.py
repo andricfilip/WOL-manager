@@ -23,10 +23,7 @@ def login():
         
         if user and user.check_password(password):
             session.permanent = True
-            login_result = login_user(user, remember=remember)
-            print(f"[DEBUG] Login attempt for user '{username}': {'SUCCESS' if login_result else 'FAILED'}")
-            print(f"[DEBUG] Session: {dict(session)}")
-            print(f"[DEBUG] Current user authenticated: {current_user.is_authenticated}")
+            login_user(user, remember=remember)
             flash(f'Dobrodošli nazad, {user.username}!', 'success')
             next_page = request.args.get('next')
             if next_page and next_page.startswith('/'):

@@ -113,6 +113,56 @@ def run_migrations(database_url):
         else:
             print("✓ 'last_checked' column already exists")
         
+        # Add last_shutdown column if missing
+        if 'last_shutdown' not in columns:
+            print("\n➜ Adding 'last_shutdown' column...")
+            with engine.connect() as conn:
+                conn.execute(text(
+                    "ALTER TABLE computer ADD COLUMN last_shutdown TIMESTAMP"
+                ))
+                conn.commit()
+            print("✓ 'last_shutdown' column added")
+            needs_migration = True
+        else:
+            print("✓ 'last_shutdown' column already exists")
+        
+        # Add SSH columns if missing
+        ssh_columns = ['ssh_host', 'ssh_port', 'ssh_username', 'ssh_password']
+        for col_name in ssh_columns:
+            if col_name not in columns:
+                print(f"\n➜ Adding '{col_name}' column...")
+                with engine.connect() as conn:
+                    if col_name == 'ssh_port':
+                        conn.execute(text(
+                            f"ALTER TABLE computer ADD COLUMN {col_name} INTEGER DEFAULT 22"
+                        ))
+                    elif col_name == 'ssh_password':
+                        conn.execute(text(
+                            f"ALTER TABLE computer ADD COLUMN {col_name} VARCHAR(500)"
+                        ))
+                    else:
+                        conn.execute(text(
+                            f"ALTER TABLE computer ADD COLUMN {col_name} VARCHAR(255)"
+                        ))
+                    conn.commit()
+                print(f"✓ '{col_name}' column added")
+                needs_migration = True
+            else:
+                print(f"✓ '{col_name}' column already exists")
+        
+        # Add os_type column if missing
+        if 'os_type' not in columns:
+            print("\n➜ Adding 'os_type' column...")
+            with engine.connect() as conn:
+                conn.execute(text(
+                    "ALTER TABLE computer ADD COLUMN os_type VARCHAR(20) DEFAULT 'linux'"
+                ))
+                conn.commit()
+            print("✓ 'os_type' column added")
+            needs_migration = True
+        else:
+                print(f"✓ '{col_name}' column already exists")
+        
         if needs_migration:
             print("\n✓ Database migration completed successfully!")
         else:

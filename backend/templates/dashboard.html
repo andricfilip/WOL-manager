@@ -165,6 +165,56 @@
     .wol-btn:disabled {
         background: #ccc;
         cursor: not-allowed;
+        opacity: 0.6;
+    }
+
+    .shutdown-btn {
+        flex: 1;
+        background: linear-gradient(135deg, #e63946, #d62828);
+        color: white;
+        padding: 0.75rem;
+        border: none;
+        border-radius: 0.3rem;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+
+    .shutdown-btn:hover:not(:disabled) {
+        transform: scale(1.05);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    .shutdown-btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+
+    .btn-disabled {
+        pointer-events: none;
+    }
+
+    .status-badge {
+        font-size: 0.85rem;
+        padding: 0.4rem 0.8rem;
+        border-radius: 1rem;
+        font-weight: 600;
+    }
+
+    .status-badge.status-online {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .status-badge.status-offline {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .status-badge.status-unknown {
+        background: #e2e3e5;
+        color: #383d41;
     }
 
     .refresh-btn {
@@ -328,7 +378,17 @@
                 </div>
                 
                 <h3>
-                    <i class="fas fa-desktop"></i> 
+                    {% if computer.status == 'online' %}
+                        {% if computer.os_type == 'windows' %}
+                            <i class="fab fa-windows" style="color: #0078d4;"></i>
+                        {% elif computer.os_type == 'linux' %}
+                            <i class="fab fa-linux" style="color: #fcc624;"></i>
+                        {% else %}
+                            <i class="fas fa-desktop"></i>
+                        {% endif %}
+                    {% else %}
+                        <i class="fas fa-desktop" style="color: #999;"></i>
+                    {% endif %}
                     {{ computer.name }}
                 </h3>
                 
@@ -341,6 +401,17 @@
                         <strong>IP:</strong> {{ computer.ip_address }}
                     </div>
                 {% endif %}
+
+                {% if computer.status == 'online' and computer.os_type and computer.os_type != 'unknown' %}
+                    <div class="computer-info">
+                        <strong>OS:</strong> 
+                        {% if computer.os_type == 'windows' %}
+                            <i class="fab fa-windows" style="color: #0078d4;"></i> Windows
+                        {% elif computer.os_type == 'linux' %}
+                            <i class="fab fa-linux" style="color: #fcc624;"></i> Linux
+                        {% endif %}
+                    </div>
+                {% endif %}
                 
                 {% if computer.description %}
                     <div class="computer-info">
@@ -349,8 +420,14 @@
                 {% endif %}
                 
                 {% if computer.last_wol %}
-                    <div class="computer-info">
+                    <div class="computer-info" data-last-wol="{{ computer.id }}">
                         <strong>Poslednji WoL:</strong> {{ computer.last_wol.strftime('%Y-%m-%d %H:%M') }}
+                    </div>
+                {% endif %}
+                
+                {% if computer.last_shutdown %}
+                    <div class="computer-info" data-last-shutdown="{{ computer.id }}">
+                        <strong>Poslednje gašenje:</strong> {{ computer.last_shutdown.strftime('%Y-%m-%d %H:%M') }}
                     </div>
                 {% endif %}
                 
@@ -361,9 +438,15 @@
                 {% endif %}
                 
                 <div class="computer-actions">
-                    <button class="wol-btn" data-wol-btn data-computer-id="{{ computer.id }}" data-computer-name="{{ computer.name }}">
-                        <i class="fas fa-power-off"></i> Probudi
+                    <button class="wol-btn" data-wake-btn="{{ computer.id }}" data-wol-btn data-computer-id="{{ computer.id }}" data-computer-name="{{ computer.name }}" {% if computer.status == 'online' %}disabled{% endif %}>
+                        <i class="fas fa-power-off"></i> Uključi
                     </button>
+                    
+                    {% if computer.ssh_host and computer.ssh_username %}
+                    <button class="shutdown-btn" data-shutdown-btn="{{ computer.id }}" data-computer-id="{{ computer.id }}" data-computer-name="{{ computer.name }}" {% if computer.status != 'online' %}disabled{% endif %}>
+                        <i class="fas fa-stop-circle"></i> Ugasi
+                    </button>
+                    {% endif %}
                 </div>
             </div>
         {% endfor %}
@@ -503,6 +586,75 @@
         }, REFRESH_INTERVAL);
     }
 
+    // Setup Shutdown buttons
+    function setupShutdownButtons() {
+        const shutdownButtons = document.querySelectorAll('[data-shutdown-btn]');
+        
+        shutdownButtons.forEach(button => {
+            button.addEventListener('click', async (e) => {
+                e.preventDefault();
+                
+                const computerId = button.dataset.computerId;
+                const computerName = button.dataset.computerName;
+                
+                if (!confirm(`Da li ste sigurni da želite da ugasite računar ${computerName}?`)) {
+                    return;
+                }
+                
+                button.disabled = true;
+                const originalHTML = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gašenje...';
+                
+                try {
+                    const response = await fetch('/api/shutdown', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            computer_id: parseInt(computerId)
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        // Update last shutdown time on the card
+                        if (result.last_shutdown) {
+                            const card = document.querySelector(`[data-computer-id="${computerId}"]`);
+                            if (card) {
+                                // Find or create last_shutdown info element
+                                let lastShutdownElement = card.querySelector('[data-last-shutdown]');
+                                if (!lastShutdownElement) {
+                                    // Create new element if doesn't exist
+                                    const actionsDiv = card.querySelector('.computer-actions');
+                                    lastShutdownElement = document.createElement('div');
+                                    lastShutdownElement.className = 'computer-info';
+                                    lastShutdownElement.setAttribute('data-last-shutdown', computerId);
+                                    actionsDiv.parentNode.insertBefore(lastShutdownElement, actionsDiv);
+                                }
+                                lastShutdownElement.innerHTML = `<strong>Poslednje gašenje:</strong> ${result.last_shutdown}`;
+                            }
+                        }
+                        
+                        alert(`✓ Računar ${computerName} uspešno ugašen!\n\nStatusi će se automatski osvežiti za 3 sekunde.`);
+                        // Check status after shutdown
+                        setTimeout(() => {
+                            checkAllComputersStatus();
+                        }, 3000);
+                    } else {
+                        alert(`✗ Greška: ${result.message}`);
+                    }
+                } catch (error) {
+                    alert(`✗ Greška: ${error.message}`);
+                } finally {
+                    button.disabled = false;
+                    button.innerHTML = originalHTML;
+                }
+            });
+        });
+    }
+
     // Setup WOL buttons
     function setupWOLButtons() {
         const wolButtons = document.querySelectorAll('[data-wol-btn]');
@@ -532,6 +684,24 @@
                     const result = await response.json();
                     
                     if (result.success) {
+                        // Update last WOL time on the card
+                        if (result.last_wol) {
+                            const card = document.querySelector(`[data-computer-id="${computerId}"]`);
+                            if (card) {
+                                // Find or create last_wol info element
+                                let lastWolElement = card.querySelector('[data-last-wol]');
+                                if (!lastWolElement) {
+                                    // Create new element if doesn't exist
+                                    const actionsDiv = card.querySelector('.computer-actions');
+                                    lastWolElement = document.createElement('div');
+                                    lastWolElement.className = 'computer-info';
+                                    lastWolElement.setAttribute('data-last-wol', computerId);
+                                    actionsDiv.parentNode.insertBefore(lastWolElement, actionsDiv);
+                                }
+                                lastWolElement.innerHTML = `<strong>Poslednji WoL:</strong> ${result.last_wol}`;
+                            }
+                        }
+                        
                         alert(`✓ WoL paket poslat na ${computerName}!\n\nStatusi će se automatski osvežiti za 5 sekundi.`);
                         // Check status after WOL (wait for computer to boot)
                         setTimeout(() => {
@@ -553,6 +723,7 @@
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', () => {
         setupWOLButtons();
+        setupShutdownButtons();
         
         // Setup manual refresh button
         const refreshBtn = document.getElementById('refresh-status-btn');

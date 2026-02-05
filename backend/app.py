@@ -1,17 +1,45 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import LoginManager, login_required, current_user
+from flask_socketio import SocketIO, emit, join_room, leave_room
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from datetime import datetime
 from config import config
-from models import db, User, Computer, WOLLog
-from wol import send_wol_packet, validate_mac_address, check_host_status
+from models import db, User, Computer, WOLLog, ShutdownLog, AuditLog
+from wol import send_wol_packet, validate_mac_address, check_host_status, shutdown_computer_ssh
+from encryption import verify_encryption_setup
+from security import init_security
 import auth
 import os
+import threading
+import time
+import logging
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.config.from_object(config[os.environ.get('FLASK_ENV', 'development')])
 
 # Initialize extensions
 db.init_app(app)
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+
+# Initialize security middleware
+init_security(app)
+
+# Initialize rate limiter
+limiter = Limiter(
+    app=app,
+    key_func=get_remote_address,
+    default_limits=[app.config.get('RATELIMIT_DEFAULT', "200 per hour")],
+    storage_uri=app.config.get('RATELIMIT_STORAGE_URL', "memory://")
+)
+
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'auth.login'
@@ -19,6 +47,20 @@ login_manager.login_message = 'Molim prijavite se da pristupite ovoj stranici'
 
 # Register blueprints
 app.register_blueprint(auth.auth_bp)
+
+# Verify encryption setup on startup
+_security_verified = False
+
+@app.before_request
+def verify_security():
+    """Verify security configuration on first request"""
+    global _security_verified
+    if not _security_verified:
+        if not verify_encryption_setup():
+            logger.error("⚠️  ENCRYPTION NOT PROPERLY CONFIGURED! Set ENCRYPTION_KEY in environment.")
+        else:
+            logger.info("✓ Encryption verified and working correctly")
+        _security_verified = True
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -65,9 +107,99 @@ def dashboard():
             computer.last_wol = datetime.utcnow()
             db.session.commit()
             
-            return jsonify({'success': success, 'message': message})
+            return jsonify({
+                'success': success, 
+                'message': message,
+                'last_wol': computer.last_wol.strftime('%Y-%m-%d %H:%M') if computer.last_wol else None
+            })
     
     return render_template('dashboard.html', computers=computers)
+
+@app.route('/api/shutdown', methods=['POST'])
+@login_required
+@limiter.limit("10 per minute")  # Rate limit: max 10 shutdown attempts per minute
+def shutdown_computer():
+    """Shutdown a computer via SSH - Only admin has SSH credentials"""
+    if request.is_json:
+        data = request.get_json()
+        computer_id = data.get('computer_id')
+        
+        computer = Computer.query.get(computer_id)
+        
+        # Check if user has access to this computer
+        # Regular users can trigger shutdown, but only if admin configured SSH
+        if not computer or current_user not in computer.assigned_users:
+            # Audit log: Unauthorized shutdown attempt
+            AuditLog.log_action(
+                action='shutdown_denied',
+                user=current_user,
+                resource_type='computer',
+                resource_id=computer_id,
+                status='denied',
+                details=f'User attempted to shutdown computer without access',
+                ip_address=request.remote_addr,
+                user_agent=request.headers.get('User-Agent')
+            )
+            return jsonify({'success': False, 'message': 'Pristup odbijen'}), 403
+        
+        # Check if SSH is configured
+        if not computer.ssh_host or not computer.ssh_username or not computer.ssh_password:
+            return jsonify({
+                'success': False, 
+                'message': 'SSH nije konfigurisan za ovaj računar. Kontaktirajte administratora.'
+            }), 400
+        
+        # Send shutdown command via SSH
+        success, message = shutdown_computer_ssh(
+            host=computer.ssh_host or computer.ip_address,
+            username=computer.ssh_username,
+            password=computer.ssh_password,
+            port=computer.ssh_port or 22,
+            os_type=computer.os_type or 'linux'  # Use computer's OS type
+        )
+        
+        # Audit log: Shutdown action
+        AuditLog.log_action(
+            action='shutdown',
+            user=current_user,
+            resource_type='computer',
+            resource_id=computer_id,
+            status='success' if success else 'failed',
+            details=f'Computer: {computer.name}, Result: {message}',
+            ip_address=request.remote_addr,
+            user_agent=request.headers.get('User-Agent')
+        )
+        
+        # Log the action
+        log = ShutdownLog(
+            user_id=current_user.id,
+            computer_id=computer_id,
+            status='success' if success else 'failed',
+            error_message=None if success else message
+        )
+        db.session.add(log)
+        
+        if success:
+            computer.last_shutdown = datetime.utcnow()
+            computer.status = 'offline'  # Assume offline after shutdown
+        
+        db.session.commit()
+        
+        # Emit status update via WebSocket
+        if success:
+            socketio.emit('status_update', {
+                'computer_id': computer.id,
+                'status': 'offline',
+                'last_checked': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+            }, namespace='/', broadcast=True)
+        
+        return jsonify({
+            'success': success, 
+            'message': message,
+            'last_shutdown': computer.last_shutdown.strftime('%Y-%m-%d %H:%M') if computer.last_shutdown else None
+        })
+    
+    return jsonify({'success': False, 'message': 'Invalid request'}), 400
 
 @app.route('/admin/computers')
 @login_required
@@ -113,7 +245,12 @@ def admin_add_computer():
             name=name,
             mac_address=mac_address,
             ip_address=ip_address if ip_address else None,
-            description=description if description else None
+            description=description if description else None,
+            os_type=request.form.get('os_type', 'linux'),
+            ssh_host=request.form.get('ssh_host', '').strip() or None,
+            ssh_port=int(request.form.get('ssh_port', 22)),
+            ssh_username=request.form.get('ssh_username', '').strip() or None,
+            ssh_password=request.form.get('ssh_password', '').strip() or None
         )
         
         # Assign users
@@ -146,7 +283,18 @@ def admin_edit_computer(computer_id):
         mac_address = request.form.get('mac_address', '').strip().upper()
         computer.ip_address = request.form.get('ip_address', '').strip() or None
         computer.description = request.form.get('description', '').strip() or None
+        computer.os_type = request.form.get('os_type', 'linux')
         assigned_user_ids = request.form.getlist('assigned_users')
+        
+        # SSH configuration
+        computer.ssh_host = request.form.get('ssh_host', '').strip() or None
+        computer.ssh_port = int(request.form.get('ssh_port', 22))
+        computer.ssh_username = request.form.get('ssh_username', '').strip() or None
+        
+        # Only update password if new one is provided (security: never expose existing password)
+        new_password = request.form.get('ssh_password', '').strip()
+        if new_password:  # Only update if not empty
+            computer.ssh_password = new_password
         
         # Validation
         if not computer.name or not mac_address:
@@ -177,8 +325,11 @@ def admin_edit_computer(computer_id):
         flash(f'Računar "{computer.name}" je ažuriran', 'success')
         return redirect(url_for('admin_computers'))
     
+    # Security: Check if password exists without exposing it
+    has_ssh_password = computer._ssh_password_encrypted is not None and computer._ssh_password_encrypted != ''
+    
     users = User.query.all()
-    return render_template('admin_edit_computer.html', computer=computer, users=users)
+    return render_template('admin_edit_computer.html', computer=computer, users=users, has_ssh_password=has_ssh_password)
 
 @app.route('/admin/computers/<int:computer_id>/delete', methods=['POST'])
 @login_required
@@ -348,6 +499,13 @@ def check_computer_status(computer_id):
     # Check status
     is_online, status = check_host_status(computer.ip_address)
     
+    # Auto-detect OS if computer is online
+    if is_online and computer.ip_address:
+        from wol import detect_os_type
+        detected_os = detect_os_type(computer.ip_address)
+        if detected_os != 'unknown':
+            computer.os_type = detected_os
+    
     # Update database
     computer.status = status
     computer.last_checked = datetime.utcnow()
@@ -371,6 +529,14 @@ def check_all_computers_status():
     for computer in computers:
         if computer.ip_address:
             is_online, status = check_host_status(computer.ip_address)
+            
+            # Auto-detect OS if computer is online
+            if is_online:
+                from wol import detect_os_type
+                detected_os = detect_os_type(computer.ip_address)
+                if detected_os != 'unknown':
+                    computer.os_type = detected_os
+            
             computer.status = status
             computer.last_checked = datetime.utcnow()
             
@@ -430,9 +596,94 @@ def create_admin():
     
     print(f'✓ Admin korisnik "{username}" je kreiran!')
 
+# ==================== WEBSOCKET EVENTS ====================
+
+# Background thread for status monitoring
+status_monitor_thread = None
+status_monitor_running = False
+
+def monitor_computer_status():
+    """Background thread that monitors computer status"""
+    global status_monitor_running
+    
+    while status_monitor_running:
+        with app.app_context():
+            try:
+                computers = Computer.query.all()
+                
+                for computer in computers:
+                    if computer.ip_address:
+                        is_online, status = check_host_status(computer.ip_address)
+                        
+                        # Update status if changed
+                        if computer.status != status:
+                            computer.status = status
+                            computer.last_checked = datetime.utcnow()
+                            db.session.commit()
+                            
+                            # Emit status update to all connected clients
+                            socketio.emit('status_update', {
+                                'computer_id': computer.id,
+                                'status': status,
+                                'last_checked': computer.last_checked.strftime('%Y-%m-%d %H:%M:%S')
+                            }, namespace='/', broadcast=True)
+                
+            except Exception as e:
+                print(f"Error in status monitor: {e}")
+        
+        # Check every 10 seconds
+        time.sleep(10)
+
+@socketio.on('connect')
+def handle_connect():
+    """Handle client connection"""
+    print(f'Client connected: {request.sid}')
+    
+    # Start status monitor thread if not running
+    global status_monitor_thread, status_monitor_running
+    if status_monitor_thread is None or not status_monitor_thread.is_alive():
+        status_monitor_running = True
+        status_monitor_thread = threading.Thread(target=monitor_computer_status, daemon=True)
+        status_monitor_thread.start()
+    
+    # Send current status of all computers
+    with app.app_context():
+        computers = Computer.query.all()
+        for computer in computers:
+            emit('status_update', {
+                'computer_id': computer.id,
+                'status': computer.status,
+                'last_checked': computer.last_checked.strftime('%Y-%m-%d %H:%M:%S') if computer.last_checked else None
+            })
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    """Handle client disconnection"""
+    print(f'Client disconnected: {request.sid}')
+
+@socketio.on('request_status')
+def handle_request_status(data):
+    """Handle manual status check request"""
+    computer_id = data.get('computer_id')
+    
+    with app.app_context():
+        computer = Computer.query.get(computer_id)
+        if computer and computer.ip_address:
+            is_online, status = check_host_status(computer.ip_address)
+            computer.status = status
+            computer.last_checked = datetime.utcnow()
+            db.session.commit()
+            
+            emit('status_update', {
+                'computer_id': computer.id,
+                'status': status,
+                'last_checked': computer.last_checked.strftime('%Y-%m-%d %H:%M:%S')
+            }, broadcast=True)
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
+    socketio.run(app, host='0.0.0.0', port=5000, debug=True, allow_unsafe_werkzeug=True)
     # Disable reloader in production to prevent session issues
     is_dev = os.environ.get('FLASK_ENV') == 'development'
     app.run(host='0.0.0.0', debug=is_dev, use_reloader=is_dev)
