@@ -12,6 +12,27 @@ user_computers = db.Table('user_computers',
     db.Column('computer_id', db.Integer, db.ForeignKey('computer.id'), primary_key=True)
 )
 
+# Many-to-many association table for group-computer assignments
+group_computers = db.Table('group_computers',
+    db.Column('group_id', db.Integer, db.ForeignKey('computer_group.id'), primary_key=True),
+    db.Column('computer_id', db.Integer, db.ForeignKey('computer.id'), primary_key=True)
+)
+
+class ComputerGroup(db.Model):
+    """Computer group model"""
+    __tablename__ = 'computer_group'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), unique=True, nullable=False)
+    description = db.Column(db.String(500))
+    color = db.Column(db.String(7), default='#0066cc')  # Hex color
+    icon = db.Column(db.String(50), default='fas fa-folder')  # FontAwesome icon class
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    computers = db.relationship('Computer', secondary=group_computers, backref=db.backref('groups', lazy='dynamic'))
+    
+    def __repr__(self):
+        return f'<ComputerGroup {self.name}>'
+
 class User(UserMixin, db.Model):
     """User model"""
     id = db.Column(db.Integer, primary_key=True)
@@ -115,14 +136,14 @@ class AuditLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
-    username = db.Column(db.String(80))  # Stored for history even if user deleted
-    action = db.Column(db.String(50), nullable=False, index=True)  # 'login', 'logout', 'shutdown', 'wol', etc.
-    resource_type = db.Column(db.String(50))  # 'computer', 'user', etc.
+    username = db.Column(db.String(80))
+    action = db.Column(db.String(50), nullable=False, index=True)
+    resource_type = db.Column(db.String(50))
     resource_id = db.Column(db.Integer)
-    ip_address = db.Column(db.String(45))  # IPv4 or IPv6
+    ip_address = db.Column(db.String(45))
     user_agent = db.Column(db.String(255))
-    status = db.Column(db.String(20))  # 'success', 'failed', 'denied'
-    details = db.Column(db.Text)  # JSON or additional info
+    status = db.Column(db.String(20))
+    details = db.Column(db.Text)
     
     user = db.relationship('User', backref='audit_logs')
     
@@ -132,23 +153,29 @@ class AuditLog(db.Model):
     @staticmethod
     def log_action(action, user=None, resource_type=None, resource_id=None, 
                    status='success', details=None, ip_address=None, user_agent=None):
-        """Helper method to create audit log entry"""
         log = AuditLog(
             user_id=user.id if user else None,
             username=user.username if user else 'anonymous',
-            action=action,
-            resource_type=resource_type,
-            resource_id=resource_id,
-            status=status,
-            details=details,
-            ip_address=ip_address,
-            user_agent=user_agent
+            action=action, resource_type=resource_type,
+            resource_id=resource_id, status=status,
+            details=details, ip_address=ip_address, user_agent=user_agent
         )
         db.session.add(log)
         try:
             db.session.commit()
         except Exception as e:
             db.session.rollback()
-            # Log to file if database logging fails
             import logging
             logging.error(f"Failed to create audit log: {e}")
+
+class UptimeLog(db.Model):
+    """Track uptime history for computers"""
+    id = db.Column(db.Integer, primary_key=True)
+    computer_id = db.Column(db.Integer, db.ForeignKey('computer.id'), nullable=False, index=True)
+    status = db.Column(db.String(20), nullable=False)  # 'online', 'offline'
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    
+    computer = db.relationship('Computer', backref=db.backref('uptime_logs', lazy='dynamic', cascade='all, delete-orphan'))
+    
+    def __repr__(self):
+        return f'<UptimeLog {self.computer_id} {self.status} at {self.timestamp}>'

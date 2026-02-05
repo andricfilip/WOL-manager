@@ -12,11 +12,7 @@
         flex-wrap: wrap;
         gap: 1rem;
     }
-
-    .dashboard-header h1 {
-        margin: 0;
-    }
-
+    .dashboard-header h1 { margin: 0; }
     .header-actions {
         display: flex;
         gap: 0.5rem;
@@ -24,12 +20,59 @@
         flex-wrap: wrap;
     }
 
+    /* Group Section */
+    .group-section {
+        margin-bottom: 2rem;
+    }
+    .group-header-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem 1rem;
+        border-radius: 0.75rem 0.75rem 0 0;
+        color: white;
+    }
+    .group-header-bar h2 {
+        margin: 0;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .wake-group-btn {
+        background: rgba(255,255,255,0.2);
+        color: white;
+        border: 1px solid rgba(255,255,255,0.4);
+        padding: 0.4rem 1rem;
+        border-radius: 0.4rem;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.85rem;
+        transition: all 0.3s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    .wake-group-btn:hover:not(:disabled) {
+        background: rgba(255,255,255,0.35);
+    }
+    .wake-group-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    .group-body {
+        border: 2px solid var(--border);
+        border-top: none;
+        border-radius: 0 0 0.75rem 0.75rem;
+        padding: 1rem;
+    }
+
+    /* Computer Grid */
     .computer-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 1.5rem;
+        gap: 1.25rem;
     }
-
     .computer-card {
         background: white;
         border: 2px solid var(--border);
@@ -37,28 +80,27 @@
         padding: 1.25rem;
         transition: all 0.3s;
         position: relative;
-        min-height: 200px;
+        min-height: 180px;
         display: flex;
         flex-direction: column;
     }
-
     .computer-card:hover {
         box-shadow: 0 8px 24px rgba(0,0,0,0.12);
         border-color: var(--primary);
         transform: translateY(-3px);
     }
-
     .computer-card h3 {
-        margin-bottom: 1rem;
+        margin-bottom: 0.75rem;
         color: var(--primary);
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        font-size: 1.1rem;
-        padding-right: 80px; /* Space for status badge */
+        font-size: 1.05rem;
+        padding-right: 80px;
         word-break: break-word;
     }
 
+    /* Status Indicator */
     .status-indicator {
         position: absolute;
         top: 1rem;
@@ -66,680 +108,542 @@
         display: flex;
         align-items: center;
         gap: 0.3rem;
-        font-size: 0.75rem;
-        padding: 0.4rem 0.7rem;
+        font-size: 0.7rem;
+        padding: 0.35rem 0.6rem;
         border-radius: 1rem;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
-
     .status-indicator .status-dot {
         width: 8px;
         height: 8px;
         border-radius: 50%;
-        animation: pulse 2s infinite;
     }
-
     @keyframes pulse {
         0%, 100% { opacity: 1; }
         50% { opacity: 0.5; }
     }
+    .status-online { background: #d4edda; color: #155724; border: 1px solid #28a745; }
+    .status-online .status-dot { background: #28a745; animation: pulse 2s infinite; }
+    .status-offline { background: #f8d7da; color: #721c24; border: 1px solid #dc3545; }
+    .status-offline .status-dot { background: #dc3545; }
+    .status-unknown { background: #e2e3e5; color: #6c757d; border: 1px solid #6c757d; }
+    .status-unknown .status-dot { background: #6c757d; }
+    .status-checking { background: #fff3cd; color: #856404; border: 1px solid #ffc107; }
+    .status-checking .status-dot { background: #ffc107; animation: spin-dot 1s linear infinite !important; }
+    @keyframes spin-dot { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-    .status-online {
-        background: #d4edda;
-        color: #155724;
-        border: 1px solid #28a745;
-    }
-
-    .status-online .status-dot {
-        background: #28a745;
-    }
-
-    .status-offline {
-        background: #f8d7da;
-        color: #721c24;
-        border: 1px solid #dc3545;
-    }
-
-    .status-offline .status-dot {
-        background: #dc3545;
-    }
-
-    .status-unknown {
-        background: #e2e3e5;
-        color: #6c757d;
-        border: 1px solid #6c757d;
-    }
-
-    .status-unknown .status-dot {
-        background: #6c757d;
-    }
-
-    .status-checking {
-        background: #fff3cd;
-        color: #856404;
-        border: 1px solid #ffc107;
-    }
-
-    .status-checking .status-dot {
-        background: #ffc107;
-        animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
-    }
-    }
-
-    .computer-info {
-        font-size: 0.9rem;
-        color: #666;
-        margin-bottom: 0.3rem;
-    }
-
+    .computer-info { font-size: 0.88rem; color: #666; margin-bottom: 0.25rem; }
     .computer-actions {
-        margin-top: 1rem;
+        margin-top: auto;
+        padding-top: 0.75rem;
         display: flex;
         gap: 0.5rem;
     }
-
     .wol-btn {
         flex: 1;
         background: linear-gradient(135deg, #2a9d8f, #1db8a2);
         color: white;
-        padding: 0.75rem;
+        padding: 0.65rem;
         border: none;
         border-radius: 0.3rem;
         cursor: pointer;
         font-weight: 600;
+        font-size: 0.9rem;
         transition: all 0.3s;
     }
-
-    .wol-btn:hover:not(:disabled) {
-        transform: scale(1.05);
-        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    }
-
-    .wol-btn:disabled {
-        background: #ccc;
-        cursor: not-allowed;
-        opacity: 0.6;
-    }
-
+    .wol-btn:hover:not(:disabled) { transform: scale(1.03); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+    .wol-btn:disabled { background: #ccc; cursor: not-allowed; opacity: 0.6; }
     .shutdown-btn {
         flex: 1;
         background: linear-gradient(135deg, #e63946, #d62828);
         color: white;
-        padding: 0.75rem;
+        padding: 0.65rem;
         border: none;
         border-radius: 0.3rem;
         cursor: pointer;
         font-weight: 600;
+        font-size: 0.9rem;
         transition: all 0.3s;
     }
+    .shutdown-btn:hover:not(:disabled) { transform: scale(1.03); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+    .shutdown-btn:disabled { background: #ccc; cursor: not-allowed; opacity: 0.6; }
 
-    .shutdown-btn:hover:not(:disabled) {
-        transform: scale(1.05);
-        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    .auto-refresh-info { font-size: 0.85rem; color: #6c757d; }
+    .empty-state { text-align: center; padding: 3rem; color: #999; }
+
+    /* Toolbar */
+    .dashboard-toolbar {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        background: white;
+        padding: 0.75rem 1rem;
+        border-radius: 0.75rem;
+        border: 1px solid var(--border);
     }
-
-    .shutdown-btn:disabled {
-        background: #ccc;
-        cursor: not-allowed;
-        opacity: 0.6;
+    .search-box {
+        flex: 1;
+        min-width: 200px;
+        position: relative;
     }
-
-    .btn-disabled {
-        pointer-events: none;
+    .search-box input {
+        width: 100%;
+        padding: 0.6rem 0.75rem 0.6rem 2.5rem;
+        border: 2px solid var(--border);
+        border-radius: 0.5rem;
+        font-size: 0.9rem;
+        transition: all 0.3s;
+        outline: none;
     }
-
-    .status-badge {
-        font-size: 0.85rem;
-        padding: 0.4rem 0.8rem;
-        border-radius: 1rem;
-        font-weight: 600;
+    .search-box input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(0,102,204,0.1);
     }
-
-    .status-badge.status-online {
-        background: #d4edda;
-        color: #155724;
+    .search-box i {
+        position: absolute;
+        left: 0.85rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #999;
     }
-
-    .status-badge.status-offline {
-        background: #f8d7da;
-        color: #721c24;
-    }
-
-    .status-badge.status-unknown {
-        background: #e2e3e5;
-        color: #383d41;
-    }
-
-    .refresh-btn {
-        background: linear-gradient(135deg, #6c757d, #5a6268);
-        padding: 0.75rem 1.5rem;
-        color: white;
+    .toolbar-btn {
+        padding: 0.6rem 1.1rem;
         border: none;
         border-radius: 0.5rem;
         cursor: pointer;
         font-weight: 600;
-        font-size: 1rem;
-        transition: all 0.3s;
+        font-size: 0.88rem;
+        transition: all 0.2s;
         display: inline-flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: 0.4rem;
+        white-space: nowrap;
     }
-
-    .refresh-btn:hover:not(:disabled) {
-        background: linear-gradient(135deg, #5a6268, #495057);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    .toolbar-btn-refresh {
+        background: var(--primary);
+        color: white;
     }
-
-    .refresh-btn:disabled {
-        background: #ccc;
+    .toolbar-btn-refresh:hover:not(:disabled) {
+        background: #0055aa;
+        transform: translateY(-1px);
+    }
+    .toolbar-btn-refresh:disabled {
+        background: #a0c4e8;
         cursor: not-allowed;
-        transform: none;
+    }
+    .toolbar-divider {
+        width: 1px;
+        height: 28px;
+        background: var(--border);
     }
 
-    .btn-sm {
-        flex: 1;
-        padding: 0.5rem;
-        font-size: 0.85rem;
-    }
-
-    .empty-state {
+    /* No results */
+    .no-search-results {
         text-align: center;
-        padding: 3rem;
+        padding: 2rem;
         color: #999;
+        display: none;
     }
 
-    .auto-refresh-info {
-        font-size: 0.85rem;
-        color: #6c757d;
-        margin-left: 1rem;
+    /* Quick Stats */
+    .quick-stats { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .quick-stat {
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 0.5rem;
+        padding: 0.75rem 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex: 1;
+        min-width: 140px;
     }
+    .quick-stat-icon {
+        width: 40px; height: 40px; border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.2rem; color: white;
+    }
+    .quick-stat-value { font-size: 1.4rem; font-weight: 700; color: var(--dark); line-height: 1; }
+    .quick-stat-label { font-size: 0.75rem; color: #999; text-transform: uppercase; letter-spacing: 0.5px; }
 
-    /* Mobile Responsive Styles */
     @media (max-width: 768px) {
-        .computer-grid {
-            grid-template-columns: 1fr;
-            gap: 1rem;
-        }
-
-        .dashboard-header {
-            flex-direction: column;
-            gap: 1rem;
-            align-items: stretch !important;
-        }
-
-        .dashboard-header > div {
-            width: 100%;
-        }
-
-        .dashboard-header h1 {
-            font-size: 1.5rem;
-        }
-
-        .auto-refresh-info {
-            margin-left: 0.5rem;
-            font-size: 0.75rem;
-        }
-
-        .header-actions {
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .header-actions button,
-        .header-actions a {
-            width: 100%;
-        }
-
-        .computer-card {
-            padding: 1rem;
-        }
-
-        .computer-card h3 {
-            font-size: 1.1rem;
-            padding-right: 90px;
-        }
-
-        .status-indicator {
-            padding: 0.3rem 0.6rem;
-            font-size: 0.75rem;
-        }
-
-        .computer-actions {
-            flex-direction: column;
-        }
-
-        .wol-btn, .btn-sm {
-            width: 100%;
-        }
+        .computer-grid { grid-template-columns: 1fr; gap: 1rem; }
+        .dashboard-header { flex-direction: column; gap: 0.5rem; }
+        .dashboard-toolbar { flex-direction: column; }
+        .search-box { min-width: 100%; }
+        .toolbar-divider { display: none; }
+        .toolbar-btn { width: 100%; justify-content: center; }
+        .computer-card h3 { font-size: 1rem; padding-right: 80px; }
+        .computer-actions { flex-direction: column; }
+        .quick-stats { flex-direction: column; }
+        .group-header-bar { flex-direction: column; gap: 0.5rem; align-items: stretch; }
     }
-
     @media (max-width: 480px) {
-        .computer-card {
-            padding: 0.8rem;
-        }
-
-        .computer-info {
-            font-size: 0.85rem;
-        }
-
-        .empty-state {
-            padding: 2rem 1rem;
-        }
-
-        .refresh-btn {
-            padding: 0.6rem;
-            font-size: 0.85rem;
-        }
+        .computer-card { padding: 0.8rem; }
+        .auto-refresh-info { font-size: 0.75rem; text-align: center; }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-    <div style="display: flex; align-items: center;">
-        <h1>Moji Računari</h1>
-        <span class="auto-refresh-info" id="refresh-info"></span>
+
+{# ======== MACRO: render a single computer card ======== #}
+{% macro render_computer_card(computer) %}
+<div class="computer-card" data-computer-id="{{ computer.id }}">
+    <div class="status-indicator status-{{ computer.status if computer.status else 'unknown' }}" data-status-badge="{{ computer.id }}">
+        <span class="status-dot"></span>
+        <span class="status-text">
+            {% if computer.status == 'online' %}Online
+            {% elif computer.status == 'offline' %}Offline
+            {% else %}Nepoznato{% endif %}
+        </span>
     </div>
-    <div class="header-actions" style="display: flex; gap: 0.5rem;">
-        <button id="refresh-status-btn" class="refresh-btn">
-            <i class="fas fa-sync"></i> Proveri Status
+    <h3>
+        {% if computer.status == 'online' %}
+            {% if computer.os_type == 'windows' %}<i class="fab fa-windows" style="color: #0078d4;"></i>
+            {% elif computer.os_type == 'linux' %}<i class="fab fa-linux" style="color: #fcc624;"></i>
+            {% else %}<i class="fas fa-desktop"></i>{% endif %}
+        {% else %}
+            <i class="fas fa-desktop" style="color: #999;"></i>
+        {% endif %}
+        {{ computer.name }}
+    </h3>
+    <div class="computer-info"><strong>MAC:</strong> {{ computer.mac_address }}</div>
+    {% if computer.ip_address %}
+    <div class="computer-info"><strong>IP:</strong> {{ computer.ip_address }}</div>
+    {% endif %}
+    {% if computer.status == 'online' and computer.os_type and computer.os_type != 'unknown' %}
+    <div class="computer-info">
+        <strong>OS:</strong>
+        {% if computer.os_type == 'windows' %}<i class="fab fa-windows" style="color: #0078d4;"></i> Windows
+        {% elif computer.os_type == 'linux' %}<i class="fab fa-linux" style="color: #fcc624;"></i> Linux{% endif %}
+    </div>
+    {% endif %}
+    {% if computer.description %}
+    <div class="computer-info"><strong>Opis:</strong> {{ computer.description }}</div>
+    {% endif %}
+    {% if computer.last_wol %}
+    <div class="computer-info" data-last-wol="{{ computer.id }}"><strong>Poslednji WoL:</strong> {{ computer.last_wol.strftime('%d.%m.%Y %H:%M') }}</div>
+    {% endif %}
+    {% if computer.last_shutdown %}
+    <div class="computer-info" data-last-shutdown="{{ computer.id }}"><strong>Poslednje gašenje:</strong> {{ computer.last_shutdown.strftime('%d.%m.%Y %H:%M') }}</div>
+    {% endif %}
+    {% if computer.last_checked %}
+    <div class="computer-info" data-last-checked="{{ computer.id }}"><strong>Provereno:</strong> {{ computer.last_checked.strftime('%d.%m.%Y %H:%M:%S') }}</div>
+    {% endif %}
+    <div class="computer-actions">
+        <button class="wol-btn" data-wake-btn="{{ computer.id }}" data-wol-btn data-computer-id="{{ computer.id }}" data-computer-name="{{ computer.name }}" {% if computer.status == 'online' %}disabled{% endif %}>
+            <i class="fas fa-power-off"></i> Uključi
         </button>
-        {% if current_user.is_admin %}
-            <a href="{{ url_for('admin_computers') }}" class="btn btn-primary">
-                <i class="fas fa-cog"></i> Upravljanje Računarima
-            </a>
+        {% if computer.ssh_host and computer.ssh_username %}
+        <button class="shutdown-btn" data-shutdown-btn="{{ computer.id }}" data-computer-id="{{ computer.id }}" data-computer-name="{{ computer.name }}" {% if computer.status != 'online' %}disabled{% endif %}>
+            <i class="fas fa-stop-circle"></i> Ugasi
+        </button>
         {% endif %}
     </div>
 </div>
+{% endmacro %}
+
+{# ======== HEADER ======== #}
+<div class="dashboard-header">
+    <h1><i class="fas fa-desktop"></i> Moji Računari</h1>
+</div>
+
+{# ======== TOOLBAR: Search + Refresh + Timer ======== #}
+<div class="dashboard-toolbar">
+    <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" id="search-input" placeholder="Pretraži po nazivu, IP adresi, MAC adresi..." autocomplete="off">
+    </div>
+    <div class="toolbar-divider"></div>
+    <button id="refresh-status-btn" class="toolbar-btn toolbar-btn-refresh">
+        <i class="fas fa-sync-alt"></i> Proveri status
+    </button>
+    <span class="auto-refresh-info" id="refresh-info"></span>
+</div>
+<div class="no-search-results" id="no-search-results">
+    <i class="fas fa-search" style="font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.5;"></i>
+    <p>Nema rezultata pretrage</p>
+</div>
 
 {% if computers %}
-    <div class="computer-grid">
-        {% for computer in computers %}
-            <div class="computer-card" data-computer-id="{{ computer.id }}">
-                <div class="status-indicator status-{{ computer.status if computer.status else 'unknown' }}" data-status-badge="{{ computer.id }}">
-                    <span class="status-dot"></span>
-                    <span class="status-text">
-                        {% if computer.status == 'online' %}
-                            Online
-                        {% elif computer.status == 'offline' %}
-                            Offline
-                        {% else %}
-                            Nepoznato
-                        {% endif %}
-                    </span>
-                </div>
-                
-                <h3>
-                    {% if computer.status == 'online' %}
-                        {% if computer.os_type == 'windows' %}
-                            <i class="fab fa-windows" style="color: #0078d4;"></i>
-                        {% elif computer.os_type == 'linux' %}
-                            <i class="fab fa-linux" style="color: #fcc624;"></i>
-                        {% else %}
-                            <i class="fas fa-desktop"></i>
-                        {% endif %}
-                    {% else %}
-                        <i class="fas fa-desktop" style="color: #999;"></i>
-                    {% endif %}
-                    {{ computer.name }}
-                </h3>
-                
-                <div class="computer-info">
-                    <strong>MAC:</strong> {{ computer.mac_address }}
-                </div>
-                
-                {% if computer.ip_address %}
-                    <div class="computer-info">
-                        <strong>IP:</strong> {{ computer.ip_address }}
-                    </div>
-                {% endif %}
-
-                {% if computer.status == 'online' and computer.os_type and computer.os_type != 'unknown' %}
-                    <div class="computer-info">
-                        <strong>OS:</strong> 
-                        {% if computer.os_type == 'windows' %}
-                            <i class="fab fa-windows" style="color: #0078d4;"></i> Windows
-                        {% elif computer.os_type == 'linux' %}
-                            <i class="fab fa-linux" style="color: #fcc624;"></i> Linux
-                        {% endif %}
-                    </div>
-                {% endif %}
-                
-                {% if computer.description %}
-                    <div class="computer-info">
-                        <strong>Opis:</strong> {{ computer.description }}
-                    </div>
-                {% endif %}
-                
-                {% if computer.last_wol %}
-                    <div class="computer-info" data-last-wol="{{ computer.id }}">
-                        <strong>Poslednji WoL:</strong> {{ computer.last_wol.strftime('%Y-%m-%d %H:%M') }}
-                    </div>
-                {% endif %}
-                
-                {% if computer.last_shutdown %}
-                    <div class="computer-info" data-last-shutdown="{{ computer.id }}">
-                        <strong>Poslednje gašenje:</strong> {{ computer.last_shutdown.strftime('%Y-%m-%d %H:%M') }}
-                    </div>
-                {% endif %}
-                
-                {% if computer.last_checked %}
-                    <div class="computer-info" data-last-checked="{{ computer.id }}">
-                        <strong>Provereno:</strong> {{ computer.last_checked.strftime('%Y-%m-%d %H:%M:%S') }}
-                    </div>
-                {% endif %}
-                
-                <div class="computer-actions">
-                    <button class="wol-btn" data-wake-btn="{{ computer.id }}" data-wol-btn data-computer-id="{{ computer.id }}" data-computer-name="{{ computer.name }}" {% if computer.status == 'online' %}disabled{% endif %}>
-                        <i class="fas fa-power-off"></i> Uključi
-                    </button>
-                    
-                    {% if computer.ssh_host and computer.ssh_username %}
-                    <button class="shutdown-btn" data-shutdown-btn="{{ computer.id }}" data-computer-id="{{ computer.id }}" data-computer-name="{{ computer.name }}" {% if computer.status != 'online' %}disabled{% endif %}>
-                        <i class="fas fa-stop-circle"></i> Ugasi
-                    </button>
-                    {% endif %}
-                </div>
-            </div>
-        {% endfor %}
+{# ======== QUICK STATS ======== #}
+<div class="quick-stats">
+    <div class="quick-stat">
+        <div class="quick-stat-icon" style="background: linear-gradient(135deg, #28a745, #20c997);"><i class="fas fa-check-circle"></i></div>
+        <div><div class="quick-stat-value" id="stat-online">-</div><div class="quick-stat-label">Online</div></div>
     </div>
-{% else %}
-    <div class="card">
-        <div class="empty-state">
-            <i class="fas fa-desktop" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
-            <p style="font-size: 1.1rem; margin-bottom: 1rem;">Nemate dodeljenih računara</p>
-            <p style="color: #999;">Kontaktirajte administratora da vam dodeli pristup računarima</p>
+    <div class="quick-stat">
+        <div class="quick-stat-icon" style="background: linear-gradient(135deg, #dc3545, #e74c6f);"><i class="fas fa-times-circle"></i></div>
+        <div><div class="quick-stat-value" id="stat-offline">-</div><div class="quick-stat-label">Offline</div></div>
+    </div>
+    <div class="quick-stat">
+        <div class="quick-stat-icon" style="background: linear-gradient(135deg, var(--primary), var(--secondary));"><i class="fas fa-desktop"></i></div>
+        <div><div class="quick-stat-value">{{ computers|length }}</div><div class="quick-stat-label">Ukupno</div></div>
+    </div>
+</div>
+
+{# ======== GROUPED COMPUTERS ======== #}
+{% set ns = namespace(grouped_ids=[]) %}
+
+{% for group in groups %}
+    {% set gns = namespace(has_any=false) %}
+    {% for computer in group.computers %}
+        {% if computer in computers %}
+            {% set gns.has_any = true %}
+        {% endif %}
+    {% endfor %}
+
+    {% if gns.has_any %}
+    <div class="group-section">
+        <div class="group-header-bar" style="background: {{ group.color }};">
+            <h2>
+                <i class="{{ group.icon }}"></i> {{ group.name }}
+                {% if group.description %}
+                <small style="opacity: 0.8; font-weight: 400; font-size: 0.8rem; margin-left: 0.5rem;">{{ group.description }}</small>
+                {% endif %}
+            </h2>
+            <button class="wake-group-btn" onclick="wakeGroup({{ group.id }}, '{{ group.name }}')">
+                <i class="fas fa-power-off"></i> Uključi sve
+            </button>
+        </div>
+        <div class="group-body">
+            <div class="computer-grid">
+                {% for computer in group.computers %}
+                    {% if computer in computers %}
+                        {% if ns.grouped_ids.append(computer.id) %}{% endif %}
+                        {{ render_computer_card(computer) }}
+                    {% endif %}
+                {% endfor %}
+            </div>
         </div>
     </div>
+    {% endif %}
+{% endfor %}
+
+{# ======== UNGROUPED COMPUTERS ======== #}
+{% set ungrouped = [] %}
+{% for computer in computers %}
+    {% if computer.id not in ns.grouped_ids %}
+        {% if ungrouped.append(computer) %}{% endif %}
+    {% endif %}
+{% endfor %}
+
+{% if ungrouped %}
+<div class="group-section">
+    <div class="group-header-bar" style="background: #6c757d;">
+        <h2><i class="fas fa-desktop"></i> Ostali računari</h2>
+    </div>
+    <div class="group-body">
+        <div class="computer-grid">
+            {% for computer in ungrouped %}
+                {{ render_computer_card(computer) }}
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <i class="fas fa-desktop" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+        <p style="font-size: 1.1rem; margin-bottom: 1rem;">Nemate dodeljenih računara</p>
+        <p style="color: #999;">Kontaktirajte administratora da vam dodeli pristup računarima</p>
+    </div>
+</div>
 {% endif %}
 
 <script>
-    // Auto-refresh settings
+    const REFRESH_INTERVAL = 30000;
     let autoRefreshInterval = null;
-    const REFRESH_INTERVAL = 30000; // 30 seconds
     let nextRefreshTime = null;
 
-    // Format time remaining
     function formatTimeRemaining(seconds) {
         if (seconds <= 0) return 'Osvežavanje...';
         return `Sledeće osvežavanje za ${seconds}s`;
     }
-
-    // Update refresh timer display
     function updateRefreshTimer() {
-        const refreshInfo = document.getElementById('refresh-info');
-        if (!refreshInfo || !nextRefreshTime) return;
-        
-        const now = Date.now();
-        const remaining = Math.max(0, Math.ceil((nextRefreshTime - now) / 1000));
-        refreshInfo.textContent = formatTimeRemaining(remaining);
+        const el = document.getElementById('refresh-info');
+        if (!el || !nextRefreshTime) return;
+        const remaining = Math.max(0, Math.ceil((nextRefreshTime - Date.now()) / 1000));
+        el.textContent = formatTimeRemaining(remaining);
     }
 
-    // Update status badge
     function updateStatusBadge(computerId, status, isOnline) {
         const badge = document.querySelector(`[data-status-badge="${computerId}"]`);
         if (!badge) return;
-        
-        // Remove all status classes
         badge.classList.remove('status-online', 'status-offline', 'status-unknown', 'status-checking');
-        
-        // Add appropriate class
         badge.classList.add(`status-${status}`);
-        
-        // Update text
-        const statusText = badge.querySelector('.status-text');
-        if (statusText) {
-            if (status === 'online') {
-                statusText.textContent = 'Online';
-            } else if (status === 'offline') {
-                statusText.textContent = 'Offline';
-            } else {
-                statusText.textContent = 'Nepoznato';
-            }
-        }
+        const text = badge.querySelector('.status-text');
+        if (text) text.textContent = status === 'online' ? 'Online' : status === 'offline' ? 'Offline' : 'Nepoznato';
+        // Toggle buttons
+        const wakeBtn = document.querySelector(`[data-wake-btn="${computerId}"]`);
+        if (wakeBtn) wakeBtn.disabled = isOnline;
+        const shutBtn = document.querySelector(`[data-shutdown-btn="${computerId}"]`);
+        if (shutBtn) shutBtn.disabled = !isOnline;
     }
-
-    // Update last checked time
     function updateLastChecked(computerId, timestamp) {
-        const elem = document.querySelector(`[data-last-checked="${computerId}"]`);
-        if (!elem) return;
-        
-        const date = new Date(timestamp);
-        const formatted = date.toLocaleString('sr-RS', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit'
+        const el = document.querySelector(`[data-last-checked="${computerId}"]`);
+        if (!el) return;
+        const d = new Date(timestamp);
+        el.innerHTML = `<strong>Provereno:</strong> ${d.toLocaleString('sr-RS', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'})}`;
+    }
+    function updateQuickStats() {
+        let online = 0, offline = 0;
+        document.querySelectorAll('[data-status-badge]').forEach(b => {
+            if (b.classList.contains('status-online')) online++;
+            else if (b.classList.contains('status-offline')) offline++;
         });
-        
-        elem.innerHTML = `<strong>Provereno:</strong> ${formatted}`;
+        const onEl = document.getElementById('stat-online');
+        const offEl = document.getElementById('stat-offline');
+        if (onEl) onEl.textContent = online;
+        if (offEl) offEl.textContent = offline;
     }
 
-    // Check all computers status
     async function checkAllComputersStatus() {
-        const refreshBtn = document.getElementById('refresh-status-btn');
-        if (refreshBtn) {
-            refreshBtn.disabled = true;
-            refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Proveravam...';
-        }
-        
-        // Set all badges to checking state
+        const btn = document.getElementById('refresh-status-btn');
+        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Proveravam...'; }
+
         document.querySelectorAll('[data-status-badge]').forEach(badge => {
             badge.classList.remove('status-online', 'status-offline', 'status-unknown');
             badge.classList.add('status-checking');
-            const statusText = badge.querySelector('.status-text');
-            if (statusText) {
-                statusText.textContent = 'Proveravam...';
-            }
+            const t = badge.querySelector('.status-text');
+            if (t) t.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i>';
         });
-        
+
         try {
-            const response = await fetch('/api/computers/status');
-            const result = await response.json();
-            
-            if (result.success) {
-                result.computers.forEach(computer => {
-                    updateStatusBadge(computer.id, computer.status, computer.is_online);
-                    if (computer.last_checked) {
-                        updateLastChecked(computer.id, computer.last_checked);
-                    }
+            const resp = await fetch('/api/computers/status');
+            const result = await resp.json();
+            if (result.success && result.results) {
+                result.results.forEach(c => {
+                    updateStatusBadge(c.id, c.status, c.is_online);
+                    if (c.last_checked) updateLastChecked(c.id, c.last_checked);
                 });
             }
-        } catch (error) {
-            console.error('Error checking status:', error);
-            // Revert to unknown on error
-            document.querySelectorAll('[data-status-badge]').forEach(badge => {
-                badge.classList.remove('status-checking');
-                badge.classList.add('status-unknown');
+        } catch (err) {
+            console.error('Status check error:', err);
+            document.querySelectorAll('[data-status-badge]').forEach(b => {
+                b.classList.remove('status-checking');
+                b.classList.add('status-unknown');
+                const t = b.querySelector('.status-text');
+                if (t) t.textContent = 'Greška';
             });
         } finally {
-            if (refreshBtn) {
-                refreshBtn.disabled = false;
-                refreshBtn.innerHTML = '<i class="fas fa-sync"></i> Proveri Status';
-            }
+            if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> Proveri status'; }
+            updateQuickStats();
         }
     }
 
-    // Start auto-refresh
+    async function wakeGroup(groupId, groupName) {
+        if (!confirm(`Uključiti sve računare u grupi "${groupName}"?`)) return;
+        const btn = event.target.closest('button');
+        btn.disabled = true;
+        const orig = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Šaljem...';
+        try {
+            const resp = await fetch(`/api/groups/${groupId}/wake`, { method: 'POST', headers: {'Content-Type': 'application/json'} });
+            const result = await resp.json();
+            if (result.success) {
+                alert('✓ ' + result.message);
+                setTimeout(() => checkAllComputersStatus(), 5000);
+            } else { alert('✗ Greška: ' + result.message); }
+        } catch (err) { alert('✗ Greška: ' + err.message); }
+        finally { btn.disabled = false; btn.innerHTML = orig; }
+    }
+
     function startAutoRefresh() {
-        // Initial check
         checkAllComputersStatus();
         nextRefreshTime = Date.now() + REFRESH_INTERVAL;
-        
-        // Update timer display every second
         setInterval(updateRefreshTimer, 1000);
-        
-        // Auto-refresh every REFRESH_INTERVAL
         autoRefreshInterval = setInterval(() => {
             checkAllComputersStatus();
             nextRefreshTime = Date.now() + REFRESH_INTERVAL;
         }, REFRESH_INTERVAL);
     }
 
-    // Setup Shutdown buttons
     function setupShutdownButtons() {
-        const shutdownButtons = document.querySelectorAll('[data-shutdown-btn]');
-        
-        shutdownButtons.forEach(button => {
+        document.querySelectorAll('[data-shutdown-btn]').forEach(button => {
             button.addEventListener('click', async (e) => {
                 e.preventDefault();
-                
-                const computerId = button.dataset.computerId;
-                const computerName = button.dataset.computerName;
-                
-                if (!confirm(`Da li ste sigurni da želite da ugasite računar ${computerName}?`)) {
-                    return;
-                }
-                
+                const cid = button.dataset.computerId, cname = button.dataset.computerName;
+                if (!confirm(`Ugasiti računar ${cname}?`)) return;
                 button.disabled = true;
-                const originalHTML = button.innerHTML;
+                const orig = button.innerHTML;
                 button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gašenje...';
-                
                 try {
-                    const response = await fetch('/api/shutdown', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            computer_id: parseInt(computerId)
-                        })
-                    });
-                    
-                    const result = await response.json();
-                    
-                    if (result.success) {
-                        // Update last shutdown time on the card
-                        if (result.last_shutdown) {
-                            const card = document.querySelector(`[data-computer-id="${computerId}"]`);
-                            if (card) {
-                                // Find or create last_shutdown info element
-                                let lastShutdownElement = card.querySelector('[data-last-shutdown]');
-                                if (!lastShutdownElement) {
-                                    // Create new element if doesn't exist
-                                    const actionsDiv = card.querySelector('.computer-actions');
-                                    lastShutdownElement = document.createElement('div');
-                                    lastShutdownElement.className = 'computer-info';
-                                    lastShutdownElement.setAttribute('data-last-shutdown', computerId);
-                                    actionsDiv.parentNode.insertBefore(lastShutdownElement, actionsDiv);
-                                }
-                                lastShutdownElement.innerHTML = `<strong>Poslednje gašenje:</strong> ${result.last_shutdown}`;
-                            }
-                        }
-                        
-                        alert(`✓ Računar ${computerName} uspešno ugašen!\n\nStatusi će se automatski osvežiti za 3 sekunde.`);
-                        // Check status after shutdown
-                        setTimeout(() => {
-                            checkAllComputersStatus();
-                        }, 3000);
-                    } else {
-                        alert(`✗ Greška: ${result.message}`);
-                    }
-                } catch (error) {
-                    alert(`✗ Greška: ${error.message}`);
-                } finally {
-                    button.disabled = false;
-                    button.innerHTML = originalHTML;
-                }
+                    const resp = await fetch('/api/shutdown', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({computer_id: parseInt(cid)}) });
+                    const result = await resp.json();
+                    if (result.success) { alert(`✓ Računar ${cname} uspešno ugašen!`); setTimeout(() => checkAllComputersStatus(), 3000); }
+                    else { alert('✗ Greška: ' + result.message); }
+                } catch (err) { alert('✗ Greška: ' + err.message); }
+                finally { button.disabled = false; button.innerHTML = orig; }
             });
         });
     }
 
-    // Setup WOL buttons
     function setupWOLButtons() {
-        const wolButtons = document.querySelectorAll('[data-wol-btn]');
-        
-        wolButtons.forEach(button => {
+        document.querySelectorAll('[data-wol-btn]').forEach(button => {
             button.addEventListener('click', async (e) => {
                 e.preventDefault();
-                
-                const computerId = button.dataset.computerId;
-                const computerName = button.dataset.computerName;
-                
+                const cid = button.dataset.computerId, cname = button.dataset.computerName;
                 button.disabled = true;
-                const originalHTML = button.innerHTML;
+                const orig = button.innerHTML;
                 button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Šaljem...';
-                
                 try {
-                    const response = await fetch('/dashboard', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            computer_id: parseInt(computerId)
-                        })
-                    });
-                    
-                    const result = await response.json();
-                    
+                    const resp = await fetch('/dashboard', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({computer_id: parseInt(cid)}) });
+                    const result = await resp.json();
                     if (result.success) {
-                        // Update last WOL time on the card
-                        if (result.last_wol) {
-                            const card = document.querySelector(`[data-computer-id="${computerId}"]`);
-                            if (card) {
-                                // Find or create last_wol info element
-                                let lastWolElement = card.querySelector('[data-last-wol]');
-                                if (!lastWolElement) {
-                                    // Create new element if doesn't exist
-                                    const actionsDiv = card.querySelector('.computer-actions');
-                                    lastWolElement = document.createElement('div');
-                                    lastWolElement.className = 'computer-info';
-                                    lastWolElement.setAttribute('data-last-wol', computerId);
-                                    actionsDiv.parentNode.insertBefore(lastWolElement, actionsDiv);
-                                }
-                                lastWolElement.innerHTML = `<strong>Poslednji WoL:</strong> ${result.last_wol}`;
-                            }
-                        }
-                        
-                        alert(`✓ WoL paket poslat na ${computerName}!\n\nStatusi će se automatski osvežiti za 5 sekundi.`);
-                        // Check status after WOL (wait for computer to boot)
-                        setTimeout(() => {
-                            checkAllComputersStatus();
-                        }, 5000);
-                    } else {
-                        alert(`✗ Greška: ${result.message}`);
-                    }
-                } catch (error) {
-                    alert(`✗ Greška: ${error.message}`);
-                } finally {
-                    button.disabled = false;
-                    button.innerHTML = originalHTML;
-                }
+                        alert(`✓ WoL paket poslat na ${cname}!`);
+                        setTimeout(() => checkAllComputersStatus(), 5000);
+                    } else { alert('✗ Greška: ' + result.message); }
+                } catch (err) { alert('✗ Greška: ' + err.message); }
+                finally { button.disabled = false; button.innerHTML = orig; }
             });
         });
     }
 
-    // Initialize on page load
+    // ======== SEARCH / FILTER ========
+    function setupSearch() {
+        const input = document.getElementById('search-input');
+        if (!input) return;
+        input.addEventListener('input', () => {
+            const q = input.value.toLowerCase().trim();
+            let anyVisible = false;
+
+            document.querySelectorAll('.group-section').forEach(section => {
+                let groupVisible = false;
+                section.querySelectorAll('.computer-card').forEach(card => {
+                    const name = (card.querySelector('h3')?.textContent || '').toLowerCase();
+                    const info = (card.querySelector('.computer-info')?.textContent || '').toLowerCase();
+                    const allText = card.textContent.toLowerCase();
+                    const match = !q || allText.includes(q);
+                    card.style.display = match ? '' : 'none';
+                    if (match) groupVisible = true;
+                });
+                section.style.display = groupVisible ? '' : 'none';
+                if (groupVisible) anyVisible = true;
+            });
+
+            const noRes = document.getElementById('no-search-results');
+            if (noRes) noRes.style.display = (q && !anyVisible) ? 'block' : 'none';
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         setupWOLButtons();
         setupShutdownButtons();
-        
-        // Setup manual refresh button
-        const refreshBtn = document.getElementById('refresh-status-btn');
-        if (refreshBtn) {
-            refreshBtn.addEventListener('click', () => {
-                checkAllComputersStatus();
-                // Reset auto-refresh timer
-                nextRefreshTime = Date.now() + REFRESH_INTERVAL;
-            });
-        }
-        
-        // Start auto-refresh if there are computers
-        const computerGrid = document.querySelector('.computer-grid');
-        if (computerGrid) {
-            startAutoRefresh();
-        }
+        setupSearch();
+        document.getElementById('refresh-status-btn')?.addEventListener('click', () => {
+            checkAllComputersStatus();
+            nextRefreshTime = Date.now() + REFRESH_INTERVAL;
+        });
+        if (document.querySelector('.computer-grid')) startAutoRefresh();
+        updateQuickStats();
     });
 </script>
 {% endblock %}

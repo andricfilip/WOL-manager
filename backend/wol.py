@@ -33,15 +33,15 @@ def check_host_status_tcp(ip_address: str, port: int = 445, timeout: float = 0.3
             except Exception:
                 pass
 
-def check_host_status(ip_address: str, timeout: float = 0.5) -> Tuple[bool, str]:
+def check_host_status(ip_address: str, timeout: float = 0.3) -> Tuple[bool, str]:
     """
-    Check if a host is online using multiple methods:
-    1. TCP port check (multiple ports) - works even when ICMP is blocked
+    Check if a host is online using multiple methods (FAST VERSION):
+    1. TCP port check (3 ports with 0.3s timeout each)
     2. Fallback to ping if TCP fails
     
     Args:
         ip_address: IP address to check
-        timeout: Timeout in seconds per port (default 0.5)
+        timeout: Timeout in seconds per port (default 0.3 - faster!)
     
     Returns:
         Tuple: (is_online: bool, status: str)
@@ -50,13 +50,15 @@ def check_host_status(ip_address: str, timeout: float = 0.5) -> Tuple[bool, str]
         return False, 'unknown'
     
     try:
-        # Try only most reliable ports - quick check
+        # Check only 3 most reliable ports (covers both Windows & Linux)
+        # BRZA PROVERA: 0.3s po portu = max 0.9s za sve portove
         ports_to_check = [
-            # 445,   # SMB - File sharing (most reliable)
-            3389,  # RDP - Remote Desktop (works even on lock screen)
+            3389,  # RDP - Remote Desktop (Windows, works even on lock screen) - NAJPOUZDANIJI
+            445,   # SMB - File sharing (Windows, very reliable)
+            22,    # SSH - Linux/Unix (also Windows if OpenSSH installed)
         ]
         
-        # Check each port with short timeout
+        # Check each port with short timeout (max ~0.9 seconds total)
         for port in ports_to_check:
             if check_host_status_tcp(ip_address, port, timeout):
                 return True, 'online'
@@ -66,16 +68,16 @@ def check_host_status(ip_address: str, timeout: float = 0.5) -> Tuple[bool, str]
         param = '-n' if platform.system().lower() == 'windows' else '-c'
         timeout_param = '-w' if platform.system().lower() == 'windows' else '-W'
         
-        # Ping command: send 1 packet with timeout (1 second max)
-        ping_timeout = 1
-        command = ['ping', param, '1', timeout_param, str(ping_timeout * 1000 if platform.system().lower() == 'windows' else ping_timeout), ip_address]
+        # Ping command: BRZI ping - samo 0.5 sekundi
+        ping_timeout = 0.5
+        command = ['ping', param, '1', timeout_param, str(int(ping_timeout * 1000) if platform.system().lower() == 'windows' else ping_timeout), ip_address]
         
         # Execute ping
         result = subprocess.run(
             command,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            timeout=ping_timeout + 0.5
+            timeout=ping_timeout + 0.3
         )
         
         # Check if ping was successful

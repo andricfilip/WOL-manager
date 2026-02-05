@@ -161,7 +161,68 @@ def run_migrations(database_url):
             print("✓ 'os_type' column added")
             needs_migration = True
         else:
-                print(f"✓ '{col_name}' column already exists")
+            print("✓ 'os_type' column already exists")
+        
+        # Create computer_group table if missing
+        if 'computer_group' not in inspector.get_table_names():
+            print("\n➜ Creating 'computer_group' table...")
+            with engine.connect() as conn:
+                conn.execute(text("""
+                    CREATE TABLE computer_group (
+                        id SERIAL PRIMARY KEY,
+                        name VARCHAR(120) UNIQUE NOT NULL,
+                        description VARCHAR(500),
+                        color VARCHAR(7) DEFAULT '#0066cc',
+                        icon VARCHAR(50) DEFAULT 'fas fa-folder',
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                """))
+                conn.commit()
+            print("✓ 'computer_group' table created")
+            needs_migration = True
+        else:
+            print("✓ 'computer_group' table already exists")
+        
+        # Create group_computers M2M table if missing
+        if 'group_computers' not in inspector.get_table_names():
+            print("\n➜ Creating 'group_computers' table...")
+            with engine.connect() as conn:
+                conn.execute(text("""
+                    CREATE TABLE group_computers (
+                        group_id INTEGER REFERENCES computer_group(id),
+                        computer_id INTEGER REFERENCES computer(id),
+                        PRIMARY KEY (group_id, computer_id)
+                    )
+                """))
+                conn.commit()
+            print("✓ 'group_computers' table created")
+            needs_migration = True
+        else:
+            print("✓ 'group_computers' table already exists")
+        
+        # Create uptime_log table if missing
+        if 'uptime_log' not in inspector.get_table_names():
+            print("\n➜ Creating 'uptime_log' table...")
+            with engine.connect() as conn:
+                conn.execute(text("""
+                    CREATE TABLE uptime_log (
+                        id SERIAL PRIMARY KEY,
+                        computer_id INTEGER NOT NULL REFERENCES computer(id),
+                        status VARCHAR(20) NOT NULL,
+                        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                """))
+                conn.execute(text(
+                    "CREATE INDEX ix_uptime_log_computer_id ON uptime_log (computer_id)"
+                ))
+                conn.execute(text(
+                    "CREATE INDEX ix_uptime_log_timestamp ON uptime_log (timestamp)"
+                ))
+                conn.commit()
+            print("✓ 'uptime_log' table created")
+            needs_migration = True
+        else:
+            print("✓ 'uptime_log' table already exists")
         
         if needs_migration:
             print("\n✓ Database migration completed successfully!")

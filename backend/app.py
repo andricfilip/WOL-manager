@@ -5,7 +5,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from datetime import datetime
 from config import config
-from models import db, User, Computer, WOLLog, ShutdownLog, AuditLog
+from models import db, User, Computer, WOLLog, ShutdownLog, AuditLog, ComputerGroup, UptimeLog
 from wol import send_wol_packet, validate_mac_address, check_host_status, shutdown_computer_ssh
 from encryption import verify_encryption_setup
 from security import init_security
@@ -113,7 +113,7 @@ def dashboard():
                 'last_wol': computer.last_wol.strftime('%Y-%m-%d %H:%M') if computer.last_wol else None
             })
     
-    return render_template('dashboard.html', computers=computers)
+    return render_template('dashboard.html', computers=computers, groups=ComputerGroup.query.order_by(ComputerGroup.name).all())
 
 @app.route('/api/shutdown', methods=['POST'])
 @login_required
@@ -521,44 +521,299 @@ def check_computer_status(computer_id):
 @app.route('/api/computers/status', methods=['GET'])
 @login_required
 def check_all_computers_status():
-    """Check status for all assigned computers"""
+    """Check status for all assigned computers in PARALLEL"""
+    from concurrent.futures import ThreadPoolExecutor
+    from wol import detect_os_type
+    
     # Get computers assigned to current user
     computers = current_user.computers if not current_user.is_admin else Computer.query.all()
     
+    def check_single_computer(computer):
+        """Check single computer status (will run in parallel)"""
+        if not computer.ip_address:
+            return None
+        
+        is_online, status = check_host_status(computer.ip_address)
+        
+        # Auto-detect OS if computer is online
+        if is_online:
+            detected_os = detect_os_type(computer.ip_address)
+            if detected_os != 'unknown':
+                computer.os_type = detected_os
+        
+        # Log uptime change if status changed
+        old_status = computer.status
+        if old_status != status and status in ('online', 'offline'):
+            try:
+                uptime_entry = UptimeLog(computer_id=computer.id, status=status)
+                db.session.add(uptime_entry)
+            except Exception:
+                pass
+        
+        computer.status = status
+        computer.last_checked = datetime.utcnow()
+        
+        return {
+            'id': computer.id,
+            'name': computer.name,
+            'status': status,
+            'is_online': is_online,
+            'last_checked': computer.last_checked.isoformat()
+        }
+    
+    # PARALLEL CHECK - all computers at once!
     results = []
-    for computer in computers:
-        if computer.ip_address:
-            is_online, status = check_host_status(computer.ip_address)
-            
-            # Auto-detect OS if computer is online
-            if is_online:
-                from wol import detect_os_type
-                detected_os = detect_os_type(computer.ip_address)
-                if detected_os != 'unknown':
-                    computer.os_type = detected_os
-            
-            computer.status = status
-            computer.last_checked = datetime.utcnow()
-            
-            results.append({
-                'id': computer.id,
-                'name': computer.name,
-                'status': status,
-                'is_online': is_online,
-                'last_checked': computer.last_checked.isoformat()
-            })
-        else:
-            results.append({
-                'id': computer.id,
-                'name': computer.name,
-                'status': 'unknown',
-                'is_online': False,
-                'last_checked': None
-            })
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        # Submit all checks at once
+        future_to_computer = {executor.submit(check_single_computer, comp): comp for comp in computers}
+        
+        # Collect results as they complete
+        for future in future_to_computer:
+            result = future.result()
+            if result:
+                results.append(result)
+    
+    # Save all changes to database
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'results': results
+    })
+
+# ==================== GROUP MANAGEMENT ====================
+
+@app.route('/admin/groups')
+@login_required
+def admin_groups():
+    """Admin: Manage computer groups"""
+    if not current_user.is_admin:
+        flash('Pristup odbijen', 'error')
+        return redirect(url_for('dashboard'))
+    
+    groups = ComputerGroup.query.order_by(ComputerGroup.name).all()
+    return render_template('admin_groups.html', groups=groups)
+
+@app.route('/admin/groups/add', methods=['GET', 'POST'])
+@login_required
+def admin_add_group():
+    """Admin: Add new group"""
+    if not current_user.is_admin:
+        flash('Pristup odbijen', 'error')
+        return redirect(url_for('dashboard'))
+    
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        description = request.form.get('description', '').strip()
+        color = request.form.get('color', '#0066cc').strip()
+        icon = request.form.get('icon', 'fas fa-folder').strip()
+        computer_ids = request.form.getlist('computers')
+        
+        if not name:
+            flash('Naziv grupe je obavezan', 'error')
+            return redirect(url_for('admin_add_group'))
+        
+        if ComputerGroup.query.filter_by(name=name).first():
+            flash('Grupa sa tim nazivom već postoji', 'error')
+            return redirect(url_for('admin_add_group'))
+        
+        group = ComputerGroup(
+            name=name,
+            description=description or None,
+            color=color,
+            icon=icon
+        )
+        
+        for cid in computer_ids:
+            computer = Computer.query.get(int(cid))
+            if computer:
+                group.computers.append(computer)
+        
+        db.session.add(group)
+        db.session.commit()
+        
+        flash(f'Grupa "{name}" je uspešno kreirana', 'success')
+        return redirect(url_for('admin_groups'))
+    
+    computers = Computer.query.order_by(Computer.name).all()
+    return render_template('admin_add_group.html', computers=computers)
+
+@app.route('/admin/groups/<int:group_id>/edit', methods=['GET', 'POST'])
+@login_required
+def admin_edit_group(group_id):
+    """Admin: Edit group"""
+    if not current_user.is_admin:
+        flash('Pristup odbijen', 'error')
+        return redirect(url_for('dashboard'))
+    
+    group = ComputerGroup.query.get_or_404(group_id)
+    
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        description = request.form.get('description', '').strip()
+        color = request.form.get('color', '#0066cc').strip()
+        icon = request.form.get('icon', 'fas fa-folder').strip()
+        computer_ids = request.form.getlist('computers')
+        
+        if not name:
+            flash('Naziv grupe je obavezan', 'error')
+            return redirect(url_for('admin_edit_group', group_id=group_id))
+        
+        existing = ComputerGroup.query.filter_by(name=name).first()
+        if existing and existing.id != group.id:
+            flash('Grupa sa tim nazivom već postoji', 'error')
+            return redirect(url_for('admin_edit_group', group_id=group_id))
+        
+        group.name = name
+        group.description = description or None
+        group.color = color
+        group.icon = icon
+        
+        group.computers = []
+        for cid in computer_ids:
+            computer = Computer.query.get(int(cid))
+            if computer:
+                group.computers.append(computer)
+        
+        db.session.commit()
+        
+        flash(f'Grupa "{name}" je ažurirana', 'success')
+        return redirect(url_for('admin_groups'))
+    
+    computers = Computer.query.order_by(Computer.name).all()
+    return render_template('admin_edit_group.html', group=group, computers=computers)
+
+@app.route('/admin/groups/<int:group_id>/delete', methods=['POST'])
+@login_required
+def admin_delete_group(group_id):
+    """Admin: Delete group"""
+    if not current_user.is_admin:
+        return jsonify({'success': False, 'message': 'Pristup odbijen'}), 403
+    
+    group = ComputerGroup.query.get_or_404(group_id)
+    name = group.name
+    db.session.delete(group)
+    db.session.commit()
+    
+    return jsonify({'success': True, 'message': f'Grupa "{name}" je obrisana'})
+
+@app.route('/api/groups/<int:group_id>/wake', methods=['POST'])
+@login_required
+def wake_group(group_id):
+    """Wake all computers in a group"""
+    group = ComputerGroup.query.get_or_404(group_id)
+    
+    results = []
+    for computer in group.computers:
+        # Check if user has access
+        if not current_user.is_admin and current_user not in computer.assigned_users:
+            results.append({'name': computer.name, 'success': False, 'message': 'Pristup odbijen'})
+            continue
+        
+        success, message = send_wol_packet(computer.mac_address)
+        
+        log = WOLLog(user_id=current_user.id, computer_id=computer.id, status='sent' if success else 'failed')
+        db.session.add(log)
+        computer.last_wol = datetime.utcnow()
+        
+        results.append({'name': computer.name, 'success': success, 'message': message})
     
     db.session.commit()
     
-    return jsonify({'success': True, 'computers': results})
+    sent = sum(1 for r in results if r['success'])
+    return jsonify({
+        'success': True,
+        'message': f'WoL poslat na {sent}/{len(results)} računara u grupi "{group.name}"',
+        'results': results
+    })
+
+# ==================== STATISTICS ====================
+
+@app.route('/statistics')
+@login_required
+def statistics():
+    """Statistics page with uptime graphs"""
+    if current_user.is_admin:
+        computers = Computer.query.order_by(Computer.name).all()
+    else:
+        computers = current_user.computers
+    
+    return render_template('statistics.html', computers=computers)
+
+@app.route('/api/statistics/data', methods=['GET'])
+@login_required
+def statistics_data():
+    """Get statistics data for charts"""
+    from sqlalchemy import func
+    
+    days = request.args.get('days', 7, type=int)
+    days = min(days, 90)  # Max 90 days
+    
+    cutoff = datetime.utcnow() - __import__('datetime').timedelta(days=days)
+    
+    if current_user.is_admin:
+        computers = Computer.query.all()
+    else:
+        computers = current_user.computers
+    
+    computer_stats = []
+    for computer in computers:
+        # Uptime logs
+        logs = UptimeLog.query.filter(
+            UptimeLog.computer_id == computer.id,
+            UptimeLog.timestamp >= cutoff
+        ).order_by(UptimeLog.timestamp).all()
+        
+        # Calculate total online time
+        online_seconds = 0
+        last_online_time = None
+        for log in logs:
+            if log.status == 'online':
+                last_online_time = log.timestamp
+            elif log.status == 'offline' and last_online_time:
+                online_seconds += (log.timestamp - last_online_time).total_seconds()
+                last_online_time = None
+        
+        # If still online, count up to now
+        if last_online_time and computer.status == 'online':
+            online_seconds += (datetime.utcnow() - last_online_time).total_seconds()
+        
+        total_seconds = days * 86400
+        uptime_pct = round((online_seconds / total_seconds) * 100, 1) if total_seconds > 0 else 0
+        
+        # WoL count
+        wol_count = WOLLog.query.filter(
+            WOLLog.computer_id == computer.id,
+            WOLLog.timestamp >= cutoff
+        ).count()
+        
+        # Shutdown count
+        shutdown_count = ShutdownLog.query.filter(
+            ShutdownLog.computer_id == computer.id,
+            ShutdownLog.timestamp >= cutoff
+        ).count()
+        
+        # Timeline data (hourly)
+        timeline = []
+        for log in logs:
+            timeline.append({
+                'time': log.timestamp.isoformat(),
+                'status': log.status
+            })
+        
+        computer_stats.append({
+            'id': computer.id,
+            'name': computer.name,
+            'os_type': computer.os_type or 'unknown',
+            'current_status': computer.status or 'unknown',
+            'uptime_pct': uptime_pct,
+            'online_hours': round(online_seconds / 3600, 1),
+            'wol_count': wol_count,
+            'shutdown_count': shutdown_count,
+            'timeline': timeline
+        })
+    
+    return jsonify({'success': True, 'stats': computer_stats, 'days': days})
 
 # Error handlers
 @app.errorhandler(404)
@@ -617,6 +872,14 @@ def monitor_computer_status():
                         
                         # Update status if changed
                         if computer.status != status:
+                            # Log uptime change
+                            if status in ('online', 'offline'):
+                                try:
+                                    uptime_entry = UptimeLog(computer_id=computer.id, status=status)
+                                    db.session.add(uptime_entry)
+                                except Exception:
+                                    pass
+                            
                             computer.status = status
                             computer.last_checked = datetime.utcnow()
                             db.session.commit()

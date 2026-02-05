@@ -1,0 +1,409 @@
+{% extends "base.html" %}
+
+{% block title %}Statistika{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    .stats-header h1 { margin: 0; }
+    .period-selector {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    .period-btn {
+        padding: 0.5rem 1rem;
+        border: 2px solid var(--border);
+        border-radius: 0.5rem;
+        background: white;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.2s;
+        font-size: 0.9rem;
+    }
+    .period-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .period-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    .stat-card {
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        transition: all 0.3s;
+    }
+    .stat-card:hover {
+        box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    }
+    .stat-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+    }
+    .stat-card-header h3 {
+        margin: 0;
+        font-size: 1.05rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .stat-card-header .status-pill {
+        padding: 0.2rem 0.6rem;
+        border-radius: 1rem;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+    .status-pill.online { background: #d4edda; color: #155724; }
+    .status-pill.offline { background: #f8d7da; color: #721c24; }
+    .status-pill.unknown { background: #e2e3e5; color: #6c757d; }
+
+    .stat-metrics {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    .metric {
+        text-align: center;
+    }
+    .metric-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+    .metric-label {
+        font-size: 0.7rem;
+        color: #999;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .metric-value.green { color: #28a745; }
+    .metric-value.blue { color: var(--primary); }
+    .metric-value.red { color: #dc3545; }
+    .metric-value.purple { color: #6f42c1; }
+
+    /* Uptime Bar */
+    .uptime-bar-container {
+        margin-top: 1rem;
+    }
+    .uptime-bar-label {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.8rem;
+        margin-bottom: 0.3rem;
+        color: #666;
+    }
+    .uptime-bar {
+        height: 12px;
+        background: #f0f0f0;
+        border-radius: 6px;
+        overflow: hidden;
+        position: relative;
+    }
+    .uptime-bar-fill {
+        height: 100%;
+        border-radius: 6px;
+        transition: width 1s ease;
+        background: linear-gradient(135deg, #28a745, #20c997);
+    }
+    .uptime-bar-fill.low { background: linear-gradient(135deg, #dc3545, #e74c6f); }
+    .uptime-bar-fill.medium { background: linear-gradient(135deg, #ffc107, #ffdb4d); }
+
+    /* Timeline */
+    .timeline-container {
+        margin-top: 1rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid var(--border);
+    }
+    .timeline-label {
+        font-size: 0.75rem;
+        color: #999;
+        margin-bottom: 0.3rem;
+        font-weight: 600;
+    }
+    .timeline-bar {
+        height: 24px;
+        background: #f0f0f0;
+        border-radius: 4px;
+        display: flex;
+        overflow: hidden;
+        position: relative;
+    }
+    .timeline-segment {
+        height: 100%;
+        min-width: 2px;
+        transition: all 0.3s;
+    }
+    .timeline-segment.online { background: #28a745; }
+    .timeline-segment.offline { background: #f0f0f0; }
+    .timeline-segment:hover { opacity: 0.8; }
+
+    .loading-overlay {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4rem;
+        color: #999;
+        font-size: 1.1rem;
+    }
+    .loading-overlay i { margin-right: 0.5rem; }
+
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--primary);
+        text-decoration: none;
+        margin-bottom: 1.5rem;
+    }
+    .back-link:hover { text-decoration: underline; }
+
+    /* Summary cards */
+    .summary-row {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+    }
+    .summary-card {
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 0.75rem;
+        padding: 1.25rem;
+        flex: 1;
+        min-width: 180px;
+        text-align: center;
+    }
+    .summary-card .big-number {
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1;
+        margin-bottom: 0.25rem;
+    }
+    .summary-card .label {
+        font-size: 0.8rem;
+        color: #999;
+        text-transform: uppercase;
+    }
+
+    @media (max-width: 768px) {
+        .stats-grid { grid-template-columns: 1fr; }
+        .stat-metrics { grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+        .metric-value { font-size: 1.2rem; }
+        .summary-row { flex-direction: column; }
+        .period-selector { width: 100%; }
+        .period-btn { flex: 1; text-align: center; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="stats-header">
+    <h1><i class="fas fa-chart-bar"></i> Statistika</h1>
+    <div class="period-selector">
+        <button class="period-btn" data-days="1">24h</button>
+        <button class="period-btn active" data-days="7">7 dana</button>
+        <button class="period-btn" data-days="30">30 dana</button>
+        <button class="period-btn" data-days="90">90 dana</button>
+    </div>
+</div>
+
+<!-- Summary -->
+<div class="summary-row" id="summary-row">
+    <div class="summary-card">
+        <div class="big-number green" id="sum-online">-</div>
+        <div class="label">Trenutno online</div>
+    </div>
+    <div class="summary-card">
+        <div class="big-number blue" id="sum-wol">-</div>
+        <div class="label">WoL ukupno</div>
+    </div>
+    <div class="summary-card">
+        <div class="big-number red" id="sum-shutdown">-</div>
+        <div class="label">Gašenja ukupno</div>
+    </div>
+    <div class="summary-card">
+        <div class="big-number purple" id="sum-uptime">-</div>
+        <div class="label">Prosečan uptime</div>
+    </div>
+</div>
+
+<!-- Stats Grid -->
+<div id="stats-container">
+    <div class="loading-overlay">
+        <i class="fas fa-spinner fa-spin"></i> Učitavam statistiku...
+    </div>
+</div>
+
+<script>
+let currentDays = 7;
+
+async function loadStatistics(days) {
+    currentDays = days;
+    
+    // Update active button
+    document.querySelectorAll('.period-btn').forEach(b => {
+        b.classList.toggle('active', parseInt(b.dataset.days) === days);
+    });
+    
+    const container = document.getElementById('stats-container');
+    container.innerHTML = '<div class="loading-overlay"><i class="fas fa-spinner fa-spin"></i> Učitavam statistiku...</div>';
+    
+    try {
+        const resp = await fetch(`/api/statistics/data?days=${days}`);
+        const data = await resp.json();
+        
+        if (!data.success) {
+            container.innerHTML = '<div class="loading-overlay">Greška pri učitavanju</div>';
+            return;
+        }
+        
+        renderStats(data.stats, days);
+        renderSummary(data.stats);
+    } catch (err) {
+        container.innerHTML = '<div class="loading-overlay">Greška pri učitavanju statistike</div>';
+        console.error(err);
+    }
+}
+
+function renderSummary(stats) {
+    let online = 0, totalWol = 0, totalShutdown = 0, totalUptime = 0;
+    stats.forEach(s => {
+        if (s.current_status === 'online') online++;
+        totalWol += s.wol_count;
+        totalShutdown += s.shutdown_count;
+        totalUptime += s.uptime_pct;
+    });
+    const avgUptime = stats.length > 0 ? (totalUptime / stats.length).toFixed(1) : 0;
+    
+    document.getElementById('sum-online').textContent = online;
+    document.getElementById('sum-wol').textContent = totalWol;
+    document.getElementById('sum-shutdown').textContent = totalShutdown;
+    document.getElementById('sum-uptime').textContent = avgUptime + '%';
+}
+
+function renderStats(stats, days) {
+    const container = document.getElementById('stats-container');
+    
+    if (!stats.length) {
+        container.innerHTML = '<div class="loading-overlay">Nema podataka za prikaz</div>';
+        return;
+    }
+    
+    let html = '<div class="stats-grid">';
+    
+    stats.forEach(stat => {
+        const statusClass = stat.current_status === 'online' ? 'online' : stat.current_status === 'offline' ? 'offline' : 'unknown';
+        const statusLabel = stat.current_status === 'online' ? 'Online' : stat.current_status === 'offline' ? 'Offline' : 'Nepoznato';
+        
+        let osIcon = '<i class="fas fa-desktop" style="color: #999;"></i>';
+        if (stat.current_status === 'online') {
+            if (stat.os_type === 'windows') osIcon = '<i class="fab fa-windows" style="color: #0078d4;"></i>';
+            else if (stat.os_type === 'linux') osIcon = '<i class="fab fa-linux" style="color: #fcc624;"></i>';
+            else osIcon = '<i class="fas fa-desktop" style="color: #666;"></i>';
+        }
+        
+        const uptimeClass = stat.uptime_pct >= 70 ? '' : stat.uptime_pct >= 30 ? 'medium' : 'low';
+        
+        // Build timeline
+        let timelineHtml = '';
+        if (stat.timeline.length > 0) {
+            const totalMs = days * 86400000;
+            const startTime = Date.now() - totalMs;
+            let segments = [];
+            let lastStatus = 'offline';
+            let lastTime = startTime;
+            
+            stat.timeline.forEach(entry => {
+                const t = new Date(entry.time).getTime();
+                if (t > startTime) {
+                    const pct = ((t - lastTime) / totalMs * 100).toFixed(2);
+                    if (pct > 0.1) {
+                        segments.push({ status: lastStatus, pct: pct });
+                    }
+                    lastTime = t;
+                }
+                lastStatus = entry.status;
+            });
+            
+            // Final segment
+            const finalPct = ((Date.now() - lastTime) / totalMs * 100).toFixed(2);
+            if (finalPct > 0.1) {
+                segments.push({ status: lastStatus, pct: finalPct });
+            }
+            
+            if (segments.length > 0) {
+                timelineHtml = `
+                    <div class="timeline-container">
+                        <div class="timeline-label">Aktivnost (${days} ${days === 1 ? 'dan' : days < 5 ? 'dana' : 'dana'})</div>
+                        <div class="timeline-bar">
+                            ${segments.map(s => `<div class="timeline-segment ${s.status}" style="width: ${s.pct}%;" title="${s.status === 'online' ? 'Online' : 'Offline'}"></div>`).join('')}
+                        </div>
+                    </div>`;
+            }
+        }
+        
+        html += `
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <h3>${osIcon} ${stat.name}</h3>
+                <span class="status-pill ${statusClass}">${statusLabel}</span>
+            </div>
+            <div class="stat-metrics">
+                <div class="metric">
+                    <div class="metric-value green">${stat.uptime_pct}%</div>
+                    <div class="metric-label">Uptime</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value blue">${stat.wol_count}</div>
+                    <div class="metric-label">WoL</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value red">${stat.shutdown_count}</div>
+                    <div class="metric-label">Gašenja</div>
+                </div>
+            </div>
+            <div class="uptime-bar-container">
+                <div class="uptime-bar-label">
+                    <span>Uptime</span>
+                    <span>${stat.online_hours}h od ${days * 24}h</span>
+                </div>
+                <div class="uptime-bar">
+                    <div class="uptime-bar-fill ${uptimeClass}" style="width: ${stat.uptime_pct}%;"></div>
+                </div>
+            </div>
+            ${timelineHtml}
+        </div>`;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+// Period buttons
+document.querySelectorAll('.period-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        loadStatistics(parseInt(btn.dataset.days));
+    });
+});
+
+// Load on page load
+document.addEventListener('DOMContentLoaded', () => {
+    loadStatistics(7);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+
+{% block title %}Dodaj Grupu{% endblock %}
+
+{% block extra_css %}
+<style>
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--primary);
+        text-decoration: none;
+        margin-bottom: 1.5rem;
+    }
+    .back-link:hover { text-decoration: underline; }
+    .color-preview {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        transition: all 0.3s;
+    }
+    .icon-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+    .icon-option {
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid var(--border);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 1.1rem;
+        color: #666;
+    }
+    .icon-option:hover { border-color: var(--primary); color: var(--primary); }
+    .icon-option.selected { border-color: var(--primary); background: #e3f2fd; color: var(--primary); }
+    .computer-list {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+        max-height: 400px;
+        overflow-y: auto;
+        border: 1px solid var(--border);
+        border-radius: 0.5rem;
+        padding: 0.5rem;
+        background: #f8f9fa;
+    }
+    .computer-checkbox {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        border: 2px solid #fff;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        background: white;
+    }
+    .computer-checkbox:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,0.08); transform: translateX(2px); }
+    .computer-checkbox input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+    .computer-checkbox.hidden { display: none; }
+    .color-row {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('admin_groups') }}" class="back-link">
+    <i class="fas fa-arrow-left"></i> Nazad na grupe
+</a>
+
+<div class="card">
+    <h2 style="margin-bottom: 1.5rem;"><i class="fas fa-plus-circle"></i> Nova Grupa</h2>
+    
+    <form method="POST">
+        <div class="form-group">
+            <label>Naziv grupe *</label>
+            <input type="text" name="name" required placeholder="npr. Kancelarija 1, Serverska soba...">
+        </div>
+        
+        <div class="form-group">
+            <label>Opis</label>
+            <textarea name="description" rows="2" placeholder="Kratak opis grupe (opciono)"></textarea>
+        </div>
+        
+        <div class="form-group">
+            <label>Boja</label>
+            <div class="color-row">
+                <input type="color" name="color" id="group-color" value="#0066cc" style="width: 60px; height: 44px; cursor: pointer; border: 1px solid var(--border); border-radius: 0.3rem;">
+                <div class="color-preview" id="color-preview" style="background: #0066cc;">
+                    <i class="fas fa-folder" id="preview-icon"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label>Ikonica</label>
+            <input type="hidden" name="icon" id="icon-input" value="fas fa-folder">
+            <div class="icon-grid">
+                <div class="icon-option selected" data-icon="fas fa-folder"><i class="fas fa-folder"></i></div>
+                <div class="icon-option" data-icon="fas fa-building"><i class="fas fa-building"></i></div>
+                <div class="icon-option" data-icon="fas fa-server"><i class="fas fa-server"></i></div>
+                <div class="icon-option" data-icon="fas fa-network-wired"><i class="fas fa-network-wired"></i></div>
+                <div class="icon-option" data-icon="fas fa-home"><i class="fas fa-home"></i></div>
+                <div class="icon-option" data-icon="fas fa-briefcase"><i class="fas fa-briefcase"></i></div>
+                <div class="icon-option" data-icon="fas fa-users"><i class="fas fa-users"></i></div>
+                <div class="icon-option" data-icon="fas fa-laptop"><i class="fas fa-laptop"></i></div>
+                <div class="icon-option" data-icon="fas fa-desktop"><i class="fas fa-desktop"></i></div>
+                <div class="icon-option" data-icon="fas fa-hdd"><i class="fas fa-hdd"></i></div>
+                <div class="icon-option" data-icon="fas fa-microchip"><i class="fas fa-microchip"></i></div>
+                <div class="icon-option" data-icon="fas fa-warehouse"><i class="fas fa-warehouse"></i></div>
+                <div class="icon-option" data-icon="fas fa-map-marker-alt"><i class="fas fa-map-marker-alt"></i></div>
+                <div class="icon-option" data-icon="fas fa-door-open"><i class="fas fa-door-open"></i></div>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label>Računari u grupi</label>
+            <div style="margin-bottom: 0.75rem;">
+                <input type="text" id="computer-search" placeholder="🔍 Pretraži po nazivu, IP ili MAC adresi..." style="width: 100%; padding: 0.75rem; border: 2px solid var(--border); border-radius: 0.5rem; font-size: 0.95rem;">
+            </div>
+            <div class="computer-list">
+                {% for computer in computers %}
+                <label class="computer-checkbox" data-computer-name="{{ computer.name|lower }}" data-computer-ip="{{ computer.ip_address|lower if computer.ip_address else '' }}" data-computer-mac="{{ computer.mac_address|lower }}">
+                    <input type="checkbox" name="computers" value="{{ computer.id }}">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1;">
+                        {% if computer.status == 'online' %}
+                            {% if computer.os_type == 'windows' %}
+                                <i class="fab fa-windows" style="color: #0078d4; font-size: 1.1rem;"></i>
+                            {% elif computer.os_type == 'linux' %}
+                                <i class="fab fa-linux" style="color: #fcc624; font-size: 1.1rem;"></i>
+                            {% else %}
+                                <i class="fas fa-desktop" style="color: #666; font-size: 1rem;"></i>
+                            {% endif %}
+                        {% else %}
+                            <i class="fas fa-desktop" style="color: #999; font-size: 1rem;"></i>
+                        {% endif %}
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; color: #333;">{{ computer.name }}</div>
+                            <div style="font-size: 0.75rem; color: #999;">{{ computer.ip_address or 'Bez IP' }} • {{ computer.mac_address }}</div>
+                        </div>
+                        {% if computer.status == 'online' %}
+                            <span style="padding: 0.2rem 0.5rem; background: #d4edda; color: #155724; border-radius: 0.3rem; font-size: 0.7rem; font-weight: 700;">ONLINE</span>
+                        {% elif computer.status == 'offline' %}
+                            <span style="padding: 0.2rem 0.5rem; background: #f8d7da; color: #721c24; border-radius: 0.3rem; font-size: 0.7rem; font-weight: 700;">OFFLINE</span>
+                        {% endif %}
+                    </div>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">
+            <i class="fas fa-save"></i> Sačuvaj Grupu
+        </button>
+    </form>
+</div>
+
+<script>
+// Icon selection
+document.querySelectorAll('.icon-option').forEach(opt => {
+    opt.addEventListener('click', () => {
+        document.querySelectorAll('.icon-option').forEach(o => o.classList.remove('selected'));
+        opt.classList.add('selected');
+        const icon = opt.dataset.icon;
+        document.getElementById('icon-input').value = icon;
+        document.getElementById('preview-icon').className = icon;
+    });
+});
+
+// Color preview
+document.getElementById('group-color').addEventListener('input', (e) => {
+    document.getElementById('color-preview').style.background = e.target.value;
+});
+
+// Computer search
+document.getElementById('computer-search').addEventListener('input', (e) => {
+    const query = e.target.value.toLowerCase();
+    document.querySelectorAll('.computer-checkbox').forEach(checkbox => {
+        const name = checkbox.dataset.computerName || '';
+        const ip = checkbox.dataset.computerIp || '';
+        const mac = checkbox.dataset.computerMac || '';
+        const matches = name.includes(query) || ip.includes(query) || mac.includes(query);
+        checkbox.classList.toggle('hidden', !matches);
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block title %}Upravljanje Grupama{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    .group-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+    .group-card {
+        background: white;
+        border: 2px solid var(--border);
+        border-radius: 0.75rem;
+        padding: 1.25rem;
+        transition: all 0.3s;
+        position: relative;
+        border-top: 4px solid var(--primary);
+    }
+    .group-card:hover {
+        box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+    .group-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+    .group-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+    }
+    .group-name {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--dark);
+    }
+    .group-desc {
+        color: #666;
+        font-size: 0.85rem;
+        margin-top: 0.25rem;
+    }
+    .group-computers {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        margin: 1rem 0;
+    }
+    .computer-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        background: #e3f2fd;
+        color: #1976d2;
+        padding: 0.25rem 0.6rem;
+        border-radius: 1rem;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    .group-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+    }
+    .group-actions .btn {
+        flex: 1;
+        padding: 0.5rem;
+        font-size: 0.85rem;
+    }
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #999;
+    }
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--primary);
+        text-decoration: none;
+        margin-bottom: 1.5rem;
+    }
+    .back-link:hover {
+        text-decoration: underline;
+    }
+    @media (max-width: 768px) {
+        .group-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('admin_computers') }}" class="back-link">
+    <i class="fas fa-arrow-left"></i> Nazad na računare
+</a>
+
+<div class="page-header">
+    <h1><i class="fas fa-layer-group"></i> Grupe Računara</h1>
+    <a href="{{ url_for('admin_add_group') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Nova Grupa
+    </a>
+</div>
+
+{% if groups %}
+<div class="group-grid">
+    {% for group in groups %}
+    <div class="group-card" style="border-top-color: {{ group.color }};">
+        <div class="group-header">
+            <div class="group-icon" style="background: {{ group.color }};">
+                <i class="{{ group.icon }}"></i>
+            </div>
+            <div>
+                <div class="group-name">{{ group.name }}</div>
+                {% if group.description %}
+                <div class="group-desc">{{ group.description }}</div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="group-computers">
+            {% if group.computers %}
+                {% for computer in group.computers %}
+                <span class="computer-tag">
+                    <i class="fas fa-desktop"></i> {{ computer.name }}
+                </span>
+                {% endfor %}
+            {% else %}
+                <span style="color: #999; font-size: 0.85rem;">Nema dodeljenih računara</span>
+            {% endif %}
+        </div>
+        
+        <div style="font-size: 0.8rem; color: #999;">
+            <i class="fas fa-desktop"></i> {{ group.computers | length }} računar(a)
+        </div>
+        
+        <div class="group-actions">
+            <a href="{{ url_for('admin_edit_group', group_id=group.id) }}" class="btn btn-primary btn-sm">
+                <i class="fas fa-edit"></i> Izmeni
+            </a>
+            <button class="btn btn-danger btn-sm" onclick="deleteGroup({{ group.id }}, '{{ group.name }}')">
+                <i class="fas fa-trash"></i> Obriši
+            </button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <i class="fas fa-layer-group" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+        <p style="font-size: 1.1rem;">Nema kreiranih grupa</p>
+        <p style="margin-top: 0.5rem;">Kreirajte grupe da organizujete računare</p>
+    </div>
+</div>
+{% endif %}
+
+<script>
+async function deleteGroup(groupId, groupName) {
+    if (!confirm(`Da li ste sigurni da želite da obrišete grupu "${groupName}"?\n\nRačunari neće biti obrisani.`)) return;
+    
+    try {
+        const response = await fetch(`/admin/groups/${groupId}/delete`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        });
+        const result = await response.json();
+        
+        if (result.success) {
+            location.reload();
+        } else {
+            alert('Greška: ' + result.message);
+        }
+    } catch (error) {
+        alert('Greška: ' + error.message);
+    }
+}
+</script>
+{% endblock %}
