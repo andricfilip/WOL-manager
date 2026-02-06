@@ -1,0 +1,109 @@
+PROPRIETARY SOFTWARE LICENSE
+
+WOL Manager - Professional Wake-on-LAN Management System
+Copyright © 2026 Filip Andrić. All rights reserved.
+
+================================================================================
+
+TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+1. OWNERSHIP
+
+This software and associated documentation files (the "Software") are the
+exclusive property of Filip Andrić ("Author"). All rights, title, and interest
+in and to the Software, including all intellectual property rights, are and
+shall remain the exclusive property of the Author.
+
+2. LICENSE GRANT
+
+Subject to the terms and conditions of this License, the Author grants you a
+limited, non-exclusive, non-transferable, revocable license to:
+
+   a) Use the Software for your internal business purposes
+   b) Customize the Software for your specific deployment needs
+   c) Make backup copies of the Software for archival purposes
+
+3. RESTRICTIONS
+
+You may NOT:
+
+   a) Distribute, sublicense, sell, or transfer the Software to third parties
+   b) Reverse engineer, decompile, or disassemble the Software
+   c) Remove or alter any copyright notices or proprietary legends
+   d) Create derivative works based on the Software for commercial distribution
+   e) Use the Software to provide services to third parties
+   f) Publish or share the source code publicly
+
+4. ATTRIBUTION
+
+All deployments and customizations of the Software must maintain visible
+attribution to Filip Andrić as the original author. This includes:
+
+   a) Copyright notices in the application footer
+   b) Author information in documentation files
+   c) Credits in the "About" or "Info" sections
+
+5. CUSTOMIZATION FOR CLIENTS
+
+Authorized users may customize the Software's branding and appearance for
+individual client deployments, provided that:
+
+   a) Attribution to the original author is maintained
+   b) The Software is not redistributed
+   c) Each deployment is properly licensed
+
+6. UPDATES AND SUPPORT
+
+Updates, bug fixes, and technical support are provided at the Author's
+discretion. The Author reserves the right to charge for support services.
+
+7. WARRANTY DISCLAIMER
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+8. LIMITATION OF LIABILITY
+
+IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, INCIDENTAL, INDIRECT,
+OR CONSEQUENTIAL DAMAGES WHATSOEVER (INCLUDING, WITHOUT LIMITATION, DAMAGES
+FOR LOSS OF BUSINESS PROFITS, BUSINESS INTERRUPTION, LOSS OF BUSINESS
+INFORMATION, OR ANY OTHER PECUNIARY LOSS) ARISING OUT OF THE USE OF OR
+INABILITY TO USE THE SOFTWARE.
+
+9. TERMINATION
+
+This License is effective until terminated. Your rights under this License
+will terminate automatically without notice if you fail to comply with any
+term(s) of this License. Upon termination, you shall cease all use of the
+Software and destroy all copies.
+
+10. GOVERNING LAW
+
+This License shall be governed by and construed in accordance with the laws
+of Serbia, without regard to its conflict of law provisions.
+
+11. COMMERCIAL LICENSING
+
+For commercial distribution, white-label licensing, or enterprise deployments,
+please contact the Author for a commercial license agreement.
+
+================================================================================
+
+CONTACT INFORMATION
+
+For licensing inquiries, support, or custom development:
+
+Author: Filip Andrić
+Email: contact@example.com
+Version: 1.0.0
+Date: February 2026
+
+================================================================================
+
+© 2026 Filip Andrić. All rights reserved.
+WOL Manager is a proprietary product.
+Unauthorized copying, distribution, or modification is strictly prohibited.

@@ -36,12 +36,136 @@
         color: #721c24;
         font-weight: 600;
     }
+    
+    .search-filters {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        align-items: flex-end;
+    }
+    
+    .filter-group {
+        flex: 1;
+        min-width: 200px;
+    }
+    
+    .filter-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: var(--text);
+    }
+    
+    .filter-group input {
+        width: 100%;
+        padding: 0.6rem;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        font-size: 0.95rem;
+    }
+    
+    .filter-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .page-header h1 {
+        margin: 0;
+    }
+    
+    .header-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    @media (max-width: 768px) {
+        .search-filters {
+            flex-direction: column;
+        }
+        
+        .filter-group {
+            min-width: 100%;
+        }
+        
+        .filter-actions {
+            width: 100%;
+        }
+        
+        .filter-actions .btn {
+            flex: 1;
+        }
+        
+        .page-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .header-actions {
+            width: 100%;
+        }
+        
+        .header-actions .btn {
+            flex: 1;
+        }
+        
+        table {
+            font-size: 0.85rem;
+        }
+        
+        th, td {
+            padding: 0.6rem;
+        }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <div>
-    <h1 style="margin-bottom: 1.5rem;">Wake-on-LAN History</h1>
+    <div class="page-header">
+        <h1><i class="fas fa-history"></i> Wake-on-LAN Istorija</h1>
+        {% if current_user.is_admin %}
+        <div class="header-actions">
+            <button class="btn btn-warning" onclick="showDeleteLogsModal()" title="Obriši logove">
+                <i class="fas fa-trash"></i> Obriši Logove
+            </button>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="card" style="margin-bottom: 1rem;">
+        <form method="GET" action="{{ url_for('history') }}" class="search-filters">
+            <div class="filter-group">
+                <label for="search"><i class="fas fa-search"></i> Pretraga</label>
+                <input type="text" id="search" name="search" placeholder="Ime računara ili korisnika..." value="{{ search_query or '' }}">
+            </div>
+            <div class="filter-group">
+                <label for="date_from"><i class="fas fa-calendar"></i> Od datuma</label>
+                <input type="date" id="date_from" name="date_from" value="{{ date_from or '' }}">
+            </div>
+            <div class="filter-group">
+                <label for="date_to"><i class="fas fa-calendar"></i> Do datuma</label>
+                <input type="date" id="date_to" name="date_to" value="{{ date_to or '' }}">
+            </div>
+            <div class="filter-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-filter"></i> Filtriraj
+                </button>
+                <a href="{{ url_for('history') }}" class="btn btn-secondary">
+                    <i class="fas fa-redo"></i> Resetuj
+                </a>
+            </div>
+        </form>
+    </div>
 
     <div class="card">
         {% if logs %}
@@ -76,9 +200,125 @@
         {% else %}
             <div style="text-align: center; padding: 2rem; color: #999;">
                 <i class="fas fa-history" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5;"></i>
-                <p>No WoL history yet</p>
+                <p>Nema pronađenih logova</p>
             </div>
         {% endif %}
     </div>
 </div>
+
+<!-- Delete Logs Modal -->
+{% if current_user.is_admin %}
+<div id="deleteLogsModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 10000; padding: 2rem;">
+    <div style="background: white; max-width: 500px; margin: 2rem auto; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+        <h2 style="margin-bottom: 1.5rem; color: #dc3545;"><i class="fas fa-exclamation-triangle"></i> Brisanje Logova</h2>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <label style="display: flex; align-items: center; margin-bottom: 1rem; cursor: pointer;">
+                <input type="radio" name="deleteOption" value="range" checked style="margin-right: 0.5rem;">
+                <span>Obriši logove za period</span>
+            </label>
+            
+            <div id="dateRangeInputs" style="margin-left: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 150px;">
+                    <label style="display: block; margin-bottom: 0.3rem; font-size: 0.9rem;">Od datuma:</label>
+                    <input type="date" id="deleteFromDate" class="form-control">
+                </div>
+                <div style="flex: 1; min-width: 150px;">
+                    <label style="display: block; margin-bottom: 0.3rem; font-size: 0.9rem;">Do datuma:</label>
+                    <input type="date" id="deleteToDate" class="form-control">
+                </div>
+            </div>
+        </div>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <label style="display: flex; align-items: center; cursor: pointer;">
+                <input type="radio" name="deleteOption" value="all" style="margin-right: 0.5rem;">
+                <span style="color: #dc3545; font-weight: 600;">Obriši SVE logove</span>
+            </label>
+        </div>
+        
+        <div style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1.5rem;">
+            <button class="btn btn-secondary" onclick="hideDeleteLogsModal()">
+                <i class="fas fa-times"></i> Otkaži
+            </button>
+            <button class="btn btn-danger" onclick="confirmDeleteLogs()">
+                <i class="fas fa-trash"></i> Obriši
+            </button>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+function showDeleteLogsModal() {
+    document.getElementById('deleteLogsModal').style.display = 'block';
+}
+
+function hideDeleteLogsModal() {
+    document.getElementById('deleteLogsModal').style.display = 'none';
+}
+
+function confirmDeleteLogs() {
+    const deleteOption = document.querySelector('input[name="deleteOption"]:checked').value;
+    
+    let confirmMessage = '';
+    let deleteData = { option: deleteOption };
+    
+    if (deleteOption === 'range') {
+        const fromDate = document.getElementById('deleteFromDate').value;
+        const toDate = document.getElementById('deleteToDate').value;
+        
+        if (!fromDate || !toDate) {
+            alert('Molimo unesite oba datuma za period brisanja.');
+            return;
+        }
+        
+        deleteData.from_date = fromDate;
+        deleteData.to_date = toDate;
+        confirmMessage = `Da li ste sigurni da želite obrisati sve logove od ${fromDate} do ${toDate}?`;
+    } else {
+        confirmMessage = 'Da li ste sigurni da želite obrisati SVE logove? Ova akcija se ne može poništiti!';
+    }
+    
+    if (!confirm(confirmMessage)) {
+        return;
+    }
+    
+    fetch('/admin/delete-logs', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(deleteData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            hideDeleteLogsModal();
+            location.reload();
+        } else {
+            alert('Greška: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Došlo je do greške prilikom brisanja logova.');
+    });
+}
+
+// Toggle date inputs based on selected option
+document.querySelectorAll('input[name="deleteOption"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const dateRangeInputs = document.getElementById('dateRangeInputs');
+        if (this.value === 'range') {
+            dateRangeInputs.style.opacity = '1';
+            dateRangeInputs.querySelectorAll('input').forEach(input => input.disabled = false);
+        } else {
+            dateRangeInputs.style.opacity = '0.3';
+            dateRangeInputs.querySelectorAll('input').forEach(input => input.disabled = true);
+        }
+    });
+});
+</script>
 {% endblock %}

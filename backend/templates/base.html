@@ -254,6 +254,32 @@
             background: var(--light);
             font-weight: 600;
         }
+        
+        /* Back Button Styling */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--primary);
+            text-decoration: none;
+            margin-bottom: 1.5rem;
+            padding: 0.6rem 1rem;
+            border-radius: 0.3rem;
+            transition: all 0.3s;
+            background: var(--light);
+            border: 1px solid var(--border);
+        }
+        
+        .back-link:hover {
+            background: var(--primary);
+            color: white;
+            text-decoration: none;
+            transform: translateX(-3px);
+        }
+        
+        .back-link i {
+            font-size: 1rem;
+        }
 
         /* Mobile Optimizations */
         @media (max-width: 768px) {
@@ -340,8 +366,8 @@
     <nav class="navbar">
         <div class="navbar-content">
             <a href="{{ url_for('dashboard') }}" class="navbar-brand">
-                <i class="fas fa-power-off"></i>
-                <span>WOL Manager</span>
+                <i class="{{ app_info.icon }}"></i>
+                <span>{{ app_info.name }}</span>
             </a>
             <ul class="navbar-menu">
                 <li><a href="{{ url_for('dashboard') }}" {% if request.endpoint == 'dashboard' %}class="active"{% endif %}>
@@ -382,6 +408,13 @@
 
         {% block content %}{% endblock %}
     </div>
+    
+    <footer style="text-align: center; padding: 2rem 1rem; margin-top: 3rem; border-top: 1px solid var(--border); color: #666; font-size: 0.9rem;">
+        <p>{{ app_info.footer }}</p>
+        <p style="margin-top: 0.5rem; font-size: 0.85rem;">
+            {{ app_info.name }} v{{ app_info.version }} | Developed by {{ app_info.author }}
+        </p>
+    </footer>
 
     <style>
         @media (max-width: 768px) {

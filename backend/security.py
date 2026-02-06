@@ -32,11 +32,11 @@ def add_security_headers(response):
     # Content Security Policy
     response.headers['Content-Security-Policy'] = (
         "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline' https://cdn.socket.io https://cdnjs.cloudflare.com; "
+        "script-src 'self' 'unsafe-inline' https://cdn.socket.io https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; "
         "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; "
         "img-src 'self' data:; "
         "font-src 'self' https://cdnjs.cloudflare.com; "
-        "connect-src 'self' ws: wss: https://cdn.socket.io;"
+        "connect-src 'self' ws: wss: https://cdn.socket.io https://cdn.jsdelivr.net;"
     )
     
     # Referrer Policy

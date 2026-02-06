@@ -26,6 +26,11 @@ class ComputerGroup(db.Model):
     description = db.Column(db.String(500))
     color = db.Column(db.String(7), default='#0066cc')  # Hex color
     icon = db.Column(db.String(50), default='fas fa-folder')  # FontAwesome icon class
+    
+    # Action permissions
+    allow_wake = db.Column(db.Boolean, default=True)  # Allow WoL (wake on LAN)
+    allow_shutdown = db.Column(db.Boolean, default=True)  # Allow shutdown
+    
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     computers = db.relationship('Computer', secondary=group_computers, backref=db.backref('groups', lazy='dynamic'))
@@ -40,6 +45,7 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
+    can_view_groups = db.Column(db.Boolean, default=True)  # NEW: korisnici mogu videti grupe
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Many-to-many relationship with computers
@@ -179,3 +185,48 @@ class UptimeLog(db.Model):
     
     def __repr__(self):
         return f'<UptimeLog {self.computer_id} {self.status} at {self.timestamp}>'
+
+class AppSettings(db.Model):
+    """Application settings - Key/Value store"""
+    __tablename__ = 'app_settings'
+    id = db.Column(db.Integer, primary_key=True)
+    key = db.Column(db.String(100), unique=True, nullable=False, index=True)
+    value = db.Column(db.String(500))
+    description = db.Column(db.String(500))
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    @staticmethod
+    def get(key, default=None):
+        """Get setting value"""
+        setting = AppSettings.query.filter_by(key=key).first()
+        return setting.value if setting else default
+    
+    @staticmethod
+    def set(key, value, description=None):
+        """Set setting value"""
+        setting = AppSettings.query.filter_by(key=key).first()
+        if setting:
+            setting.value = value
+            if description:
+                setting.description = description
+        else:
+            setting = AppSettings(key=key, value=value, description=description)
+            db.session.add(setting)
+        try:
+            db.session.commit()
+            return True
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Failed to set app setting {key}: {e}")
+            return False
+    
+    @staticmethod
+    def get_bool(key, default=False):
+        """Get boolean setting"""
+        value = AppSettings.get(key)
+        if value is None:
+            return default
+        return value.lower() in ('true', '1', 'yes', 'on')
+    
+    def __repr__(self):
+        return f'<AppSettings {self.key}={self.value}>'

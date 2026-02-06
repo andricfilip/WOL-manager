@@ -1,0 +1,144 @@
+<!-- SSH Setup Help Modal -->
+<div id="sshHelpModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 10000; overflow-y: auto; padding: 1rem;">
+    <div style="background: white; max-width: 900px; margin: 1rem auto; padding: 1.5rem; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.5rem;">
+            <h2 style="margin: 0; color: var(--primary); font-size: clamp(1.1rem, 4vw, 1.5rem);"><i class="fas fa-terminal"></i> SSH Setup - Omogućavanje Daljinskog Gašenja</h2>
+            <button onclick="closeSSHHelp()" class="btn btn-secondary btn-sm">
+                <i class="fas fa-times"></i> Zatvori
+            </button>
+        </div>
+        
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 2px solid #e9ecef; overflow-x: auto;">
+            <button class="ssh-tab" data-tab="linux" onclick="switchSSHTab('linux')" style="padding: 0.5rem 1rem; background: var(--primary); color: white; border: none; cursor: pointer; border-radius: 4px 4px 0 0; font-weight: 600; white-space: nowrap;">
+                <i class="fab fa-linux"></i> Linux
+            </button>
+            <button class="ssh-tab" data-tab="windows" onclick="switchSSHTab('windows')" style="padding: 0.5rem 1rem; background: #e9ecef; color: #666; border: none; cursor: pointer; border-radius: 4px 4px 0 0; font-weight: 600; white-space: nowrap;">
+                <i class="fab fa-windows"></i> Windows
+            </button>
+        </div>
+        
+        <!-- Linux Tab -->
+        <div id="ssh-linux" class="ssh-tab-content">
+            <h3><i class="fab fa-linux"></i> Linux (Ubuntu/Debian)</h3>
+            
+            <h4 style="margin-top: 1.5rem;">1. Instalacija OpenSSH Servera</h4>
+            <pre style="background: #2d2d2d; color: #f8f8f2; padding: 1rem; border-radius: 4px; overflow-x: auto;"><code>sudo apt update
+sudo apt install openssh-server -y
+sudo systemctl enable ssh
+sudo systemctl start ssh</code></pre>
+            
+            <h4 style="margin-top: 1.5rem;">2. Provera Statusa</h4>
+            <pre style="background: #2d2d2d; color: #f8f8f2; padding: 1rem; border-radius: 4px; overflow-x: auto;"><code>sudo systemctl status ssh</code></pre>
+            <p>Trebalo bi da vidite "active (running)".</p>
+            
+            <h4 style="margin-top: 1.5rem;">3. Kreiranje SSH Korisnika (Preporučeno)</h4>
+            <pre style="background: #2d2d2d; color: #f8f8f2; padding: 1rem; border-radius: 4px; overflow-x: auto;"><code>sudo adduser wol-manager
+sudo usermod -aG sudo wol-manager</code></pre>
+            
+            <h4 style="margin-top: 1.5rem;">4. Omogućavanje Shutdown Bez Lozinke</h4>
+            <pre style="background: #2d2d2d; color: #f8f8f2; padding: 1rem; border-radius: 4px; overflow-x: auto;"><code>sudo visudo</code></pre>
+            <p>Dodaj na kraj fajla:</p>
+            <pre style="background: #2d2d2d; color: #f8f8f2; padding: 1rem; border-radius: 4px; overflow-x: auto;"><code>wol-manager ALL=(ALL) NOPASSWD: /sbin/shutdown, /sbin/poweroff</code></pre>
+            
+            <h4 style="margin-top: 1.5rem;">5. Testiranje</h4>
+            <pre style="background: #2d2d2d; color: #f8f8f2; padding: 1rem; border-radius: 4px; overflow-x: auto;"><code>ssh wol-manager@localhost
+sudo shutdown -h now  # Trebalo bi da radi bez lozinke</code></pre>
+            
+            <div style="background: #d4edda; border-left: 4px solid #28a745; padding: 1rem; margin-top: 1.5rem; border-radius: 4px;">
+                <strong><i class="fas fa-check-circle"></i> Unos u WOL Manager:</strong>
+                <ul style="margin: 0.5rem 0 0 1.5rem;">
+                    <li><strong>SSH Host:</strong> IP adresa računara (npr. 192.168.1.100)</li>
+                    <li><strong>SSH Port:</strong> 22</li>
+                    <li><strong>SSH Username:</strong> wol-manager</li>
+                    <li><strong>SSH Password:</strong> lozinka korisnika</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Windows Tab -->
+        <div id="ssh-windows" class="ssh-tab-content" style="display: none;">
+            <h3><i class="fab fa-windows"></i> Windows 10/11</h3>
+            
+            <h4 style="margin-top: 1.5rem;">1. Instalacija OpenSSH Servera</h4>
+            <p>Otvori <strong>PowerShell kao Administrator</strong>:</p>
+            <pre style="background: #012456; color: #00d4ff; padding: 1rem; border-radius: 4px; overflow-x: auto;"><code>Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0</code></pre>
+            
+            <h4 style="margin-top: 1.5rem;">2. Pokretanje SSH Servisa</h4>
+            <pre style="background: #012456; color: #00d4ff; padding: 1rem; border-radius: 4px; overflow-x: auto;"><code>Start-Service sshd
+Set-Service -Name sshd -StartupType 'Automatic'</code></pre>
+            
+            <h4 style="margin-top: 1.5rem;">3. Firewall Pravilo</h4>
+            <pre style="background: #012456; color: #00d4ff; padding: 1rem; border-radius: 4px; overflow-x: auto;"><code>New-NetFirewallRule -Name sshd -DisplayName 'OpenSSH Server (sshd)' -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 22</code></pre>
+            
+            <h4 style="margin-top: 1.5rem;">4. Kreiranje PowerShell Shutdown Skripta</h4>
+            <p>Kreiraj fajl <code>C:\Scripts\shutdown.ps1</code>:</p>
+            <pre style="background: #012456; color: #00d4ff; padding: 1rem; border-radius: 4px; overflow-x: auto;"><code>Stop-Computer -Force</code></pre>
+            
+            <h4 style="margin-top: 1.5rem;">5. Testiranje</h4>
+            <pre style="background: #012456; color: #00d4ff; padding: 1rem; border-radius: 4px; overflow-x: auto;"><code>ssh username@localhost
+powershell -File C:\Scripts\shutdown.ps1</code></pre>
+            
+            <div style="background: #d4edda; border-left: 4px solid #28a745; padding: 1rem; margin-top: 1.5rem; border-radius: 4px;">
+                <strong><i class="fas fa-check-circle"></i> Unos u WOL Manager:</strong>
+                <ul style="margin: 0.5rem 0 0 1.5rem;">
+                    <li><strong>SSH Host:</strong> IP adresa računara</li>
+                    <li><strong>SSH Port:</strong> 22</li>
+                    <li><strong>SSH Username:</strong> Windows korisničko ime (Administrator preporučen)</li>
+                    <li><strong>SSH Password:</strong> Windows lozinka</li>
+                </ul>
+            </div>
+            
+            <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 1rem; margin-top: 1rem; border-radius: 4px;">
+                <strong><i class="fas fa-exclamation-triangle"></i> Napomena:</strong> Windows zahteva Administrator privilegije za shutdown. Koristite administrator nalog ili kreirajte custom PowerShell skriptu.
+            </div>
+        </div>
+        
+        <div style="background: #f8f9fa; padding: 1rem; margin-top: 2rem; border-radius: 4px; border: 1px solid #dee2e6;">
+            <strong><i class="fas fa-lock"></i> Bezbednost:</strong>
+            <ul style="margin: 0.5rem 0 0 1.5rem;">
+                <li>Lozinke se čuvaju enkriptovano u bazi podataka (AES-256)</li>
+                <li>Preporučuje se korišćenje jakih lozinki</li>
+                <li>Opcionalno: Možete koristiti SSH key umesto lozinke</li>
+                <li>Ograničite SSH pristup samo na potrebne korisnike</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+function showSSHHelp() {
+    document.getElementById('sshHelpModal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeSSHHelp() {
+    document.getElementById('sshHelpModal').style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+function switchSSHTab(tab) {
+    // Hide all tabs
+    document.querySelectorAll('.ssh-tab-content').forEach(el => el.style.display = 'none');
+    
+    // Reset all tab buttons
+    document.querySelectorAll('.ssh-tab').forEach(btn => {
+        btn.style.background = '#e9ecef';
+        btn.style.color = '#666';
+    });
+    
+    // Show selected tab
+    document.getElementById('ssh-' + tab).style.display = 'block';
+    
+    // Activate button
+    const activeBtn = document.querySelector('.ssh-tab[data-tab="' + tab + '"]');
+    activeBtn.style.background = 'var(--primary)';
+    activeBtn.style.color = 'white';
+}
+
+// Close modal on outside click
+document.getElementById('sshHelpModal')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeSSHHelp();
+    }
+});
+</script>

@@ -134,6 +134,53 @@
             </div>
         </div>
         
+        <hr style="margin: 2rem 0; border: none; border-top: 2px solid #e9ecef;">
+        
+        <div class="form-group">
+            <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                <i class="fas fa-shield-alt"></i> Dozvoljene Akcije
+            </label>
+            <div style="background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 0.75rem; padding: 1.25rem;">
+                <p style="color: #666; font-size: 0.9rem; margin: 0 0 1rem 0;">
+                    <i class="fas fa-info-circle"></i> Izaberite koje akcije korisnici mogu izvršavati nad računarima u ovoj grupi
+                </p>
+                
+                <div style="display: grid; gap: 1rem;">
+                    <label style="display: flex; align-items: flex-start; gap: 1rem; padding: 1rem; background: white; border: 2px solid #e9ecef; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="if(!this.querySelector('input').checked) this.style.borderColor='#e9ecef'">
+                        <input type="checkbox" name="allow_wake" value="1" checked style="width: 20px; height: 20px; cursor: pointer; margin-top: 0.2rem; flex-shrink: 0;">
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; color: #28a745; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                                <i class="fas fa-power-off"></i> Upali računare (Wake-on-LAN)
+                            </div>
+                            <div style="font-size: 0.85rem; color: #666;">
+                                Korisnici mogu uključivati računare u ovoj grupi
+                            </div>
+                        </div>
+                    </label>
+                    
+                    <label style="display: flex; align-items: flex-start; gap: 1rem; padding: 1rem; background: white; border: 2px solid #e9ecef; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="if(!this.querySelector('input').checked) this.style.borderColor='#e9ecef'">
+                        <input type="checkbox" name="allow_shutdown" value="1" checked style="width: 20px; height: 20px; cursor: pointer; margin-top: 0.2rem; flex-shrink: 0;">
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; color: #dc3545; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                                <i class="fas fa-power-off"></i> Ugasi računare (SSH Shutdown)
+                            </div>
+                            <div style="font-size: 0.85rem; color: #666;">
+                                Korisnici mogu gasiti računare u ovoj grupi (zahteva SSH)
+                            </div>
+                        </div>
+                    </label>
+                </div>
+                
+                <div style="margin-top: 1rem; padding: 0.75rem; background: #fff3cd; border-left: 3px solid #f4a261; border-radius: 0.3rem;">
+                    <small style="color: #856404;">
+                        <i class="fas fa-exclamation-triangle"></i> <strong>Napomena:</strong> Ako nijedna akcija nije izabrana, korisnici neće moći kontrolisati računare u grupi.
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <hr style="margin: 2rem 0; border: none; border-top: 2px solid #e9ecef;">
+        
         <div class="form-group">
             <label>Računari u grupi</label>
             <div style="margin-bottom: 0.75rem;">

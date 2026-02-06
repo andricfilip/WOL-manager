@@ -534,7 +534,8 @@ tr:hover {
 /* Responsive */
 @media (max-width: 768px) {
     .computer-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr !important;
+        gap: 1rem;
     }
     
     .page-header {
@@ -565,6 +566,121 @@ tr:hover {
     .modal-content {
         width: 95%;
         margin: 20% auto;
+    }
+    
+    /* Dashboard responsive fixes */
+    .dashboard-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .header-actions {
+        justify-content: stretch;
+        flex-direction: column;
+    }
+    
+    .header-actions .btn,
+    .header-actions button {
+        width: 100%;
+    }
+    
+    /* Group section mobile */
+    .group-header-bar {
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: stretch;
+        text-align: center;
+    }
+    
+    .wake-group-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    /* Computer card mobile optimizations */
+    .computer-card {
+        padding: 1rem;
+        min-height: auto;
+    }
+    
+    .computer-card h3 {
+        font-size: 0.95rem;
+        padding-right: 0;
+        margin-bottom: 0.5rem;
+    }
+    
+    .status-indicator {
+        position: static;
+        margin-bottom: 0.5rem;
+        justify-content: center;
+    }
+    
+    .computer-info {
+        font-size: 0.8rem;
+    }
+    
+    .computer-actions {
+        flex-direction: column;
+        gap: 0.4rem;
+    }
+    
+    .wol-btn,
+    .shutdown-btn {
+        width: 100%;
+    }
+    
+    /* Stats responsive */
+    .stats-grid {
+        grid-template-columns: 1fr !important;
+        gap: 1rem;
+    }
+    
+    .stat-metrics {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+    
+    .period-selector {
+        justify-content: stretch;
+    }
+    
+    .period-btn {
+        flex: 1;
+        font-size: 0.8rem;
+        padding: 0.4rem 0.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .computer-card {
+        padding: 0.75rem;
+    }
+    
+    .computer-card h3 {
+        font-size: 0.9rem;
+    }
+    
+    .computer-info {
+        font-size: 0.75rem;
+        margin-bottom: 0.2rem;
+    }
+    
+    .status-indicator {
+        font-size: 0.65rem;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .stat-metrics {
+        grid-template-columns: 1fr;
+    }
+    
+    .period-btn {
+        font-size: 0.75rem;
+        padding: 0.35rem 0.4rem;
     }
 }
 

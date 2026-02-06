@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block title %}Podešavanja{% endblock %}
+
+{% block content %}
+<div class="container">
+    <a href="{{ url_for('admin_computers') }}" class="back-link">
+        <i class="fas fa-arrow-left"></i> Nazad
+    </a>
+    
+    <div class="page-header">
+        <h1>⚙️ Podešavanja aplikacije</h1>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2>Funkcionalnosti</h2>
+            <p class="text-muted">Uključite ili isključite određene funkcionalnosti aplikacije</p>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                <div class="settings-section">
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <label class="setting-label">
+                                <i class="fas fa-folder"></i> Grupe računara
+                            </label>
+                            <p class="setting-description">
+                                Omogućava organizaciju računara u grupe za lakše upravljanje. 
+                                <strong>Preporučeno za veće mreže.</strong>
+                            </p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" name="enable_groups" {% if settings.enable_groups %}checked{% endif %}>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <label class="setting-label">
+                                <i class="fas fa-search"></i> Pretraživanje
+                            </label>
+                            <p class="setting-description">
+                                Omogućava pretraživanje računara po nazivu i MAC adresi. 
+                                <strong>Manje korisno za male mreže sa nekoliko računara.</strong>
+                            </p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" name="enable_search" {% if settings.enable_search %}checked{% endif %}>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Sačuvaj podešavanja
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top: 2rem;">
+        <div class="card-header">
+            <h2>📊 Informacije o sistemu</h2>
+        </div>
+        <div class="card-body">
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">Platforma:</span>
+                    <span class="info-value">Linux / Docker</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Raspberry Pi podrška:</span>
+                    <span class="info-value">✅ Podržano (ARM/ARM64)</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Python verzija:</span>
+                    <span class="info-value">3.9+</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.settings-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-radius: 0.5rem;
+    border: 2px solid var(--border-color);
+    transition: all 0.3s;
+}
+
+.setting-item:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.setting-info {
+    flex: 1;
+}
+
+.setting-label {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--dark-text);
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.setting-label i {
+    margin-right: 0.5rem;
+    color: var(--primary-color);
+}
+
+.setting-description {
+    margin: 0;
+    color: #666;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+/* Toggle Switch */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 30px;
+    flex-shrink: 0;
+    margin-left: 1rem;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #dc3545;
+    transition: .3s;
+    border-radius: 30px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.toggle-slider:after {
+    position: absolute;
+    content: "✕";
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    transition: .3s;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 22px;
+    width: 22px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .3s;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    z-index: 1;
+}
+
+input:checked + .toggle-slider {
+    background-color: #28a745;
+}
+
+input:checked + .toggle-slider:after {
+    content: "✓";
+    left: 8px;
+    right: auto;
+}
+
+input:checked + .toggle-slider:before {
+    transform: translateX(30px);
+}
+
+.toggle-switch:hover .toggle-slider {
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2), 0 0 0 3px rgba(0,0,0,0.05);
+}
+
+.form-actions {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 0.5rem;
+}
+
+.info-label {
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 0.25rem;
+}
+
+.info-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--dark-text);
+}
+
+@media (max-width: 768px) {
+    .setting-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .toggle-switch {
+        margin-left: 0;
+    }
+    
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}

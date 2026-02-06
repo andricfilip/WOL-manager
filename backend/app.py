@@ -5,10 +5,11 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from datetime import datetime
 from config import config
-from models import db, User, Computer, WOLLog, ShutdownLog, AuditLog, ComputerGroup, UptimeLog
+from models import db, User, Computer, WOLLog, ShutdownLog, AuditLog, ComputerGroup, UptimeLog, AppSettings
 from wol import send_wol_packet, validate_mac_address, check_host_status, shutdown_computer_ssh
 from encryption import verify_encryption_setup
 from security import init_security
+import app_config  # Application branding and configuration
 import auth
 import os
 import threading
@@ -48,6 +49,15 @@ login_manager.login_message = 'Molim prijavite se da pristupite ovoj stranici'
 # Register blueprints
 app.register_blueprint(auth.auth_bp)
 
+# Inject app configuration into all templates
+@app.context_processor
+def inject_app_config():
+    """Make app configuration available to all templates"""
+    return {
+        'app_info': app_config.get_app_info(),
+        'app_colors': app_config.get_theme_colors()
+    }
+
 # Verify encryption setup on startup
 _security_verified = False
 
@@ -82,6 +92,13 @@ def dashboard():
     # Get computers assigned to current user
     computers = current_user.computers
     
+    # Get app settings
+    enable_groups = AppSettings.get_bool('enable_groups', default=True)
+    enable_search = AppSettings.get_bool('enable_search', default=True)
+    
+    # Check if user can view groups (admin always can, users only if enabled)
+    show_groups = enable_groups and (current_user.is_admin or current_user.can_view_groups)
+    
     if request.method == 'POST':
         # Check if it's AJAX request for WOL
         if request.is_json:
@@ -113,7 +130,12 @@ def dashboard():
                 'last_wol': computer.last_wol.strftime('%Y-%m-%d %H:%M') if computer.last_wol else None
             })
     
-    return render_template('dashboard.html', computers=computers, groups=ComputerGroup.query.order_by(ComputerGroup.name).all())
+    groups = ComputerGroup.query.order_by(ComputerGroup.name).all() if show_groups else []
+    return render_template('dashboard.html', 
+                         computers=computers, 
+                         groups=groups,
+                         enable_groups=show_groups,
+                         enable_search=enable_search)
 
 @app.route('/api/shutdown', methods=['POST'])
 @login_required
@@ -262,6 +284,18 @@ def admin_add_computer():
         db.session.add(computer)
         db.session.commit()
         
+        # Audit log: Computer created
+        AuditLog.log_action(
+            action='computer_create',
+            user=current_user,
+            resource_type='computer',
+            resource_id=computer.id,
+            status='success',
+            details=f'Created computer "{name}" (MAC: {mac_address})',
+            ip_address=request.remote_addr,
+            user_agent=request.headers.get('User-Agent')
+        )
+        
         flash(f'Računar "{name}" je uspešno dodat', 'success')
         return redirect(url_for('admin_computers'))
     
@@ -322,6 +356,18 @@ def admin_edit_computer(computer_id):
         
         db.session.commit()
         
+        # Audit log: Computer updated
+        AuditLog.log_action(
+            action='computer_update',
+            user=current_user,
+            resource_type='computer',
+            resource_id=computer.id,
+            status='success',
+            details=f'Updated computer "{computer.name}" (MAC: {mac_address})',
+            ip_address=request.remote_addr,
+            user_agent=request.headers.get('User-Agent')
+        )
+        
         flash(f'Računar "{computer.name}" je ažuriran', 'success')
         return redirect(url_for('admin_computers'))
     
@@ -343,6 +389,18 @@ def admin_delete_computer(computer_id):
     name = computer.name
     db.session.delete(computer)
     db.session.commit()
+    
+    # Audit log: Computer deleted
+    AuditLog.log_action(
+        action='computer_delete',
+        user=current_user,
+        resource_type='computer',
+        resource_id=computer_id,
+        status='success',
+        details=f'Deleted computer "{name}"',
+        ip_address=request.remote_addr,
+        user_agent=request.headers.get('User-Agent')
+    )
     
     return jsonify({'success': True, 'message': f'Računar "{name}" je obrisan'})
 
@@ -399,6 +457,18 @@ def admin_add_user():
         db.session.add(user)
         db.session.commit()
         
+        # Audit log: User created
+        AuditLog.log_action(
+            action='user_create',
+            user=current_user,
+            resource_type='user',
+            resource_id=user.id,
+            status='success',
+            details=f'Created user "{username}" (admin: {is_admin})',
+            ip_address=request.remote_addr,
+            user_agent=request.headers.get('User-Agent')
+        )
+        
         flash(f'Korisnik "{username}" je uspešno kreiran', 'success')
         return redirect(url_for('admin_users'))
     
@@ -420,10 +490,51 @@ def toggle_admin(user_id):
     user.is_admin = not user.is_admin
     db.session.commit()
     
+    # Audit log: Admin permission changed
+    AuditLog.log_action(
+        action='user_admin_toggle',
+        user=current_user,
+        resource_type='user',
+        resource_id=user.id,
+        status='success',
+        details=f'Changed {user.username} admin status to {user.is_admin}',
+        ip_address=request.remote_addr,
+        user_agent=request.headers.get('User-Agent')
+    )
+    
     return jsonify({
         'success': True,
         'message': f'Korisnik {user.username} je sada {"admin" if user.is_admin else "obični korisnik"}',
         'is_admin': user.is_admin
+    })
+# Audit log: Group permission changed
+    AuditLog.log_action(
+        action='user_groups_toggle',
+        user=current_user,
+        resource_type='user',
+        resource_id=user.id,
+        status='success',
+        details=f'Changed {user.username} group viewing to {user.can_view_groups}',
+        ip_address=request.remote_addr,
+        user_agent=request.headers.get('User-Agent')
+    )
+    
+    
+@app.route('/admin/users/<int:user_id>/toggle-groups', methods=['POST'])
+@login_required
+def toggle_user_groups(user_id):
+    """Admin: Toggle user group viewing permission"""
+    if not current_user.is_admin:
+        return jsonify({'success': False, 'message': 'Pristup odbijen'}), 403
+    
+    user = User.query.get_or_404(user_id)
+    user.can_view_groups = not user.can_view_groups
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'message': f'Korisnik {user.username} {"može" if user.can_view_groups else "ne može"} videti grupe',
+        'can_view_groups': user.can_view_groups
     })
 
 @app.route('/admin/users/<int:user_id>/delete', methods=['POST'])
@@ -443,20 +554,146 @@ def delete_user(user_id):
     db.session.delete(user)
     db.session.commit()
     
+    # Audit log: User deleted
+    AuditLog.log_action(
+        action='user_delete',
+        user=current_user,
+        resource_type='user',
+        resource_id=user_id,
+        status='success',
+        details=f'Deleted user "{username}"',
+        ip_address=request.remote_addr,
+        user_agent=request.headers.get('User-Agent')
+    )
+    
     return jsonify({'success': True, 'message': f'Korisnik {username} je obrisan'})
 
 @app.route('/history')
 @login_required
 def history():
-    """View WOL history"""
-    if current_user.is_admin:
-        # Admin sees all logs
-        logs = WOLLog.query.order_by(WOLLog.timestamp.desc()).all()
-    else:
-        # Regular users see only their own logs
-        logs = WOLLog.query.filter_by(user_id=current_user.id).order_by(WOLLog.timestamp.desc()).all()
+    """View WOL/Shutdown history AND audit logs with search and filtering"""
+    # Get search parameters
+    search_query = request.args.get('search', '').strip()
+    date_from = request.args.get('date_from', '').strip()
+    date_to = request.args.get('date_to', '').strip()
+    log_type = request.args.get('type', 'wol').strip()  # 'wol', 'shutdown', or 'audit'
     
-    return render_template('history.html', logs=logs)
+    if log_type == 'audit':
+        # Audit logs
+        if current_user.is_admin:
+            # Admin sees all audit logs
+            logs_query = AuditLog.query
+        else:
+            # Regular users see only their own audit logs
+            logs_query = AuditLog.query.filter_by(user_id=current_user.id)
+        
+        # Apply search filter for audit logs
+        if search_query:
+            logs_query = logs_query.filter(
+                db.or_(
+                    AuditLog.action.ilike(f'%{search_query}%'),
+                    AuditLog.username.ilike(f'%{search_query}%'),
+                    AuditLog.details.ilike(f'%{search_query}%')
+                )
+            )
+        
+        # Apply date filters
+        if date_from:
+            try:
+                from_date = datetime.strptime(date_from, '%Y-%m-%d')
+                logs_query = logs_query.filter(AuditLog.timestamp >= from_date)
+            except ValueError:
+                pass
+        
+        if date_to:
+            try:
+                to_date = datetime.strptime(date_to, '%Y-%m-%d')
+                to_date = to_date.replace(hour=23, minute=59, second=59)
+                logs_query = logs_query.filter(AuditLog.timestamp <= to_date)
+            except ValueError:
+                pass
+        
+        logs = logs_query.order_by(AuditLog.timestamp.desc()).all()
+        return render_template('history.html', logs=logs, log_type='audit',
+                             search_query=search_query, date_from=date_from, date_to=date_to)
+    
+    elif log_type == 'shutdown':
+        # Shutdown logs
+        if current_user.is_admin:
+            logs_query = ShutdownLog.query
+        else:
+            logs_query = ShutdownLog.query.filter_by(user_id=current_user.id)
+        
+        # Apply search filter
+        if search_query:
+            logs_query = logs_query.join(Computer).join(User).filter(
+                db.or_(
+                    Computer.name.ilike(f'%{search_query}%'),
+                    User.username.ilike(f'%{search_query}%')
+                )
+            )
+        
+        # Apply date filters
+        if date_from:
+            try:
+                from_date = datetime.strptime(date_from, '%Y-%m-%d')
+                logs_query = logs_query.filter(ShutdownLog.timestamp >= from_date)
+            except ValueError:
+                pass
+        
+        if date_to:
+            try:
+                to_date = datetime.strptime(date_to, '%Y-%m-%d')
+                to_date = to_date.replace(hour=23, minute=59, second=59)
+                logs_query = logs_query.filter(ShutdownLog.timestamp <= to_date)
+            except ValueError:
+                pass
+        
+        logs = logs_query.order_by(ShutdownLog.timestamp.desc()).all()
+        return render_template('history.html', logs=logs, log_type='shutdown',
+                             search_query=search_query, date_from=date_from, date_to=date_to)
+    
+    else:
+        # WOL logs (default)
+        if current_user.is_admin:
+            # Admin sees all logs
+            logs_query = WOLLog.query
+        else:
+            # Regular users see only their own logs
+            logs_query = WOLLog.query.filter_by(user_id=current_user.id)
+    
+    # Apply search filter
+    if search_query:
+        logs_query = logs_query.join(Computer).join(User).filter(
+            db.or_(
+                Computer.name.ilike(f'%{search_query}%'),
+                User.username.ilike(f'%{search_query}%')
+            )
+        )
+    
+    # Apply date filters
+    if date_from:
+        try:
+            from_date = datetime.strptime(date_from, '%Y-%m-%d')
+            logs_query = logs_query.filter(WOLLog.timestamp >= from_date)
+        except ValueError:
+            pass
+    
+    if date_to:
+        try:
+            to_date = datetime.strptime(date_to, '%Y-%m-%d')
+            # Add one day to include the entire end date
+            to_date = to_date.replace(hour=23, minute=59, second=59)
+            logs_query = logs_query.filter(WOLLog.timestamp <= to_date)
+        except ValueError:
+            pass
+    
+    logs = logs_query.order_by(WOLLog.timestamp.desc()).all()
+    
+    return render_template('history.html', logs=logs, log_type='wol',
+                         search_query=search_query, 
+                         date_from=date_from, 
+                         date_to=date_to)
 
 @app.route('/profile')
 @login_required
@@ -608,6 +845,8 @@ def admin_add_group():
         color = request.form.get('color', '#0066cc').strip()
         icon = request.form.get('icon', 'fas fa-folder').strip()
         computer_ids = request.form.getlist('computers')
+        allow_wake = request.form.get('allow_wake') == '1'
+        allow_shutdown = request.form.get('allow_shutdown') == '1'
         
         if not name:
             flash('Naziv grupe je obavezan', 'error')
@@ -621,7 +860,9 @@ def admin_add_group():
             name=name,
             description=description or None,
             color=color,
-            icon=icon
+            icon=icon,
+            allow_wake=allow_wake,
+            allow_shutdown=allow_shutdown
         )
         
         for cid in computer_ids:
@@ -631,6 +872,18 @@ def admin_add_group():
         
         db.session.add(group)
         db.session.commit()
+        
+        # Audit log: Group created
+        AuditLog.log_action(
+            action='group_create',
+            user=current_user,
+            resource_type='group',
+            resource_id=group.id,
+            status='success',
+            details=f'Created group "{name}" with {len(computer_ids)} computers',
+            ip_address=request.remote_addr,
+            user_agent=request.headers.get('User-Agent')
+        )
         
         flash(f'Grupa "{name}" je uspešno kreirana', 'success')
         return redirect(url_for('admin_groups'))
@@ -654,6 +907,8 @@ def admin_edit_group(group_id):
         color = request.form.get('color', '#0066cc').strip()
         icon = request.form.get('icon', 'fas fa-folder').strip()
         computer_ids = request.form.getlist('computers')
+        allow_wake = request.form.get('allow_wake') == '1'
+        allow_shutdown = request.form.get('allow_shutdown') == '1'
         
         if not name:
             flash('Naziv grupe je obavezan', 'error')
@@ -668,6 +923,8 @@ def admin_edit_group(group_id):
         group.description = description or None
         group.color = color
         group.icon = icon
+        group.allow_wake = allow_wake
+        group.allow_shutdown = allow_shutdown
         
         group.computers = []
         for cid in computer_ids:
@@ -676,6 +933,18 @@ def admin_edit_group(group_id):
                 group.computers.append(computer)
         
         db.session.commit()
+        
+        # Audit log: Group updated
+        AuditLog.log_action(
+            action='group_update',
+            user=current_user,
+            resource_type='group',
+            resource_id=group.id,
+            status='success',
+            details=f'Updated group "{name}" with {len(computer_ids)} computers',
+            ip_address=request.remote_addr,
+            user_agent=request.headers.get('User-Agent')
+        )
         
         flash(f'Grupa "{name}" je ažurirana', 'success')
         return redirect(url_for('admin_groups'))
@@ -695,7 +964,100 @@ def admin_delete_group(group_id):
     db.session.delete(group)
     db.session.commit()
     
+    # Audit log: Group deleted
+    AuditLog.log_action(
+        action='group_delete',
+        user=current_user,
+        resource_type='group',
+        resource_id=group_id,
+        status='success',
+        details=f'Deleted group "{name}"',
+        ip_address=request.remote_addr,
+        user_agent=request.headers.get('User-Agent')
+    )
+    
     return jsonify({'success': True, 'message': f'Grupa "{name}" je obrisana'})
+
+# ==================== APP SETTINGS ====================
+
+@app.route('/admin/settings', methods=['GET', 'POST'])
+@login_required
+def admin_settings():
+    """Admin: Application settings"""
+    if not current_user.is_admin:
+        flash('Pristup odbijen', 'error')
+        return redirect(url_for('dashboard'))
+    
+    if request.method == 'POST':
+        # Update settings
+        enable_groups = request.form.get('enable_groups') == 'on'
+        enable_search = request.form.get('enable_search') == 'on'
+        
+        AppSettings.set('enable_groups', str(enable_groups).lower(), 
+                       'Omogući organizaciju računara u grupe')
+        AppSettings.set('enable_search', str(enable_search).lower(), 
+                       'Omogući pretraživanje računara')
+        
+        db.session.commit()
+        flash('Podešavanja su sačuvana', 'success')
+        return redirect(url_for('admin_settings'))
+    
+    # Get current settings
+    settings = {
+        'enable_groups': AppSettings.get_bool('enable_groups', default=True),
+        'enable_search': AppSettings.get_bool('enable_search', default=True),
+    }
+    
+    return render_template('admin_settings.html', settings=settings)
+
+@app.route('/admin/delete-logs', methods=['POST'])
+@login_required
+def admin_delete_logs():
+    """Admin: Delete WOL logs"""
+    if not current_user.is_admin:
+        return jsonify({'success': False, 'message': 'Pristup odbijen'}), 403
+    
+    try:
+        data = request.get_json()
+        delete_option = data.get('option')
+        
+        if delete_option == 'all':
+            # Delete all logs
+            count = WOLLog.query.count()
+            WOLLog.query.delete()
+            db.session.commit()
+            return jsonify({'success': True, 'message': f'Obrisano {count} logova'})
+        
+        elif delete_option == 'range':
+            # Delete logs in date range
+            from_date_str = data.get('from_date')
+            to_date_str = data.get('to_date')
+            
+            if not from_date_str or not to_date_str:
+                return jsonify({'success': False, 'message': 'Nedostaju datumi'}), 400
+            
+            try:
+                from_date = datetime.strptime(from_date_str, '%Y-%m-%d')
+                to_date = datetime.strptime(to_date_str, '%Y-%m-%d')
+                to_date = to_date.replace(hour=23, minute=59, second=59)
+                
+                logs_query = WOLLog.query.filter(
+                    WOLLog.timestamp >= from_date,
+                    WOLLog.timestamp <= to_date
+                )
+                count = logs_query.count()
+                logs_query.delete()
+                db.session.commit()
+                
+                return jsonify({'success': True, 'message': f'Obrisano {count} logova za period {from_date_str} do {to_date_str}'})
+            except ValueError as e:
+                return jsonify({'success': False, 'message': 'Neispravan format datuma'}), 400
+        else:
+            return jsonify({'success': False, 'message': 'Nepoznata opcija brisanja'}), 400
+            
+    except Exception as e:
+        logger.error(f"Error deleting logs: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 @app.route('/api/groups/<int:group_id>/wake', methods=['POST'])
 @login_required
@@ -857,45 +1219,84 @@ def create_admin():
 status_monitor_thread = None
 status_monitor_running = False
 
+def check_single_computer_status(computer_id, ip_address):
+    """Check status of a single computer (for parallel execution)"""
+    try:
+        is_online, status = check_host_status(ip_address)
+        return (computer_id, status, True)
+    except Exception as e:
+        logger.error(f"Error checking status for computer {computer_id}: {e}")
+        return (computer_id, 'unknown', False)
+
 def monitor_computer_status():
-    """Background thread that monitors computer status"""
+    """Background thread that monitors computer status - OPTIMIZED with parallel checks"""
     global status_monitor_running
+    from concurrent.futures import ThreadPoolExecutor, as_completed
     
     while status_monitor_running:
         with app.app_context():
             try:
-                computers = Computer.query.all()
+                # Fetch all computers with IP addresses
+                computers = Computer.query.filter(Computer.ip_address.isnot(None)).all()
                 
-                for computer in computers:
-                    if computer.ip_address:
-                        is_online, status = check_host_status(computer.ip_address)
+                if not computers:
+                    time.sleep(10)
+                    continue
+                
+                # Parallel status checks with timeout
+                status_updates = []
+                with ThreadPoolExecutor(max_workers=min(10, len(computers))) as executor:
+                    # Submit all tasks
+                    future_to_computer = {
+                        executor.submit(check_host_status, comp.ip_address): comp 
+                        for comp in computers
+                    }
+                    
+                    # Process results as they complete
+                    for future in as_completed(future_to_computer, timeout=8):
+                        computer = future_to_computer[future]
+                        try:
+                            is_online, status = future.result(timeout=2)
+                            status_updates.append((computer, status))
+                        except Exception as e:
+                            logger.debug(f"Status check failed for {computer.name}: {e}")
+                            status_updates.append((computer, 'unknown'))
+                
+                # Batch database updates
+                now = datetime.utcnow()
+                changes = []
+                for computer, new_status in status_updates:
+                    if computer.status != new_status:
+                        # Log uptime change
+                        if new_status in ('online', 'offline'):
+                            try:
+                                uptime_entry = UptimeLog(computer_id=computer.id, status=new_status)
+                                db.session.add(uptime_entry)
+                            except Exception:
+                                pass
                         
-                        # Update status if changed
-                        if computer.status != status:
-                            # Log uptime change
-                            if status in ('online', 'offline'):
-                                try:
-                                    uptime_entry = UptimeLog(computer_id=computer.id, status=status)
-                                    db.session.add(uptime_entry)
-                                except Exception:
-                                    pass
-                            
-                            computer.status = status
-                            computer.last_checked = datetime.utcnow()
-                            db.session.commit()
-                            
-                            # Emit status update to all connected clients
-                            socketio.emit('status_update', {
-                                'computer_id': computer.id,
-                                'status': status,
-                                'last_checked': computer.last_checked.strftime('%Y-%m-%d %H:%M:%S')
-                            }, namespace='/', broadcast=True)
+                        computer.status = new_status
+                        computer.last_checked = now
+                        changes.append({
+                            'computer_id': computer.id,
+                            'status': new_status,
+                            'last_checked': now.strftime('%Y-%m-%d %H:%M:%S')
+                        })
+                
+                # Commit all changes at once
+                if changes:
+                    db.session.commit()
+                    
+                    # Emit all status updates
+                    for change in changes:
+                        socketio.emit('status_update', change, namespace='/', broadcast=True)
                 
             except Exception as e:
-                print(f"Error in status monitor: {e}")
+                logger.error(f"Error in status monitor: {e}")
+                db.session.rollback()
         
-        # Check every 10 seconds
-        time.sleep(10)
+        # Check every 15 seconds (reduced from 10 for less load)
+        time.sleep(15)
 
 @socketio.on('connect')
 def handle_connect():

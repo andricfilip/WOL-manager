@@ -173,8 +173,14 @@
     <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
         <h1>Upravljanje Računarima</h1>
         <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <a href="{{ url_for('admin_users') }}" class="btn btn-secondary">
+                <i class="fas fa-users"></i> Korisnici
+            </a>
             <a href="{{ url_for('admin_groups') }}" class="btn btn-secondary">
                 <i class="fas fa-layer-group"></i> Grupe
+            </a>
+            <a href="{{ url_for('admin_settings') }}" class="btn btn-secondary">
+                <i class="fas fa-cog"></i> Podešavanja
             </a>
             <a href="{{ url_for('admin_add_computer') }}" class="btn btn-primary">
                 <i class="fas fa-plus"></i> Dodaj Računar
@@ -230,12 +236,20 @@
                             <td><code>{{ computer.mac_address }}</code></td>
                             <td>{{ computer.ip_address or '-' }}</td>
                             <td class="assigned-users">
-                                {% if computer.assigned_users.all() %}
-                                    {% for user in computer.assigned_users %}
+                                {% set users_list = computer.assigned_users.all() %}
+                                {% if users_list %}
+                                    {% for user in users_list %}
+                                        {% if loop.index <= 3 %}
                                         <span class="user-badge">
                                             <i class="fas fa-user"></i> {{ user.username }}
                                         </span>
+                                        {% endif %}
                                     {% endfor %}
+                                    {% if users_list | length > 3 %}
+                                    <span class="user-badge" style="background: #f5f5f5; color: #666;">
+                                        ... još {{ users_list | length - 3 }}
+                                    </span>
+                                    {% endif %}
                                 {% else %}
                                     <span style="color: #999;"><i>Nema dodeljenih korisnika</i></span>
                                 {% endif %}
@@ -302,12 +316,20 @@
                     <div class="mobile-info-row">
                         <span class="mobile-info-label">Korisnici:</span>
                         <div class="assigned-users">
-                            {% if computer.assigned_users.all() %}
-                                {% for user in computer.assigned_users %}
+                            {% set users_list = computer.assigned_users.all() %}
+                            {% if users_list %}
+                                {% for user in users_list %}
+                                    {% if loop.index <= 3 %}
                                     <span class="user-badge">
                                         <i class="fas fa-user"></i> {{ user.username }}
                                     </span>
+                                    {% endif %}
                                 {% endfor %}
+                                {% if users_list | length > 3 %}
+                                <span class="user-badge" style="background: #f5f5f5; color: #666;">
+                                    ... još {{ users_list | length - 3 }}
+                                </span>
+                                {% endif %}
                             {% else %}
                                 <span style="color: #999; font-size: 0.85rem;"><i>Nema</i></span>
                             {% endif %}

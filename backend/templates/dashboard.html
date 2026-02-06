@@ -12,12 +12,31 @@
         flex-wrap: wrap;
         gap: 1rem;
     }
-    .dashboard-header h1 { margin: 0; }
+    .dashboard-header h1 { margin: 0; flex: 1; }
     .header-actions {
         display: flex;
         gap: 0.5rem;
         align-items: center;
         flex-wrap: wrap;
+    }
+    
+    @media (max-width: 768px) {
+        .dashboard-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .dashboard-header h1 {
+            text-align: center;
+            font-size: 1.5rem !important;
+        }
+        .header-actions {
+            flex-direction: column;
+            width: 100%;
+        }
+        .header-actions .btn {
+            width: 100%;
+            justify-content: center;
+        }
     }
 
     /* Group Section */
@@ -355,20 +374,24 @@
 
 {# ======== TOOLBAR: Search + Refresh + Timer ======== #}
 <div class="dashboard-toolbar">
+    {% if enable_search %}
     <div class="search-box">
         <i class="fas fa-search"></i>
         <input type="text" id="search-input" placeholder="Pretraži po nazivu, IP adresi, MAC adresi..." autocomplete="off">
     </div>
     <div class="toolbar-divider"></div>
+    {% endif %}
     <button id="refresh-status-btn" class="toolbar-btn toolbar-btn-refresh">
         <i class="fas fa-sync-alt"></i> Proveri status
     </button>
     <span class="auto-refresh-info" id="refresh-info"></span>
 </div>
+{% if enable_search %}
 <div class="no-search-results" id="no-search-results">
     <i class="fas fa-search" style="font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.5;"></i>
     <p>Nema rezultata pretrage</p>
 </div>
+{% endif %}
 
 {% if computers %}
 {# ======== QUICK STATS ======== #}
@@ -610,7 +633,7 @@
     // ======== SEARCH / FILTER ========
     function setupSearch() {
         const input = document.getElementById('search-input');
-        if (!input) return;
+        if (!input) return; // Search disabled
         input.addEventListener('input', () => {
             const q = input.value.toLowerCase().trim();
             let anyVisible = false;
