@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% block title %}Podesavanja Racunara{% endblock %}
+
+{% block extra_css %}
+<style>
+    .prefs-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+    }
+    .prefs-header h1 { margin: 0; }
+
+    .prefs-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+        gap: 1rem;
+    }
+    .pref-card {
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 0.75rem;
+        padding: 1rem;
+        min-width: 0;
+        overflow: hidden;
+    }
+    .pref-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+    .pref-title h3 { margin: 0; font-size: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .pref-meta { color: #666; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .pref-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.6rem 0;
+        border-top: 1px dashed var(--border);
+        min-width: 0;
+    }
+    .pref-row > span:first-child {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        flex-shrink: 1;
+    }
+    .pref-toggle, [data-ssh-status] {
+        flex-shrink: 0;
+    }
+
+    .pref-toggle {
+        position: relative;
+        display: inline-block;
+        width: 48px;
+        height: 26px;
+    }
+    .pref-toggle input { display: none; }
+    .pref-slider {
+        position: absolute;
+        inset: 0;
+        background: #ccc;
+        border-radius: 26px;
+        cursor: pointer;
+        transition: background 0.2s ease;
+    }
+    .pref-slider::before {
+        content: '';
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        left: 3px;
+        top: 3px;
+        background: #fff;
+        border-radius: 50%;
+        transition: transform 0.2s ease;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .pref-toggle input:checked + .pref-slider { background: var(--primary); }
+    .pref-toggle input:checked + .pref-slider::before { transform: translateX(22px); }
+
+    .pref-actions {
+        margin-top: 0.75rem;
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div>
+    <a href="{{ url_for('dashboard') }}" class="back-link" style="display: inline-flex; align-items: center; gap: 0.5rem; color: var(--primary); text-decoration: none; margin-bottom: 1rem;">
+        <i class="fas fa-arrow-left"></i> Nazad
+    </a>
+    <h1 style="margin-bottom: 1.5rem;"><i class="fas fa-sliders-h"></i> Podesavanja racunara</h1>
+
+    {% if computers %}
+    <div class="prefs-grid">
+    {% for computer in computers %}
+    <div class="pref-card" data-computer-id="{{ computer.id }}">
+        <div class="pref-title">
+            <h3><i class="fas fa-desktop"></i> {{ computer.name }}</h3>
+            {% if computer.status %}
+            <span class="pref-meta">Status: {{ computer.status }}</span>
+            {% endif %}
+        </div>
+        {% if computer.ip_address %}
+        <div class="pref-meta"><strong>IP:</strong> {{ computer.ip_address }}</div>
+        {% endif %}
+
+        <div class="pref-row">
+            <span><i class="fas fa-key"></i> SSH Auto-Login</span>
+            {% set user_role = user_roles.get(computer.id, 'operator') if user_roles is defined else 'operator' %}
+            {% set can_change_ssh = current_user.is_admin or user_role == 'owner' or computer.created_by_id == current_user.id %}
+            {% if can_change_ssh %}
+            <label class="pref-toggle">
+                <input type="checkbox" data-ssh-pref="{{ computer.id }}"
+                       {% if computer.ssh_auto_login %}checked{% endif %}>
+                <span class="pref-slider"></span>
+            </label>
+            {% else %}
+            <span data-ssh-status="{{ computer.id }}" style="font-weight: 600; color: {% if computer.ssh_auto_login %}var(--success){% else %}#999{% endif %};">
+                {% if computer.ssh_auto_login %}<i class="fas fa-check-circle"></i> Uključen{% else %}<i class="fas fa-times-circle"></i> Isključen{% endif %}
+            </span>
+            {% endif %}
+        </div>
+
+        <div class="pref-actions">
+            {% if can_change_ssh %}
+            <a href="{{ url_for('edit_computer', computer_id=computer.id) }}" class="btn btn-primary" style="text-decoration: none;">
+                <i class="fas fa-edit"></i> Izmeni uredjaj
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card">
+    <p style="color: #999; margin: 0;">Nemate dodeljenih racunara.</p>
+</div>
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('[data-ssh-pref]').forEach(input => {
+        input.addEventListener('change', async () => {
+            const computerId = input.getAttribute('data-ssh-pref');
+            const value = input.checked;
+            try {
+                const resp = await fetch(`/api/computers/${computerId}/ssh-preference`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ssh_auto_login: value })
+                });
+                const data = await resp.json();
+                if (!data.success) throw new Error(data.message || 'Greska');
+            } catch (err) {
+                input.checked = !value;
+                alert('Ne mogu da sacuvam SSH podesavanje. Pokusaj ponovo.');
+            }
+        });
+    });
+
+    // Socket.IO: Listen for SSH auto-login changes from any user
+    var socket = _globalSocket;
+    var currentUserId = _currentUserId;
+
+    socket.on('ssh_auto_login_changed', function(data) {
+        var cid = String(data.computer_id);
+        var fromOther = (data.user_id !== currentUserId);
+
+        // Update toggle if present (owners)
+        var toggle = document.querySelector('[data-ssh-pref="' + cid + '"]');
+        if (toggle) {
+            toggle.checked = data.ssh_auto_login;
+            if (fromOther) {
+                showSshToast(data.ssh_auto_login
+                    ? 'SSH Auto-Login je UKLJUČEN od strane admina'
+                    : 'SSH Auto-Login je ISKLJUČEN od strane admina');
+            }
+        }
+
+        // Update read-only status text (operators/viewers)
+        var statusSpan = document.querySelector('[data-ssh-status="' + cid + '"]');
+        if (statusSpan) {
+            if (data.ssh_auto_login) {
+                statusSpan.style.color = 'var(--success)';
+                statusSpan.innerHTML = '<i class="fas fa-check-circle"></i> Uključen';
+            } else {
+                statusSpan.style.color = '#999';
+                statusSpan.innerHTML = '<i class="fas fa-times-circle"></i> Isključen';
+            }
+            if (fromOther && !toggle) {
+                showSshToast(data.ssh_auto_login
+                    ? 'SSH Auto-Login je UKLJUČEN od strane admina'
+                    : 'SSH Auto-Login je ISKLJUČEN od strane admina');
+            }
+        }
+    });
+
+    function showSshToast(msg) {
+        var existing = document.getElementById('ssh-change-toast');
+        if (existing) existing.remove();
+        var toast = document.createElement('div');
+        toast.id = 'ssh-change-toast';
+        toast.style.cssText = 'position:fixed;top:80px;right:20px;z-index:9999;max-width:320px;' +
+            'background:#0c5460;color:#fff;padding:1rem 1.25rem;border-radius:0.5rem;' +
+            'box-shadow:0 4px 16px rgba(0,0,0,0.3);font-weight:600;display:flex;align-items:center;gap:0.5rem;';
+        toast.innerHTML = '<i class="fas fa-bell"></i> ' + msg;
+        document.body.appendChild(toast);
+        setTimeout(function() { if (toast.parentNode) toast.remove(); }, 4000);
+    }
+});
+</script>
+{% endblock %}

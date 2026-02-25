@@ -82,12 +82,12 @@
         <div class="profile-info">
             <div class="info-row">
                 <span class="info-label"><i class="fas fa-user"></i> Username</span>
-                <span class="info-value">{{ current_user.username }}</span>
+                <span class="info-value" id="display-username">{{ current_user.username }}</span>
             </div>
 
             <div class="info-row">
                 <span class="info-label"><i class="fas fa-envelope"></i> Email</span>
-                <span class="info-value">{{ current_user.email }}</span>
+                <span class="info-value" id="display-email">{{ current_user.email }}</span>
             </div>
 
             <div class="info-row">
@@ -110,6 +110,24 @@
                 <span class="info-value">{{ current_user.created_at.strftime('%B %d, %Y') }}</span>
             </div>
         </div>
+    </div>
+
+    <div class="card">
+        <h2 style="margin-bottom: 1.5rem;">Izmeni Profil</h2>
+
+        <div class="form-group">
+            <label for="editUsername"><i class="fas fa-user"></i> Korisničko ime</label>
+            <input type="text" id="editUsername" value="{{ current_user.username }}" required minlength="3">
+        </div>
+
+        <div class="form-group">
+            <label for="editEmail"><i class="fas fa-envelope"></i> Email</label>
+            <input type="email" id="editEmail" value="{{ current_user.email }}" required>
+        </div>
+
+        <button type="button" class="btn btn-primary" onclick="updateProfile()">
+            <i class="fas fa-save"></i> Sačuvaj Izmene
+        </button>
     </div>
 
     <div class="card">
@@ -137,6 +155,38 @@
 </div>
 
 <script>
+
+    async function updateProfile() {
+        const username = document.getElementById('editUsername').value.trim();
+        const email = document.getElementById('editEmail').value.trim();
+
+        if (!username || !email) {
+            alert('Sva polja su obavezna');
+            return;
+        }
+
+        try {
+            const response = await fetch('/profile/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, email })
+            });
+            const result = await response.json();
+            if (result.success) {
+                alert(result.message);
+                document.getElementById('display-username').textContent = username;
+                document.getElementById('display-email').textContent = email;
+                // Update navbar username
+                const navUsername = document.querySelector('.navbar-menu .fa-user')?.closest('a')?.querySelector('.hide-mobile');
+                if (navUsername) navUsername.textContent = username;
+            } else {
+                alert(`Greška: ${result.message}`);
+            }
+        } catch (error) {
+            alert(`Greška: ${error.message}`);
+        }
+    }
+
     async function changePassword() {
         const oldPassword = document.getElementById('oldPassword').value;
         const newPassword = document.getElementById('newPassword').value;

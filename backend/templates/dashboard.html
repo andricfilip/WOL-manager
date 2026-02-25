@@ -41,7 +41,19 @@
 
     /* Group Section */
     .group-section {
-        margin-bottom: 2rem;
+        margin-bottom: 0;
+    }
+    /* Multi-column groups grid on desktop */
+    .groups-wrapper {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 560px), 1fr));
+        gap: 1.5rem;
+        align-items: start;
+    }
+    @media (max-width: 768px) {
+        .groups-wrapper {
+            grid-template-columns: 1fr;
+        }
     }
     .group-header-bar {
         display: flex;
@@ -89,7 +101,7 @@
     /* Computer Grid */
     .computer-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
         gap: 1.25rem;
     }
     .computer-card {
@@ -188,6 +200,20 @@
     }
     .shutdown-btn:hover:not(:disabled) { transform: scale(1.03); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
     .shutdown-btn:disabled { background: #ccc; cursor: not-allowed; opacity: 0.6; }
+    .terminal-btn {
+        flex: 1;
+        background: linear-gradient(135deg, #6f42c1, #8854d0);
+        color: white;
+        padding: 0.65rem;
+        border: none;
+        border-radius: 0.3rem;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.3s;
+    }
+    .terminal-btn:hover:not(:disabled) { transform: scale(1.03); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+    .terminal-btn:disabled { background: #ccc; cursor: not-allowed; opacity: 0.6; }
 
     .auto-refresh-info { font-size: 0.85rem; color: #6c757d; }
     .empty-state { text-align: center; padding: 3rem; color: #999; }
@@ -279,15 +305,18 @@
         align-items: center;
         gap: 0.75rem;
         flex: 1;
-        min-width: 140px;
+        min-width: 0;
+        overflow: hidden;
     }
     .quick-stat-icon {
-        width: 40px; height: 40px; border-radius: 10px;
+        width: 42px; height: 42px; border-radius: 50%;
         display: flex; align-items: center; justify-content: center;
-        font-size: 1.2rem; color: white;
+        font-size: 1.25rem; color: white;
+        flex-shrink: 0;
     }
     .quick-stat-value { font-size: 1.4rem; font-weight: 700; color: var(--dark); line-height: 1; }
     .quick-stat-label { font-size: 0.75rem; color: #999; text-transform: uppercase; letter-spacing: 0.5px; }
+
 
     @media (max-width: 768px) {
         .computer-grid { grid-template-columns: 1fr; gap: 1rem; }
@@ -295,10 +324,16 @@
         .dashboard-toolbar { flex-direction: column; }
         .search-box { min-width: 100%; }
         .toolbar-divider { display: none; }
-        .toolbar-btn { width: 100%; justify-content: center; }
         .computer-card h3 { font-size: 1rem; padding-right: 80px; }
-        .computer-actions { flex-direction: column; }
-        .quick-stats { flex-direction: column; }
+        .computer-actions { flex-wrap: wrap; }
+        .computer-actions .wol-btn,
+        .computer-actions .shutdown-btn,
+        .computer-actions .terminal-btn { font-size: 0.82rem; padding: 0.55rem 0.4rem; }
+        .quick-stats { gap: 0.5rem; }
+        .quick-stat { padding: 0.5rem 0.6rem; gap: 0.5rem; }
+        .quick-stat-icon { width: 30px; height: 30px; font-size: 0.75rem; flex-shrink: 0; }
+        .quick-stat-value { font-size: 1rem; }
+        .quick-stat-label { font-size: 0.65rem; }
         .group-header-bar { flex-direction: column; gap: 0.5rem; align-items: stretch; }
     }
     @media (max-width: 480px) {
@@ -354,13 +389,25 @@
     {% if computer.last_checked %}
     <div class="computer-info" data-last-checked="{{ computer.id }}"><strong>Provereno:</strong> {{ computer.last_checked.strftime('%d.%m.%Y %H:%M:%S') }}</div>
     {% endif %}
+    {% set role_value = user_roles.get(computer.id, 'operator') if user_roles is defined else 'operator' %}
+    {% set can_operate = current_user.is_admin or role_value in ['owner', 'operator'] %}
     <div class="computer-actions">
-        <button class="wol-btn" data-wake-btn="{{ computer.id }}" data-wol-btn data-computer-id="{{ computer.id }}" data-computer-name="{{ computer.name }}" {% if computer.status == 'online' %}disabled{% endif %}>
+        <button class="wol-btn" data-wake-btn="{{ computer.id }}" data-wol-btn data-computer-id="{{ computer.id }}" data-computer-name="{{ computer.name }}" {% if computer.status == 'online' or not can_operate %}disabled{% endif %}>
             <i class="fas fa-power-off"></i> Uključi
         </button>
         {% if computer.ssh_host and computer.ssh_username %}
-        <button class="shutdown-btn" data-shutdown-btn="{{ computer.id }}" data-computer-id="{{ computer.id }}" data-computer-name="{{ computer.name }}" {% if computer.status != 'online' %}disabled{% endif %}>
+        <button class="shutdown-btn" data-shutdown-btn="{{ computer.id }}" data-computer-id="{{ computer.id }}" data-computer-name="{{ computer.name }}" {% if computer.status != 'online' or not can_operate %}disabled{% endif %}>
             <i class="fas fa-stop-circle"></i> Ugasi
+        </button>
+        <button class="terminal-btn" data-terminal-btn="{{ computer.id }}" data-ssh-auto-login="{{ computer.ssh_auto_login|lower }}" onclick="openTerminal({{ computer.id }}, '{{ computer.name }}')" {% if computer.status != 'online' or not can_operate %}disabled{% endif %}>
+            <i class="fas fa-terminal"></i> Terminal
+        </button>
+        {% elif computer.ssh_username and computer._ssh_password_encrypted %}
+        <button class="shutdown-btn" data-shutdown-btn="{{ computer.id }}" data-computer-id="{{ computer.id }}" data-computer-name="{{ computer.name }}" {% if computer.status != 'online' or not can_operate %}disabled{% endif %}>
+            <i class="fas fa-stop-circle"></i> Ugasi
+        </button>
+        <button class="terminal-btn" data-terminal-btn="{{ computer.id }}" data-ssh-auto-login="{{ computer.ssh_auto_login|lower }}" onclick="openTerminal({{ computer.id }}, '{{ computer.name }}')" {% if computer.status != 'online' or not can_operate %}disabled{% endif %}>
+            <i class="fas fa-terminal"></i> Terminal
         </button>
         {% endif %}
     </div>
@@ -397,11 +444,11 @@
 {# ======== QUICK STATS ======== #}
 <div class="quick-stats">
     <div class="quick-stat">
-        <div class="quick-stat-icon" style="background: linear-gradient(135deg, #28a745, #20c997);"><i class="fas fa-check-circle"></i></div>
+        <div class="quick-stat-icon" style="background: linear-gradient(135deg, #28a745, #20c997);"><i class="fas fa-check"></i></div>
         <div><div class="quick-stat-value" id="stat-online">-</div><div class="quick-stat-label">Online</div></div>
     </div>
     <div class="quick-stat">
-        <div class="quick-stat-icon" style="background: linear-gradient(135deg, #dc3545, #e74c6f);"><i class="fas fa-times-circle"></i></div>
+        <div class="quick-stat-icon" style="background: linear-gradient(135deg, #dc3545, #e74c6f);"><i class="fas fa-times"></i></div>
         <div><div class="quick-stat-value" id="stat-offline">-</div><div class="quick-stat-label">Offline</div></div>
     </div>
     <div class="quick-stat">
@@ -412,7 +459,7 @@
 
 {# ======== GROUPED COMPUTERS ======== #}
 {% set ns = namespace(grouped_ids=[]) %}
-
+<div class="groups-wrapper">
 {% for group in groups %}
     {% set gns = namespace(has_any=false) %}
     {% for computer in group.computers %}
@@ -470,6 +517,7 @@
     </div>
 </div>
 {% endif %}
+</div>{# end groups-wrapper #}
 
 {% else %}
 <div class="card">
@@ -509,6 +557,41 @@
         if (wakeBtn) wakeBtn.disabled = isOnline;
         const shutBtn = document.querySelector(`[data-shutdown-btn="${computerId}"]`);
         if (shutBtn) shutBtn.disabled = !isOnline;
+        const termBtn = document.querySelector(`[data-terminal-btn="${computerId}"]`);
+        if (termBtn) termBtn.disabled = !isOnline;
+    }
+
+    function ensureSshButtons(computerId, hasSsh, computerName) {
+        if (!hasSsh) return;
+        const card = document.querySelector(`.computer-card[data-computer-id="${computerId}"]`);
+        if (!card) return;
+        // Already has shutdown button?
+        if (card.querySelector(`[data-shutdown-btn="${computerId}"]`)) return;
+        const actions = card.querySelector('.computer-actions');
+        if (!actions) return;
+        // Determine if online
+        const badge = card.querySelector(`[data-status-badge="${computerId}"]`);
+        const isOnline = badge && badge.classList.contains('status-online');
+        const disabledAttr = isOnline ? '' : 'disabled';
+        // Add shutdown button
+        const shutBtn = document.createElement('button');
+        shutBtn.className = 'shutdown-btn';
+        shutBtn.setAttribute('data-shutdown-btn', computerId);
+        shutBtn.setAttribute('data-computer-id', computerId);
+        shutBtn.setAttribute('data-computer-name', computerName);
+        if (!isOnline) shutBtn.disabled = true;
+        shutBtn.innerHTML = '<i class="fas fa-stop-circle"></i> Ugasi';
+        actions.appendChild(shutBtn);
+        // Add terminal button
+        const termBtn = document.createElement('button');
+        termBtn.className = 'terminal-btn';
+        termBtn.setAttribute('data-terminal-btn', computerId);
+        termBtn.onclick = function() { openTerminal(computerId, computerName); };
+        if (!isOnline) termBtn.disabled = true;
+        termBtn.innerHTML = '<i class="fas fa-terminal"></i> Terminal';
+        actions.appendChild(termBtn);
+        // Re-bind shutdown handler
+        setupShutdownButtons();
     }
     function updateLastChecked(computerId, timestamp) {
         const el = document.querySelector(`[data-last-checked="${computerId}"]`);
@@ -546,6 +629,7 @@
                 result.results.forEach(c => {
                     updateStatusBadge(c.id, c.status, c.is_online);
                     if (c.last_checked) updateLastChecked(c.id, c.last_checked);
+                    if (c.has_ssh) ensureSshButtons(c.id, c.has_ssh, c.name);
                 });
             }
         } catch (err) {
@@ -667,6 +751,19 @@
         });
         if (document.querySelector('.computer-grid')) startAutoRefresh();
         updateQuickStats();
+
+        // Socket.IO: Listen for SSH preference changes
+        var socket = _globalSocket;
+        var currentUserId = _currentUserId;
+        
+        socket.on('ssh_auto_login_changed', function(data) {
+            // Update data-ssh-auto-login attribute on terminal button for all users who can see it
+            const termBtn = document.querySelector(`[data-terminal-btn="${data.computer_id}"]`);
+            if (termBtn) {
+                termBtn.setAttribute('data-ssh-auto-login', data.ssh_auto_login ? 'true' : 'false');
+            }
+        });
+
     });
 </script>
 {% endblock %}

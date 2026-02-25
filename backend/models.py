@@ -80,6 +80,11 @@ class Computer(db.Model):
     ssh_port = db.Column(db.Integer, default=22)
     ssh_username = db.Column(db.String(100))
     _ssh_password_encrypted = db.Column('ssh_password', db.String(500))  # Encrypted storage
+    ssh_auto_login = db.Column(db.Boolean, default=False)  # Per-computer SSH auto-login setting
+    
+    # Creator/Owner of the computer (optional - needed for user settings)
+    created_by_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    created_by = db.relationship('User', backref=db.backref('created_computers', lazy='dynamic'))
     
     # Remove owner_id - now using many-to-many relationship
     logs = db.relationship('WOLLog', backref='computer', lazy=True, cascade='all, delete-orphan')
@@ -111,6 +116,23 @@ class Computer(db.Model):
     
     def __repr__(self):
         return f'<Computer {self.name}>'
+
+class UserComputerPreference(db.Model):
+    """Per-user preferences for assigned computers"""
+    __tablename__ = 'user_computer_preference'
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'computer_id', name='uq_user_computer_pref'),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    computer_id = db.Column(db.Integer, db.ForeignKey('computer.id'), nullable=False, index=True)
+    ssh_auto_login = db.Column(db.Boolean, default=False, nullable=False)
+    role = db.Column(db.String(20), default='operator', nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    user = db.relationship('User', backref=db.backref('computer_preferences', lazy='dynamic'))
+    computer = db.relationship('Computer', backref=db.backref('user_preferences', lazy='dynamic'))
 
 class WOLLog(db.Model):
     """WOL action log"""

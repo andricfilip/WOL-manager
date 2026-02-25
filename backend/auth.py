@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from flask_login import login_user, logout_user, login_required, current_user
-from models import db, User
+from models import db, User, AuditLog
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -24,12 +24,30 @@ def login():
         if user and user.check_password(password):
             session.permanent = True
             login_user(user, remember=remember)
+            AuditLog.log_action(
+                action='login_success',
+                user=user,
+                resource_type='auth',
+                status='success',
+                details='User login successful',
+                ip_address=request.remote_addr,
+                user_agent=request.headers.get('User-Agent')
+            )
             flash(f'Dobrodošli nazad, {user.username}!', 'success')
             next_page = request.args.get('next')
             if next_page and next_page.startswith('/'):
                 return redirect(next_page)
             return redirect(url_for('dashboard'))
         else:
+            AuditLog.log_action(
+                action='login_failed',
+                user=user,
+                resource_type='auth',
+                status='failed',
+                details=f'Failed login attempt for username: {username}',
+                ip_address=request.remote_addr,
+                user_agent=request.headers.get('User-Agent')
+            )
             flash('Pogrešno korisničko ime ili lozinka', 'error')
     
     return render_template('login.html')
@@ -38,6 +56,15 @@ def login():
 @login_required
 def logout():
     """Logout user"""
+    AuditLog.log_action(
+        action='logout',
+        user=current_user,
+        resource_type='auth',
+        status='success',
+        details='User logout',
+        ip_address=request.remote_addr,
+        user_agent=request.headers.get('User-Agent')
+    )
     logout_user()
     flash('Odjavljeni ste.', 'info')
     return redirect(url_for('auth.login'))

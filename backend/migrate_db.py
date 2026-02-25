@@ -25,6 +25,31 @@ def migrate_database():
                 print("✓ Kolona 'can_view_groups' dodata")
                 db.session.rollback()  # Clear session after ALTER
             
+            # Add ssh_terminal_auto_login column if needed
+            try:
+                User.query.with_entities(User.ssh_terminal_auto_login).first()
+            except Exception:
+                print("⚙️  Dodajem 'ssh_terminal_auto_login' kolonu u User tabelu...")
+                db.session.rollback()
+                with db.engine.connect() as conn:
+                    conn.execute(db.text("ALTER TABLE \"user\" ADD COLUMN ssh_terminal_auto_login BOOLEAN DEFAULT FALSE"))
+                    conn.commit()
+                print("✓ Kolona 'ssh_terminal_auto_login' dodata")
+                db.session.rollback()
+            
+            # Add created_by_id column to Computer if needed
+            try:
+                from models import Computer
+                Computer.query.with_entities(Computer.created_by_id).first()
+            except Exception:
+                print("⚙️  Dodajem 'created_by_id' kolonu u Computer tabelu...")
+                db.session.rollback()
+                with db.engine.connect() as conn:
+                    conn.execute(db.text("ALTER TABLE computer ADD COLUMN created_by_id INTEGER REFERENCES \"user\"(id)"))
+                    conn.commit()
+                print("✓ Kolona 'created_by_id' dodata")
+                db.session.rollback()
+            
             # Create tables (this will only create missing tables)
             db.create_all()
             
@@ -40,7 +65,8 @@ def migrate_database():
             db.session.commit()
             print("\n✓ Migracija uspešna!")
             print("  Tabela 'app_settings' je kreirana ili već postoji.")
-            print("  User model je ažuriran sa 'can_view_groups' poljem.")
+            print("  User model je ažuriran sa novim poljima.")
+            print("  Computer model je ažuriran sa 'created_by_id' poljem.")
             print("  Default podešavanja su postavljena.\n")
             return True
             

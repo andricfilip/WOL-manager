@@ -1,43 +1,79 @@
 {% extends "base.html" %}
 
-{% block title %}Edit Computer{% endblock %}
+{% block title %}Izmeni racunar{% endblock %}
 
 {% block content %}
-<div style="max-width: 600px; margin: 0 auto;">
-    <h1 style="margin-bottom: 1.5rem;">Edit Computer</h1>
+<div style="max-width: 700px; margin: 0 auto;">
+    <a href="{{ url_for('computer_preferences') }}" class="back-link" style="display: inline-flex; align-items: center; gap: 0.5rem; color: var(--primary); text-decoration: none; margin-bottom: 1rem;">
+        <i class="fas fa-arrow-left"></i> Nazad
+    </a>
+    <h1 style="margin-bottom: 1.5rem;"><i class="fas fa-edit"></i> Izmeni racunar</h1>
 
     <div class="card">
         <form method="post">
             <div class="form-group">
-                <label for="name"><i class="fas fa-desktop"></i> Computer Name</label>
+                <label for="name"><i class="fas fa-desktop"></i> Naziv racunara</label>
                 <input type="text" id="name" name="name" value="{{ computer.name }}" required>
             </div>
 
             <div class="form-group">
-                <label><i class="fas fa-ethernet"></i> MAC Address</label>
+                <label><i class="fas fa-ethernet"></i> MAC adresa</label>
                 <input type="text" value="{{ computer.mac_address }}" disabled style="background: #f5f5f5;">
-                <small style="color: #999;">MAC address cannot be changed</small>
+                <small style="color: #999;">MAC adresa se ne moze menjati</small>
             </div>
 
             <div class="form-group">
-                <label for="ip_address"><i class="fas fa-network-wired"></i> IP Address</label>
+                <label for="ip_address"><i class="fas fa-network-wired"></i> IP adresa</label>
                 <input type="text" id="ip_address" name="ip_address" value="{{ computer.ip_address or '' }}">
             </div>
 
             <div class="form-group">
-                <label for="description"><i class="fas fa-comment"></i> Description</label>
+                <label for="description"><i class="fas fa-comment"></i> Opis</label>
                 <textarea id="description" name="description" rows="3">{{ computer.description or '' }}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="os_type"><i class="fas fa-laptop"></i> Operativni sistem</label>
+                <select id="os_type" name="os_type" required>
+                    <option value="linux" {% if computer.os_type == 'linux' %}selected{% endif %}>Linux</option>
+                    <option value="windows" {% if computer.os_type == 'windows' %}selected{% endif %}>Windows</option>
+                    <option value="unknown" {% if computer.os_type == 'unknown' %}selected{% endif %}>Nepoznat</option>
+                </select>
+            </div>
+
+            <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid var(--border);">
+
+            <div class="form-group">
+                <label for="ssh_host"><i class="fas fa-server"></i> SSH host</label>
+                <input type="text" id="ssh_host" name="ssh_host" value="{{ computer.ssh_host or '' }}" placeholder="npr. 192.168.1.100">
+            </div>
+
+            <div class="form-group">
+                <label for="ssh_port"><i class="fas fa-ethernet"></i> SSH port</label>
+                <input type="number" id="ssh_port" name="ssh_port" value="{{ computer.ssh_port or 22 }}" min="1" max="65535">
+            </div>
+
+            <div class="form-group">
+                <label for="ssh_username"><i class="fas fa-user"></i> SSH korisnicko ime</label>
+                <input type="text" id="ssh_username" name="ssh_username" value="{{ computer.ssh_username or '' }}">
+            </div>
+
+            <div class="form-group">
+                <label for="ssh_password"><i class="fas fa-key"></i> SSH lozinka</label>
+                <input type="password" id="ssh_password" name="ssh_password" value="" placeholder="Ostavi prazno da zadrzis postojecu">
             </div>
 
             <div style="display: flex; gap: 1rem;">
                 <button type="submit" class="btn btn-primary" style="flex: 1;">
-                    <i class="fas fa-save"></i> Save Changes
+                    <i class="fas fa-save"></i> Sacuvaj izmene
                 </button>
-                <a href="{{ url_for('dashboard') }}" class="btn" style="flex: 1; background: #999; color: white; text-align: center;">
-                    Cancel
+                <a href="{{ url_for('computer_preferences') }}" class="btn" style="flex: 1; background: #999; color: white; text-align: center;">
+                    Otkaži
                 </a>
             </div>
         </form>
     </div>
 </div>
+
+
 {% endblock %}

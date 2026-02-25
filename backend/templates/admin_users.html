@@ -211,6 +211,9 @@
                             <td>
                                 <div class="action-buttons">
                                     {% if user.id != current_user.id %}
+                                        <button class="btn btn-primary btn-sm" onclick="editUser({{ user.id }}, '{{ user.username }}', '{{ user.email }}')" title="Izmeni korisnika">
+                                            <i class="fas fa-edit"></i> Izmeni
+                                        </button>
                                         <button class="btn btn-warning btn-sm" onclick="toggleAdminStatus({{ user.id }})" title="Promeni admin status">
                                             <i class="fas fa-exchange-alt"></i> Uloga
                                         </button>
@@ -227,6 +230,9 @@
                                             <i class="fas fa-trash"></i> Obriši
                                         </button>
                                     {% else %}
+                                        <button class="btn btn-primary btn-sm" disabled title="Ne možete menjati svoj nalog">
+                                            <i class="fas fa-edit"></i> Izmeni
+                                        </button>
                                         <button class="btn btn-warning btn-sm" disabled title="Ne možete menjati svoju ulogu">
                                             <i class="fas fa-exchange-alt"></i> Uloga
                                         </button>
@@ -283,6 +289,9 @@
                         
                         {% if user.id != current_user.id %}
                             <div class="mobile-actions">
+                                <button class="btn btn-primary btn-sm" onclick="editUser({{ user.id }}, '{{ user.username }}', '{{ user.email }}')">
+                                    <i class="fas fa-edit"></i> Izmeni
+                                </button>
                                 <button class="btn btn-warning btn-sm" onclick="toggleAdminStatus({{ user.id }})">
                                     <i class="fas fa-exchange-alt"></i> Promeni Ulogu
                                 </button>
@@ -313,7 +322,73 @@
     </div>
 </div>
 
+<!-- Edit User Modal -->
+<div id="editUserModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 10000; align-items: center; justify-content: center;">
+    <div style="background: white; border-radius: 0.75rem; padding: 2rem; max-width: 450px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+        <h2 style="margin: 0 0 1.5rem 0; color: var(--dark);"><i class="fas fa-user-edit"></i> Izmeni Korisnika</h2>
+        <input type="hidden" id="editUserId">
+        <div class="form-group">
+            <label for="editUsername"><i class="fas fa-user"></i> Korisničko ime</label>
+            <input type="text" id="editUsername" required minlength="3">
+        </div>
+        <div class="form-group">
+            <label for="editEmail"><i class="fas fa-envelope"></i> Email</label>
+            <input type="email" id="editEmail" required>
+        </div>
+        <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+            <button class="btn btn-primary" onclick="saveUserEdit()" style="flex: 1;">
+                <i class="fas fa-save"></i> Sačuvaj
+            </button>
+            <button class="btn btn-secondary" onclick="closeEditModal()" style="flex: 1;">
+                <i class="fas fa-times"></i> Otkaži
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
+    // Edit user modal
+    function editUser(userId, username, email) {
+        const modal = document.getElementById('editUserModal');
+        document.getElementById('editUserId').value = userId;
+        document.getElementById('editUsername').value = username;
+        document.getElementById('editEmail').value = email;
+        modal.style.display = 'flex';
+    }
+
+    function closeEditModal() {
+        document.getElementById('editUserModal').style.display = 'none';
+    }
+
+    async function saveUserEdit() {
+        const userId = document.getElementById('editUserId').value;
+        const username = document.getElementById('editUsername').value.trim();
+        const email = document.getElementById('editEmail').value.trim();
+
+        if (!username || !email) {
+            alert('Sva polja su obavezna');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/admin/users/${userId}/edit`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, email })
+            });
+            const result = await response.json();
+            if (result.success) {
+                alert(result.message);
+                closeEditModal();
+                location.reload();
+            } else {
+                alert(`Greška: ${result.message}`);
+            }
+        } catch (error) {
+            alert(`Greška: ${error.message}`);
+        }
+    }
+
     async function toggleAdminStatus(userId) {
         if (!confirm('Da li ste sigurni da želite promeniti admin status?')) {
             return;

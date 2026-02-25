@@ -1,11 +1,11 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+﻿from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import LoginManager, login_required, current_user
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from datetime import datetime
 from config import config
-from models import db, User, Computer, WOLLog, ShutdownLog, AuditLog, ComputerGroup, UptimeLog, AppSettings
+from models import db, User, Computer, WOLLog, ShutdownLog, AuditLog, ComputerGroup, UptimeLog, AppSettings, UserComputerPreference
 from wol import send_wol_packet, validate_mac_address, check_host_status, shutdown_computer_ssh
 from encryption import verify_encryption_setup
 from security import init_security
@@ -67,14 +67,31 @@ def verify_security():
     global _security_verified
     if not _security_verified:
         if not verify_encryption_setup():
-            logger.error("⚠️  ENCRYPTION NOT PROPERLY CONFIGURED! Set ENCRYPTION_KEY in environment.")
+            logger.error("âš ï¸  ENCRYPTION NOT PROPERLY CONFIGURED! Set ENCRYPTION_KEY in environment.")
         else:
-            logger.info("✓ Encryption verified and working correctly")
+            logger.info("âœ“ Encryption verified and working correctly")
         _security_verified = True
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+def _get_user_role(user, computer):
+    if user.is_admin:
+        return 'owner'
+    pref = UserComputerPreference.query.filter_by(
+        user_id=user.id,
+        computer_id=computer.id
+    ).first()
+    if pref and pref.role:
+        return pref.role
+    if computer.created_by_id == user.id:
+        return 'owner'
+    return 'operator'
+
+def _can_operate(user, computer):
+    role = _get_user_role(user, computer)
+    return role in ('owner', 'operator', 'editor')
 
 # ==================== ROUTES ====================
 
@@ -110,6 +127,9 @@ def dashboard():
             # Check if user has access to this computer
             if not computer or current_user not in computer.assigned_users:
                 return jsonify({'success': False, 'message': 'Pristup odbijen'}), 403
+
+            if not _can_operate(current_user, computer):
+                return jsonify({'success': False, 'message': 'Nemate dozvolu za ovu akciju'}), 403
             
             # Send WOL packet
             success, message = send_wol_packet(computer.mac_address)
@@ -131,11 +151,23 @@ def dashboard():
             })
     
     groups = ComputerGroup.query.order_by(ComputerGroup.name).all() if show_groups else []
+
+    # Per-user roles
+    user_roles = {}
+    if computers:
+        comp_ids = [c.id for c in computers]
+        prefs = UserComputerPreference.query.filter(
+            UserComputerPreference.user_id == current_user.id,
+            UserComputerPreference.computer_id.in_(comp_ids)
+        ).all()
+        user_roles = {p.computer_id: (p.role or 'operator') for p in prefs}
+
     return render_template('dashboard.html', 
                          computers=computers, 
                          groups=groups,
                          enable_groups=show_groups,
-                         enable_search=enable_search)
+                         enable_search=enable_search,
+                         user_roles=user_roles)
 
 @app.route('/api/shutdown', methods=['POST'])
 @login_required
@@ -164,16 +196,22 @@ def shutdown_computer():
             )
             return jsonify({'success': False, 'message': 'Pristup odbijen'}), 403
         
+        if not _can_operate(current_user, computer):
+            return jsonify({'success': False, 'message': 'Nemate dozvolu za ovu akciju'}), 403
+
         # Check if SSH is configured
-        if not computer.ssh_host or not computer.ssh_username or not computer.ssh_password:
+        if not computer.ssh_username or not computer.ssh_password:
             return jsonify({
                 'success': False, 
                 'message': 'SSH nije konfigurisan za ovaj računar. Kontaktirajte administratora.'
             }), 400
         
+        # BUG 2 fix: fall back to ip_address when ssh_host is empty
+        ssh_host = computer.ssh_host if computer.ssh_host and computer.ssh_host.strip() else computer.ip_address
+        
         # Send shutdown command via SSH
         success, message = shutdown_computer_ssh(
-            host=computer.ssh_host or computer.ip_address,
+            host=ssh_host,
             username=computer.ssh_username,
             password=computer.ssh_password,
             port=computer.ssh_port or 22,
@@ -213,7 +251,7 @@ def shutdown_computer():
                 'computer_id': computer.id,
                 'status': 'offline',
                 'last_checked': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
-            }, namespace='/', broadcast=True)
+            }, namespace='/')
         
         return jsonify({
             'success': success, 
@@ -272,17 +310,44 @@ def admin_add_computer():
             ssh_host=request.form.get('ssh_host', '').strip() or None,
             ssh_port=int(request.form.get('ssh_port', 22)),
             ssh_username=request.form.get('ssh_username', '').strip() or None,
-            ssh_password=request.form.get('ssh_password', '').strip() or None
+            ssh_password=request.form.get('ssh_password', '').strip() or None,
+            ssh_auto_login=request.form.get('ssh_auto_login') == 'on',  # Per-computer SSH auto-login
+            created_by_id=None
         )
         
-        # Assign users
+        # Assign users and roles
+        db.session.add(computer)
+        db.session.flush()
+        owner_ids = []
         for user_id in assigned_user_ids:
             user = User.query.get(int(user_id))
             if user:
                 computer.assigned_users.append(user)
+                role = request.form.get(f'role_{user_id}', 'operator')
+                if role == 'owner':
+                    owner_ids.append(user.id)
+                pref = UserComputerPreference(
+                    user_id=user.id,
+                    computer_id=computer.id,
+                    role=role,
+                    ssh_auto_login=False
+                )
+                db.session.add(pref)
+
+        if len(owner_ids) >= 1:
+            computer.created_by_id = owner_ids[0]
         
-        db.session.add(computer)
         db.session.commit()
+        
+        # Emit role assignments via WebSocket for live updates
+        for user_id in assigned_user_ids:
+            role = request.form.get(f'role_{user_id}', 'operator')
+            socketio.emit('computer_role_changed', {
+                'computer_id': computer.id,
+                'user_id': int(user_id),
+                'role': role,
+                'has_access': True
+            }, namespace='/')
         
         # Audit log: Computer created
         AuditLog.log_action(
@@ -291,7 +356,7 @@ def admin_add_computer():
             resource_type='computer',
             resource_id=computer.id,
             status='success',
-            details=f'Created computer "{name}" (MAC: {mac_address})',
+            details=f'Created computer "{name}" (MAC: {mac_address}, owner_id: {computer.created_by_id})',
             ip_address=request.remote_addr,
             user_agent=request.headers.get('User-Agent')
         )
@@ -324,6 +389,7 @@ def admin_edit_computer(computer_id):
         computer.ssh_host = request.form.get('ssh_host', '').strip() or None
         computer.ssh_port = int(request.form.get('ssh_port', 22))
         computer.ssh_username = request.form.get('ssh_username', '').strip() or None
+        computer.ssh_auto_login = request.form.get('ssh_auto_login') == 'on'
         
         # Only update password if new one is provided (security: never expose existing password)
         new_password = request.form.get('ssh_password', '').strip()
@@ -347,14 +413,70 @@ def admin_edit_computer(computer_id):
         
         computer.mac_address = mac_address
         
-        # Update assigned users
+        # Update assigned users and roles
         computer.assigned_users = []
+        assigned_ids_int = set()
+        owner_ids = []
         for user_id in assigned_user_ids:
-            user = User.query.get(int(user_id))
+            uid = int(user_id)
+            assigned_ids_int.add(uid)
+            user = User.query.get(uid)
             if user:
                 computer.assigned_users.append(user)
+
+        existing_prefs = UserComputerPreference.query.filter_by(computer_id=computer.id).all()
+        prefs_by_user = {p.user_id: p for p in existing_prefs}
+
+        for uid in assigned_ids_int:
+            role = request.form.get(f'role_{uid}', 'operator')
+            if role == 'owner':
+                owner_ids.append(uid)
+            pref = prefs_by_user.get(uid)
+            if pref:
+                pref.role = role
+            else:
+                db.session.add(UserComputerPreference(
+                    user_id=uid,
+                    computer_id=computer.id,
+                    role=role,
+                    ssh_auto_login=False
+                ))
+
+        computer.created_by_id = owner_ids[0] if owner_ids else None
+
+        # Remove prefs for users no longer assigned
+        for uid, pref in prefs_by_user.items():
+            if uid not in assigned_ids_int:
+                db.session.delete(pref)
         
         db.session.commit()
+        
+        # Emit role changes via WebSocket for live updates
+        for uid in assigned_ids_int:
+            role = request.form.get(f'role_{uid}', 'operator')
+            socketio.emit('computer_role_changed', {
+                'computer_id': computer.id,
+                'user_id': uid,
+                'role': role,
+                'has_access': True
+            }, namespace='/')
+        
+        # Notify users who lost access
+        for uid, pref in prefs_by_user.items():
+            if uid not in assigned_ids_int:
+                socketio.emit('computer_role_changed', {
+                    'computer_id': computer.id,
+                    'user_id': uid,
+                    'role': None,
+                    'has_access': False
+                }, namespace='/')
+        
+        # Emit SSH auto-login change via WebSocket for live updates
+        socketio.emit('ssh_auto_login_changed', {
+            'computer_id': computer.id,
+            'ssh_auto_login': computer.ssh_auto_login,
+            'user_id': current_user.id
+        }, namespace='/')
         
         # Audit log: Computer updated
         AuditLog.log_action(
@@ -375,7 +497,11 @@ def admin_edit_computer(computer_id):
     has_ssh_password = computer._ssh_password_encrypted is not None and computer._ssh_password_encrypted != ''
     
     users = User.query.all()
-    return render_template('admin_edit_computer.html', computer=computer, users=users, has_ssh_password=has_ssh_password)
+    # Build role map for template
+    prefs = UserComputerPreference.query.filter_by(computer_id=computer.id).all()
+    user_roles = {p.user_id: (p.role or 'operator') for p in prefs}
+
+    return render_template('admin_edit_computer.html', computer=computer, users=users, has_ssh_password=has_ssh_password, user_roles=user_roles)
 
 @app.route('/admin/computers/<int:computer_id>/delete', methods=['POST'])
 @login_required
@@ -568,6 +694,57 @@ def delete_user(user_id):
     
     return jsonify({'success': True, 'message': f'Korisnik {username} je obrisan'})
 
+@app.route('/admin/users/<int:user_id>/edit', methods=['POST'])
+@login_required
+def admin_edit_user(user_id):
+    """Admin: Edit user username and email"""
+    if not current_user.is_admin:
+        return jsonify({'success': False, 'message': 'Pristup odbijen'}), 403
+    
+    user = User.query.get_or_404(user_id)
+    data = request.get_json() or {}
+    
+    new_username = data.get('username', '').strip()
+    new_email = data.get('email', '').strip()
+    
+    if not new_username or not new_email:
+        return jsonify({'success': False, 'message': 'Korisničko ime i email su obavezni'}), 400
+    
+    if len(new_username) < 3:
+        return jsonify({'success': False, 'message': 'Korisničko ime mora imati najmanje 3 karaktera'}), 400
+    
+    # Check uniqueness
+    existing_user = User.query.filter(User.username == new_username, User.id != user.id).first()
+    if existing_user:
+        return jsonify({'success': False, 'message': 'Korisničko ime već postoji'}), 400
+    
+    existing_email = User.query.filter(User.email == new_email, User.id != user.id).first()
+    if existing_email:
+        return jsonify({'success': False, 'message': 'Email već postoji'}), 400
+    
+    old_username = user.username
+    user.username = new_username
+    user.email = new_email
+    db.session.commit()
+    
+    AuditLog.log_action(
+        action='user_update',
+        user=current_user,
+        resource_type='user',
+        resource_id=user.id,
+        status='success',
+        details=f'Updated user "{old_username}" -> "{new_username}", email: {new_email}',
+        ip_address=request.remote_addr,
+        user_agent=request.headers.get('User-Agent')
+    )
+    
+    return jsonify({
+        'success': True,
+        'message': f'Korisnik je ažuriran',
+        'username': user.username,
+        'email': user.email
+    })
+
 @app.route('/history')
 @login_required
 def history():
@@ -701,6 +878,77 @@ def profile():
     """User profile"""
     return render_template('profile.html', user=current_user)
 
+@app.route('/computers/preferences')
+@login_required
+def computer_preferences():
+    """Per-user computer preferences (SSH auto-login)"""
+    if current_user.is_admin:
+        flash('Admin koristi admin panel za podesavanja.', 'info')
+        return redirect(url_for('admin_computers'))
+    
+    computers = current_user.computers
+
+    # Get user roles for each computer
+    user_roles = {}
+    if computers:
+        comp_ids = [c.id for c in computers]
+        prefs = UserComputerPreference.query.filter(
+            UserComputerPreference.user_id == current_user.id,
+            UserComputerPreference.computer_id.in_(comp_ids)
+        ).all()
+        user_roles = {p.computer_id: (p.role or 'operator') for p in prefs}
+
+    return render_template('computer_preferences.html', computers=computers, user_roles=user_roles)
+
+@app.route('/computers/<int:computer_id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_computer(computer_id):
+    """Owner/Admin: edit computer and SSH credentials"""
+    computer = Computer.query.get_or_404(computer_id)
+
+    # Permission: admin or owner only
+    user_role = _get_user_role(current_user, computer)
+    if not current_user.is_admin and user_role != 'owner':
+        flash('Pristup odbijen', 'error')
+        return redirect(url_for('dashboard'))
+
+    if request.method == 'POST':
+        computer.name = request.form.get('name', '').strip()
+        computer.ip_address = request.form.get('ip_address', '').strip() or None
+        computer.description = request.form.get('description', '').strip() or None
+        computer.os_type = request.form.get('os_type', 'linux')
+
+        computer.ssh_host = request.form.get('ssh_host', '').strip() or None
+        computer.ssh_port = int(request.form.get('ssh_port', 22))
+        computer.ssh_username = request.form.get('ssh_username', '').strip() or None
+        # ssh_auto_login is managed via /computers/preferences (not this form)
+
+        new_password = request.form.get('ssh_password', '').strip()
+        if new_password:
+            computer.ssh_password = new_password
+
+        if not computer.name:
+            flash('Naziv racunara je obavezan', 'error')
+            return redirect(url_for('edit_computer', computer_id=computer_id))
+
+        db.session.commit()
+
+        AuditLog.log_action(
+            action='computer_update',
+            user=current_user,
+            resource_type='computer',
+            resource_id=computer.id,
+            status='success',
+            details=f'User updated computer "{computer.name}"',
+            ip_address=request.remote_addr,
+            user_agent=request.headers.get('User-Agent')
+        )
+
+        flash('Racunar je azuriran', 'success')
+        return redirect(url_for('computer_preferences'))
+
+    return render_template('edit_computer.html', computer=computer)
+
 @app.route('/profile/change-password', methods=['POST'])
 @login_required
 def change_password():
@@ -722,6 +970,110 @@ def change_password():
     db.session.commit()
     
     return jsonify({'success': True, 'message': 'Lozinka je promenjena uspešno'})
+
+@app.route('/profile/update', methods=['POST'])
+@login_required
+def update_profile():
+    """Update own username and email"""
+    data = request.get_json() or {}
+    new_username = data.get('username', '').strip()
+    new_email = data.get('email', '').strip()
+    
+    if not new_username or not new_email:
+        return jsonify({'success': False, 'message': 'Sva polja su obavezna'}), 400
+    
+    if len(new_username) < 3:
+        return jsonify({'success': False, 'message': 'Korisničko ime mora imati najmanje 3 karaktera'}), 400
+    
+    # Check uniqueness
+    existing_user = User.query.filter(User.username == new_username, User.id != current_user.id).first()
+    if existing_user:
+        return jsonify({'success': False, 'message': 'Korisničko ime već postoji'}), 400
+    
+    existing_email = User.query.filter(User.email == new_email, User.id != current_user.id).first()
+    if existing_email:
+        return jsonify({'success': False, 'message': 'Email već postoji'}), 400
+    
+    current_user.username = new_username
+    current_user.email = new_email
+    db.session.commit()
+    
+    return jsonify({'success': True, 'message': 'Profil je ažuriran uspešno'})
+
+@app.route('/api/computers/<int:computer_id>', methods=['GET'])
+@login_required
+def get_computer(computer_id):
+    """Get single computer data with has_ssh flag"""
+    computer = Computer.query.get_or_404(computer_id)
+    
+    if not current_user.is_admin and current_user not in computer.assigned_users:
+        return jsonify({'success': False, 'message': 'Pristup odbijen'}), 403
+    
+    has_ssh = bool(computer.ssh_username and computer._ssh_password_encrypted)
+    
+    return jsonify({
+        'success': True,
+        'computer': {
+            'id': computer.id,
+            'name': computer.name,
+            'mac_address': computer.mac_address,
+            'ip_address': computer.ip_address,
+            'description': computer.description,
+            'status': computer.status or 'unknown',
+            'os_type': computer.os_type or 'unknown',
+            'has_ssh': has_ssh,
+            'last_wol': computer.last_wol.strftime('%d.%m.%Y %H:%M') if computer.last_wol else None,
+            'last_shutdown': computer.last_shutdown.strftime('%d.%m.%Y %H:%M') if computer.last_shutdown else None,
+            'last_checked': computer.last_checked.strftime('%d.%m.%Y %H:%M:%S') if computer.last_checked else None,
+        }
+    })
+
+@app.route('/api/computers/<int:computer_id>/ssh-preference', methods=['POST'])
+@login_required
+def set_computer_ssh_preference(computer_id):
+    """Set global SSH auto-login preference for a computer (admin or owner only)"""
+    computer = Computer.query.get_or_404(computer_id)
+
+    # Only admin or owner can change SSH auto-login
+    user_role = _get_user_role(current_user, computer)
+    if not current_user.is_admin and user_role != 'owner':
+        return jsonify({'success': False, 'message': 'Pristup odbijen'}), 403
+
+    data = request.get_json() or {}
+    raw_value = data.get('ssh_auto_login')
+    if isinstance(raw_value, bool):
+        ssh_auto_login = raw_value
+    else:
+        ssh_auto_login = str(raw_value).lower() in ('true', '1', 'yes', 'on')
+
+    computer.ssh_auto_login = ssh_auto_login
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error saving SSH preference: {e}")
+        return jsonify({'success': False, 'message': 'Greska pri čuvanju podesavanja'}), 500
+
+    # Emit SSH auto-login change via WebSocket for live updates
+    try:
+        socketio.emit('ssh_auto_login_changed', {
+            'computer_id': computer_id,
+            'user_id': current_user.id,
+            'ssh_auto_login': ssh_auto_login
+        }, namespace='/')
+    except Exception as e:
+        logger.error(f"Error emitting socket: {e}")
+        # Don't fail the request if socket.io emit fails
+
+    return jsonify({'success': True, 'ssh_auto_login': ssh_auto_login})
+
+@app.route('/api/user/has-computers', methods=['GET'])
+@login_required
+def user_has_computers():
+    """Check if current user has any assigned computers"""
+    has_computers = len(current_user.computers) > 0
+    return jsonify({'has_computers': has_computers})
 
 @app.route('/api/computer/<int:computer_id>/status', methods=['GET'])
 @login_required
@@ -790,11 +1142,14 @@ def check_all_computers_status():
         computer.status = status
         computer.last_checked = datetime.utcnow()
         
+        has_ssh = bool(computer.ssh_username and computer._ssh_password_encrypted)
+        
         return {
             'id': computer.id,
             'name': computer.name,
             'status': status,
             'is_online': is_online,
+            'has_ssh': has_ssh,
             'last_checked': computer.last_checked.isoformat()
         }
     
@@ -1107,11 +1462,12 @@ def statistics():
 def statistics_data():
     """Get statistics data for charts"""
     from sqlalchemy import func
+    import datetime as dt
     
     days = request.args.get('days', 7, type=int)
     days = min(days, 90)  # Max 90 days
     
-    cutoff = datetime.utcnow() - __import__('datetime').timedelta(days=days)
+    cutoff = datetime.utcnow() - dt.timedelta(days=days)
     
     if current_user.is_admin:
         computers = Computer.query.all()
@@ -1119,29 +1475,70 @@ def statistics_data():
         computers = current_user.computers
     
     computer_stats = []
+    stats_dirty = False
     for computer in computers:
         # Uptime logs
         logs = UptimeLog.query.filter(
             UptimeLog.computer_id == computer.id,
             UptimeLog.timestamp >= cutoff
         ).order_by(UptimeLog.timestamp).all()
+
+        # If no uptime logs, create a baseline entry from live status
+        if not logs and computer.ip_address:
+            try:
+                is_online, status = check_host_status(computer.ip_address)
+                if status in ('online', 'offline'):
+                    baseline_time = datetime.utcnow()
+                    baseline_entry = UptimeLog(
+                        computer_id=computer.id,
+                        status=status,
+                        timestamp=baseline_time
+                    )
+                    db.session.add(baseline_entry)
+                    computer.status = status
+                    computer.last_checked = baseline_time
+                    stats_dirty = True
+                    logs = [baseline_entry]
+            except Exception:
+                pass
+        
+        # If no UptimeLog entries, build from WOL + Shutdown logs
+        if not logs:
+            wol_logs = WOLLog.query.filter(
+                WOLLog.computer_id == computer.id,
+                WOLLog.timestamp >= cutoff,
+                WOLLog.status == 'sent'
+            ).all()
+            shutdown_logs_list = ShutdownLog.query.filter(
+                ShutdownLog.computer_id == computer.id,
+                ShutdownLog.timestamp >= cutoff,
+                ShutdownLog.status == 'success'
+            ).all()
+            combined = []
+            for w in wol_logs:
+                combined.append((w.timestamp, 'online'))
+            for s in shutdown_logs_list:
+                combined.append((s.timestamp, 'offline'))
+            combined.sort(key=lambda x: x[0])
+        else:
+            combined = [(l.timestamp, l.status) for l in logs]
         
         # Calculate total online time
-        online_seconds = 0
+        online_seconds = 0.0
         last_online_time = None
-        for log in logs:
-            if log.status == 'online':
-                last_online_time = log.timestamp
-            elif log.status == 'offline' and last_online_time:
-                online_seconds += (log.timestamp - last_online_time).total_seconds()
+        for ts, status in combined:
+            if status == 'online':
+                last_online_time = ts
+            elif status == 'offline' and last_online_time:
+                online_seconds += (ts - last_online_time).total_seconds()
                 last_online_time = None
         
-        # If still online, count up to now
-        if last_online_time and computer.status == 'online':
+        # If still online, count up to now (even if status is stale)
+        if last_online_time:
             online_seconds += (datetime.utcnow() - last_online_time).total_seconds()
         
-        total_seconds = days * 86400
-        uptime_pct = round((online_seconds / total_seconds) * 100, 1) if total_seconds > 0 else 0
+        total_seconds = float(days * 86400)
+        uptime_pct = round((online_seconds / total_seconds) * 100, 1) if total_seconds > 0 else 0.0
         
         # WoL count
         wol_count = WOLLog.query.filter(
@@ -1155,12 +1552,12 @@ def statistics_data():
             ShutdownLog.timestamp >= cutoff
         ).count()
         
-        # Timeline data (hourly)
+        # Timeline data
         timeline = []
-        for log in logs:
+        for ts, status in combined:
             timeline.append({
-                'time': log.timestamp.isoformat(),
-                'status': log.status
+                'time': ts.isoformat(),
+                'status': status
             })
         
         computer_stats.append({
@@ -1175,6 +1572,12 @@ def statistics_data():
             'timeline': timeline
         })
     
+    if stats_dirty:
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+
     return jsonify({'success': True, 'stats': computer_stats, 'days': days})
 
 # Error handlers
@@ -1192,7 +1595,7 @@ def server_error(error):
 def init_db():
     """Initialize the database."""
     db.create_all()
-    print('✓ Baza je inicijalizovana.')
+    print('âœ“ Baza je inicijalizovana.')
 
 @app.cli.command()
 def create_admin():
@@ -1202,7 +1605,7 @@ def create_admin():
     password = input('Lozinka: ')
     
     if User.query.filter_by(username=username).first():
-        print('✗ Korisnik već postoji!')
+        print('âœ— Korisnik već postoji!')
         return
     
     admin = User(username=username, email=email, is_admin=True)
@@ -1211,7 +1614,7 @@ def create_admin():
     db.session.add(admin)
     db.session.commit()
     
-    print(f'✓ Admin korisnik "{username}" je kreiran!')
+    print(f'âœ“ Admin korisnik "{username}" je kreiran!')
 
 # ==================== WEBSOCKET EVENTS ====================
 
@@ -1289,7 +1692,7 @@ def monitor_computer_status():
                     
                     # Emit all status updates
                     for change in changes:
-                        socketio.emit('status_update', change, namespace='/', broadcast=True)
+                        socketio.emit('status_update', change, namespace='/')
                 
             except Exception as e:
                 logger.error(f"Error in status monitor: {e}")
@@ -1324,6 +1727,8 @@ def handle_connect():
 def handle_disconnect():
     """Handle client disconnection"""
     print(f'Client disconnected: {request.sid}')
+    # Clean up SSH terminal session if any
+    _close_terminal_session(request.sid, reason='client disconnect')
 
 @socketio.on('request_status')
 def handle_request_status(data):
@@ -1342,12 +1747,226 @@ def handle_request_status(data):
                 'computer_id': computer.id,
                 'status': status,
                 'last_checked': computer.last_checked.strftime('%Y-%m-%d %H:%M:%S')
-            }, broadcast=True)
+            })
+
+# ==================== SSH TERMINAL ====================
+
+import paramiko as paramiko_lib
+
+# Active SSH terminal sessions: { request.sid: { 'client': SSHClient, 'channel': Channel, 'last_activity': float } }
+ssh_terminal_sessions = {}
+SSH_TERMINAL_TIMEOUT = 900  # 15 minutes inactivity timeout
+
+def _ssh_terminal_cleanup_loop():
+    """Background thread that closes idle SSH terminal sessions"""
+    while True:
+        time.sleep(60)
+        now = time.time()
+        stale_sids = []
+        for sid, sess in list(ssh_terminal_sessions.items()):
+            if now - sess.get('last_activity', 0) > SSH_TERMINAL_TIMEOUT:
+                stale_sids.append(sid)
+        for sid in stale_sids:
+            _close_terminal_session(sid, reason='inactivity timeout')
+            try:
+                socketio.emit('terminal_closed', {'reason': 'Session timed out after 15 minutes of inactivity'}, to=sid)
+            except Exception:
+                pass
+
+_terminal_cleanup_thread = threading.Thread(target=_ssh_terminal_cleanup_loop, daemon=True)
+_terminal_cleanup_thread.start()
+
+def _close_terminal_session(sid, reason='disconnect'):
+    """Safely close and remove an SSH terminal session"""
+    sess = ssh_terminal_sessions.pop(sid, None)
+    if sess is None:
+        return
+    channel = sess.get('channel')
+    client = sess.get('client')
+    computer_id = sess.get('computer_id')
+    if channel:
+        try:
+            channel.close()
+        except Exception:
+            pass
+    if client:
+        try:
+            client.close()
+        except Exception:
+            pass
+    # Audit log
+    if computer_id:
+        try:
+            with app.app_context():
+                user_id = sess.get('user_id')
+                username = sess.get('username', 'unknown')
+                AuditLog.log_action(
+                    action='terminal_close',
+                    user=User.query.get(user_id) if user_id else None,
+                    resource_type='computer',
+                    resource_id=computer_id,
+                    status='success',
+                    details=f'SSH terminal closed ({reason})',
+                )
+        except Exception:
+            pass
+
+def _ssh_read_thread(sid, channel):
+    """Daemon thread: reads from SSH channel and emits to client"""
+    try:
+        while True:
+            if channel.closed:
+                break
+            if channel.recv_ready():
+                data = channel.recv(4096)
+                if not data:
+                    break
+                ssh_terminal_sessions.get(sid, {})['last_activity'] = time.time()
+                socketio.emit('terminal_output', {'data': data.decode('utf-8', errors='replace')}, to=sid)
+            elif channel.recv_stderr_ready():
+                data = channel.recv_stderr(4096)
+                if data:
+                    ssh_terminal_sessions.get(sid, {})['last_activity'] = time.time()
+                    socketio.emit('terminal_output', {'data': data.decode('utf-8', errors='replace')}, to=sid)
+            elif channel.exit_status_ready():
+                break
+            else:
+                time.sleep(0.05)
+    except Exception:
+        pass
+    finally:
+        socketio.emit('terminal_closed', {'reason': 'SSH connection closed'}, to=sid)
+        _close_terminal_session(sid, reason='channel EOF')
+
+@socketio.on('terminal_connect')
+def handle_terminal_connect(data):
+    """Open an SSH terminal session for a given computer"""
+    from flask_login import current_user as sock_user
+
+    computer_id = data.get('computer_id')
+    manual_password = data.get('manual_password')  # Password provided by user if auto-login disabled
+    cols = data.get('cols', 80)
+    rows = data.get('rows', 24)
+
+    if not sock_user or not sock_user.is_authenticated:
+        emit('terminal_error', {'message': 'Not authenticated'})
+        return
+
+    with app.app_context():
+        computer = Computer.query.get(computer_id)
+        if not computer:
+            emit('terminal_error', {'message': 'Computer not found'})
+            return
+
+        # Authorization check
+        if not sock_user.is_admin and sock_user not in computer.assigned_users:
+            emit('terminal_error', {'message': 'Access denied'})
+            return
+
+        if not _can_operate(sock_user, computer):
+            emit('terminal_error', {'message': 'Access denied'})
+            return
+
+        if not computer.ssh_username or not computer._ssh_password_encrypted:
+            emit('terminal_error', {'message': 'SSH is not configured for this computer'})
+            return
+
+        ssh_host = computer.ssh_host if computer.ssh_host and computer.ssh_host.strip() else computer.ip_address
+        ssh_port = computer.ssh_port or 22
+        ssh_user = computer.ssh_username
+        
+        # Use manual password if provided (user didn't want auto-login), otherwise use stored password
+        if manual_password:
+            ssh_pass = manual_password
+        else:
+            ssh_pass = computer.ssh_password  # decrypted via property
+            if not ssh_pass:
+                emit('terminal_error', {'message': 'SSH password could not be decrypted'})
+                return
+
+        try:
+            client = paramiko_lib.SSHClient()
+            client.set_missing_host_key_policy(paramiko_lib.AutoAddPolicy())
+            client.connect(
+                hostname=ssh_host,
+                port=ssh_port,
+                username=ssh_user,
+                password=ssh_pass,
+                timeout=10,
+                look_for_keys=False,
+                allow_agent=False,
+            )
+            channel = client.invoke_shell(term='xterm-256color', width=cols, height=rows)
+            channel.settimeout(0.0)
+
+            ssh_terminal_sessions[request.sid] = {
+                'client': client,
+                'channel': channel,
+                'computer_id': computer.id,
+                'user_id': sock_user.id,
+                'username': sock_user.username,
+                'last_activity': time.time(),
+            }
+
+            # Start reader thread
+            t = threading.Thread(target=_ssh_read_thread, args=(request.sid, channel), daemon=True)
+            t.start()
+
+            # Audit log
+            AuditLog.log_action(
+                action='terminal_open',
+                user=sock_user,
+                resource_type='computer',
+                resource_id=computer.id,
+                status='success',
+                details=f'SSH terminal opened to {computer.name} ({ssh_host})',
+                ip_address=request.remote_addr if hasattr(request, 'remote_addr') else None,
+            )
+
+            emit('terminal_ready', {'message': f'Connected to {computer.name}'})
+
+        except paramiko_lib.AuthenticationException:
+            emit('terminal_error', {'message': 'SSH authentication failed'})
+        except paramiko_lib.NoValidConnectionsError:
+            emit('terminal_error', {'message': 'Cannot connect to SSH server'})
+        except Exception as e:
+            emit('terminal_error', {'message': f'Connection failed: {str(e)}'})
+
+@socketio.on('terminal_input')
+def handle_terminal_input(data):
+    """Forward keystrokes to SSH channel"""
+    sess = ssh_terminal_sessions.get(request.sid)
+    if not sess:
+        return
+    channel = sess.get('channel')
+    if channel and not channel.closed:
+        try:
+            channel.send(data.get('data', ''))
+            sess['last_activity'] = time.time()
+        except Exception:
+            pass
+
+@socketio.on('terminal_resize')
+def handle_terminal_resize(data):
+    """Resize PTY"""
+    sess = ssh_terminal_sessions.get(request.sid)
+    if not sess:
+        return
+    channel = sess.get('channel')
+    cols = data.get('cols', 80)
+    rows = data.get('rows', 24)
+    if channel and not channel.closed:
+        try:
+            channel.resize_pty(width=cols, height=rows)
+        except Exception:
+            pass
 
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    socketio.run(app, host='0.0.0.0', port=5000, debug=True, allow_unsafe_werkzeug=True)
-    # Disable reloader in production to prevent session issues
-    is_dev = os.environ.get('FLASK_ENV') == 'development'
-    app.run(host='0.0.0.0', debug=is_dev, use_reloader=is_dev)
+    # use_reloader=False is required by Flask-SocketIO - the Werkzeug reloader
+    # restarts the process on every file save, causing 502 errors and dropped
+    # Socket.IO connections. Templates still update live (Jinja2 reads from disk).
+    socketio.run(app, host='0.0.0.0', port=5000, debug=True,
+                 allow_unsafe_werkzeug=True, use_reloader=False)
+

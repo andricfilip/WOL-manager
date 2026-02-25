@@ -17,6 +17,7 @@
         border-radius: 0.75rem;
         overflow: hidden;
         box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        margin-bottom: 2rem;
     }
     .period-btn {
         padding: 1rem;
@@ -52,7 +53,7 @@
 
     .stats-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
         gap: 1.5rem;
         margin-bottom: 2rem;
     }
@@ -224,9 +225,10 @@
         .stat-metrics { grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
         .metric-value { font-size: 1.2rem; }
         .summary-row { flex-direction: column; }
+        .summary-card { min-width: unset; }
         .period-selector { 
             grid-template-columns: repeat(2, 1fr);
-            gap: 0;
+            margin-bottom: 1.5rem;
         }
         .period-btn { 
             padding: 0.75rem 0.5rem;

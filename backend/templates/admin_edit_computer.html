@@ -14,56 +14,267 @@
     }
     .back-link:hover { text-decoration: underline; }
     
-    .user-checkbox-list {
-        background: #f8f9fa;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        max-height: 300px;
-        overflow-y: auto;
+    /* Modern Toggle Switch Styles */
+    .toggle-switch-container {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-top: 0.5rem;
     }
 
-    .user-checkbox-item {
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: auto;
+    }
+
+    .toggle-switch input {
+        display: none;
+    }
+
+    /* iOS-Style Toggle Slider */
+    .toggle-slider {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 28px;
+        background-color: #ccc;
+        border-radius: 28px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        vertical-align: middle;
+    }
+
+    .toggle-slider::before {
+        content: '';
+        position: absolute;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background-color: white;
+        top: 2px;
+        left: 2px;
+        transition: transform 0.3s ease, box-shadow 0.2s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+        background-color: var(--primary);
+    }
+
+    .toggle-switch input:checked + .toggle-slider::before {
+        transform: translateX(22px);
+    }
+
+    .toggle-switch input:disabled + .toggle-slider {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    /* User Toggle Item */
+    .user-toggle-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        padding: 1rem;
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 0.5rem;
+        transition: all 0.2s ease;
+    }
+
+    .user-toggle-item:hover {
+        background: #f8f9fa;
+        border-color: var(--primary);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .user-toggle-info {
         display: flex;
         align-items: center;
         gap: 0.75rem;
-        margin-bottom: 0.75rem;
-        padding: 0.5rem;
-        border-radius: 0.3rem;
-        transition: background 0.2s;
-    }
-
-    .user-checkbox-item:hover {
-        background: #e9ecef;
-    }
-
-    .user-checkbox-item input[type="checkbox"] {
-        width: 18px;
-        height: 18px;
-        cursor: pointer;
-        flex-shrink: 0;
-    }
-
-    .user-checkbox-item label {
-        margin: 0;
-        font-weight: normal;
-        cursor: pointer;
         flex: 1;
+        min-width: 200px;
+    }
+
+    .user-toggle-icon {
+        font-size: 1.2rem;
+        color: var(--primary);
+        width: 30px;
+        text-align: center;
+    }
+
+    .user-toggle-details {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .user-role-select {
+        min-width: 130px;
+        padding: 0.35rem 0.5rem;
+        border: 1px solid var(--border);
+        border-radius: 0.35rem;
+        background: #fff;
+        font-size: 0.85rem;
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+        div[style*="max-width: 800px"] {
+            max-width: 100% !important;
+            padding: 0;
+        }
+
+        .user-toggle-item {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.75rem;
+        }
+
+        .user-toggle-info {
+            min-width: auto;
+        }
+
+        .user-role-select {
+            min-width: auto;
+            width: 100%;
+        }
+
+        .toggle-switch {
+            align-self: flex-end;
+        }
+
+        div[style*="display: flex; align-items: center; justify-content: space-between"] {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 0.75rem;
+        }
+
+        div[style*="display: flex; gap: 1rem; margin-top: 2rem"] {
+            flex-direction: column !important;
+        }
+
+        div[style*="display: flex; gap: 1rem; margin-top: 2rem"] > * {
+            flex: none !important;
+            width: 100%;
+        }
+
+        div[style*="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem"] {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 0.5rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .user-toggle-list {
+            padding: 0.75rem;
+        }
+
+        .user-toggle-item {
+            padding: 0.75rem;
+        }
+    }
+
+    .user-toggle-name {
+        font-weight: 600;
+        color: var(--dark);
         display: flex;
         align-items: center;
         gap: 0.5rem;
     }
 
-    .user-badge {
-        background: #d4edda;
-        color: #155724;
-        padding: 0.2rem 0.5rem;
-        border-radius: 0.3rem;
-        font-size: 0.8rem;
+    .user-toggle-email {
+        font-size: 0.85rem;
+        color: #666;
     }
 
-    .user-email {
-        color: #999;
+    .user-badge {
+        background: #fff3cd;
+        color: #856404;
+        padding: 0.2rem 0.5rem;
+        border-radius: 0.3rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .user-toggle-list {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    /* Owner Selection Styles */
+    .owner-option {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        background: white;
+        border: 2px solid #e9ecef;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .owner-option:hover {
+        border-color: var(--primary);
+        background: #f0f7ff;
+    }
+
+    .owner-option.selected {
+        border-color: var(--primary);
+        background: #f0f7ff;
+        box-shadow: 0 4px 12px rgba(0, 102, 204, 0.15);
+    }
+
+    .owner-radio {
+        width: 20px;
+        height: 20px;
+        border: 2px solid #ccc;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+    }
+
+    .owner-option.selected .owner-radio {
+        border-color: var(--primary);
+        background-color: var(--primary);
+    }
+
+    .owner-radio::after {
+        content: '✓';
+        color: white;
+        font-weight: bold;
+        font-size: 0.8rem;
+        opacity: 0;
+    }
+
+    .owner-option.selected .owner-radio::after {
+        opacity: 1;
+    }
+
+    .owner-info {
+        flex: 1;
+    }
+
+    .owner-title {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .owner-description {
         font-size: 0.9rem;
+        color: #666;
     }
 </style>
 {% endblock %}
@@ -167,34 +378,66 @@
                 </small>
             </div>
 
-            <hr style="margin: 2rem 0; border: none; border-top: 2px solid #e9ecef;">
+            <div class="form-group">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <div>
+                        <label style="margin-bottom: 0.5rem; display: block;">
+                            <i class="fas fa-sign-in-alt"></i> SSH Auto-Login
+                        </label>
+                        <small style="color: #666;">
+                            Ako je uključeno: koristi SSH lozinku za auto-login u terminalu<br>
+                            Ako je isključeno: korisnik će trebati ručno da unese šifru
+                        </small>
+                    </div>
+                    <label class="toggle-switch" style="margin-top: 0;">
+                        <input type="checkbox" id="ssh_auto_login" name="ssh_auto_login" 
+                               {% if computer.ssh_auto_login %}checked{% endif %}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
 
             <div class="form-group">
                 <label><i class="fas fa-users"></i> Dodeli Korisnicima</label>
-                <div class="user-checkbox-list">
+                <div class="user-toggle-list">
                     {% if users %}
                         {% for user in users %}
-                            <div class="user-checkbox-item">
-                                <input type="checkbox" id="user_{{ user.id }}" name="assigned_users" value="{{ user.id }}"
-                                       {% if user in computer.assigned_users.all() %}checked{% endif %}>
-                                <label for="user_{{ user.id }}">
-                                    <i class="fas fa-user"></i>
-                                    <span>{{ user.username }}</span>
-                                    {% if user.is_admin %}
-                                        <span class="user-badge">
-                                            <i class="fas fa-crown"></i> Admin
-                                        </span>
-                                    {% endif %}
-                                    <span class="user-email">({{ user.email }})</span>
+                            <div class="user-toggle-item">
+                                <div class="user-toggle-info">
+                                    <div class="user-toggle-icon">
+                                        <i class="fas fa-user-circle"></i>
+                                    </div>
+                                    <div class="user-toggle-details">
+                                        <div class="user-toggle-name">
+                                            {{ user.username }}
+                                            {% if user.is_admin %}
+                                                <span class="user-badge"><i class="fas fa-crown"></i> Admin</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="user-toggle-email">{{ user.email }}</div>
+                                    </div>
+                                </div>
+                                {% set role_value = user_roles.get(user.id, 'operator') if user_roles is defined else 'operator' %}
+                                <select class="user-role-select" name="role_{{ user.id }}">
+                                    <option value="viewer" {% if role_value == 'viewer' %}selected{% endif %}>Viewer (samo pregled)</option>
+                                    <option value="operator" {% if role_value == 'operator' %}selected{% endif %}>Operator (pali/gasi)</option>
+                                    <option value="owner" {% if role_value == 'owner' %}selected{% endif %}>Owner (menja uredjaj/SSH)</option>
+                                </select>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" name="assigned_users" value="{{ user.id }}"
+                                           {% if user in computer.assigned_users.all() %}checked{% endif %}>
+                                    <span class="toggle-slider"></span>
                                 </label>
                             </div>
                         {% endfor %}
                     {% else %}
-                        <p style="color: #999; margin: 0;">Nema korisnika u sistemu</p>
+                        <p style="color: #999; margin: 0; text-align: center; padding: 1rem;">
+                            <i class="fas fa-info-circle"></i> Nema korisnika u sistemu
+                        </p>
                     {% endif %}
                 </div>
-                <small style="color: #666; display: block; margin-top: 0.5rem;">
-                    Možete izabrati više korisnika. Računar će biti vidljiv samo izabranim korisnicima.
+                <small style="color: #666; display: block; margin-top: 1rem;">
+                    <i class="fas fa-info-circle"></i> Uključite toggle za korisnike kojima želite dati pristup ovom računaru.
                 </small>
             </div>
 
@@ -261,6 +504,28 @@ document.addEventListener('DOMContentLoaded', function() {
         // Store original SSH host value
         sshHostField.setAttribute('data-original-value', sshHostField.value);
     }
+
+    // SSH Auto-Login: send AJAX immediately on toggle so owner sees it live (before form save)
+    var sshToggle = document.getElementById('ssh_auto_login');
+    if (sshToggle) {
+        sshToggle.addEventListener('change', function() {
+            var val = this.checked;
+            fetch('/api/computers/{{ computer.id }}/ssh-preference', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ssh_auto_login: val})
+            }).catch(function() {}); // Fallback: form save will persist it anyway
+        });
+    }
+
+    // Socket.IO: Listen for SSH auto-login changes from owner
+    var socket = _globalSocket;
+    socket.on('ssh_auto_login_changed', function(data) {
+        if (String(data.computer_id) === '{{ computer.id }}') {
+            var toggle = document.getElementById('ssh_auto_login');
+            if (toggle) toggle.checked = data.ssh_auto_login;
+        }
+    });
 });
 </script>
 {% endblock %}

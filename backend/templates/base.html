@@ -45,6 +45,18 @@
             min-height: 100vh;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .page-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            flex: 1;
         }
 
         .navbar {
@@ -58,8 +70,6 @@
         }
 
         .navbar-content {
-            max-width: 1400px;
-            margin: 0 auto;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -109,10 +119,26 @@
             color: white;
         }
 
+        /* Hamburger Menu Button */
+        .navbar-toggle {
+            display: none;
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 0.3rem;
+            padding: 0.4rem 0.6rem;
+            cursor: pointer;
+            font-size: 1.3rem;
+            color: var(--dark);
+            transition: all 0.2s;
+        }
+        .navbar-toggle:hover {
+            background: var(--light);
+            color: var(--primary);
+        }
+
         .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 1rem 2rem 1rem;
+            width: 100%;
+            padding: 0 2rem 2rem 2rem;
         }
 
         .card {
@@ -169,13 +195,48 @@
             color: white;
         }
 
-        /* Alerts */
-        .alert {
-            padding: 1rem 1.25rem;
-            border-radius: 0.3rem;
-            margin-bottom: 1rem;
-            border-left: 4px solid;
+        /* Alerts / Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            width: calc(100% - 2rem);
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            pointer-events: none;
         }
+        @keyframes toast-in {
+            from { opacity: 0; transform: translateY(-12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .alert {
+            padding: 0.9rem 1.25rem;
+            border-radius: 0.5rem;
+            border-left: 4px solid;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            pointer-events: all;
+            animation: toast-in 0.3s ease-out;
+        }
+        .alert-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.3rem;
+            line-height: 1;
+            opacity: 0.5;
+            flex-shrink: 0;
+            color: inherit;
+            padding: 0;
+        }
+        .alert-close:hover { opacity: 1; }
 
         .alert-success {
             background: #d4edda;
@@ -288,24 +349,42 @@
             }
 
             .navbar-content {
-                flex-direction: column;
-                align-items: stretch;
+                flex-wrap: wrap;
             }
 
-            .navbar-brand {
-                font-size: 1.1rem;
-                justify-content: center;
+            .navbar-toggle {
+                display: block;
             }
 
             .navbar-menu {
+                display: none;
                 width: 100%;
-                justify-content: center;
+                flex-direction: column;
                 gap: 0.25rem;
+                padding-top: 0.5rem;
+                border-top: 1px solid var(--border);
+                margin-top: 0.5rem;
+            }
+
+            .navbar-menu.open {
+                display: flex;
             }
 
             .navbar-menu a {
-                padding: 0.5rem 0.75rem;
-                font-size: 0.85rem;
+                padding: 0.65rem 1rem;
+                font-size: 0.95rem;
+                border-radius: 0.3rem;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            .navbar-menu a:hover {
+                background: var(--light);
+            }
+
+            .navbar-menu .hide-mobile {
+                display: inline !important;
             }
 
             .container {
@@ -325,11 +404,6 @@
                 font-size: 1.25rem !important;
             }
 
-            .btn {
-                width: 100%;
-                margin-bottom: 0.5rem;
-            }
-
             table {
                 font-size: 0.85rem;
             }
@@ -342,11 +416,6 @@
         @media (max-width: 480px) {
             .navbar-brand {
                 font-size: 1rem;
-            }
-
-            .navbar-menu a {
-                font-size: 0.8rem;
-                padding: 0.4rem 0.5rem;
             }
 
             .card {
@@ -362,6 +431,7 @@
     </style>
 </head>
 <body>
+    <div class="page-wrapper">
     {% if current_user.is_authenticated %}
     <nav class="navbar">
         <div class="navbar-content">
@@ -369,10 +439,18 @@
                 <i class="{{ app_info.icon }}"></i>
                 <span>{{ app_info.name }}</span>
             </a>
-            <ul class="navbar-menu">
+            <button class="navbar-toggle" id="navbar-toggle" aria-label="Menu">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="navbar-menu" id="navbar-menu">
                 <li><a href="{{ url_for('dashboard') }}" {% if request.endpoint == 'dashboard' %}class="active"{% endif %}>
                     <i class="fas fa-home"></i> Dashboard
                 </a></li>
+                {% if not current_user.is_admin %}
+                <li><a href="{{ url_for('computer_preferences') }}" {% if request.endpoint == 'computer_preferences' %}class="active"{% endif %}>
+                    <i class="fas fa-sliders-h"></i> <span class="hide-mobile">Podesavanja racunara</span>
+                </a></li>
+                {% endif %}
                 <li><a href="{{ url_for('statistics') }}" {% if request.endpoint == 'statistics' %}class="active"{% endif %}>
                     <i class="fas fa-chart-bar"></i> <span class="hide-mobile">Statistika</span>
                 </a></li>
@@ -398,16 +476,20 @@
     <div class="container">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
+            <div class="toast-container">
                 {% for category, message in messages %}
                     <div class="alert alert-{{ category }}">
-                        {{ message }}
+                        <span>{{ message }}</span>
+                        <button class="alert-close" onclick="this.parentElement.remove()" title="Zatvori">&#x2715;</button>
                     </div>
                 {% endfor %}
+            </div>
             {% endif %}
         {% endwith %}
 
         {% block content %}{% endblock %}
     </div>
+    </div> <!-- End page-wrapper -->
     
     <footer style="text-align: center; padding: 2rem 1rem; margin-top: 3rem; border-top: 1px solid var(--border); color: #666; font-size: 0.9rem;">
         <p>{{ app_info.footer }}</p>
@@ -419,13 +501,523 @@
     <style>
         @media (max-width: 768px) {
             .hide-mobile {
-                display: none;
+                /* handled by hamburger menu now - text shows when menu is open */
             }
         }
     </style>
 
     <!-- Socket.IO for real-time updates -->
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+
+    <!-- Global Socket.IO connection (single instance for all pages) -->
+    <script>
+        var _globalSocket = null;
+        {% if current_user.is_authenticated %}
+        _globalSocket = io();
+        var _currentUserId = {{ current_user.id }};
+        {% endif %}
+    </script>
+
+    <!-- xterm.js for SSH terminal -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js"></script>
+
+    <!-- SSH Password Modal & Terminal Modal -->
+    <style>
+        /* SSH Password Modal */
+        .ssh-password-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+        }
+        .ssh-password-overlay.active { display: flex; }
+        .ssh-password-modal {
+            background: white;
+            border-radius: 0.75rem;
+            min-width: 350px;
+            padding: 2rem;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .ssh-password-modal h2 {
+            margin: 0 0 1rem 0;
+            color: var(--dark);
+            font-size: 1.2rem;
+        }
+        .ssh-password-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .ssh-password-form input[type="password"] {
+            padding: 0.75rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-family: 'Courier New', monospace;
+            transition: border-color 0.2s;
+        }
+        .ssh-password-form input[type="password"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+        }
+        .ssh-password-buttons {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 0.5rem;
+        }
+        .ssh-password-buttons button {
+            flex: 1;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        #ssh-password-submit {
+            background: var(--primary);
+            color: white;
+        }
+        #ssh-password-submit:hover {
+            background: #0052a3;
+            box-shadow: 0 2px 8px rgba(0, 102, 204, 0.3);
+        }
+        #ssh-password-cancel {
+            background: #f0f0f0;
+            color: #333;
+        }
+        #ssh-password-cancel:hover {
+            background: #e0e0e0;
+        }
+
+        /* Terminal Modal */
+        .terminal-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+        .terminal-modal-overlay.active { display: flex; }
+        .terminal-modal {
+            background: #1e1e1e;
+            border-radius: 0.75rem;
+            width: 90vw;
+            max-width: 960px;
+            height: 70vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        .terminal-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.6rem 1rem;
+            background: #2d2d2d;
+            color: #ccc;
+            font-size: 0.85rem;
+            font-family: monospace;
+            border-bottom: 1px solid #444;
+        }
+        .terminal-modal-header .terminal-title {
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+        .terminal-status-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: #ffc107;
+        }
+        .terminal-status-dot.connected { background: #28a745; }
+        .terminal-status-dot.error { background: #dc3545; }
+        .terminal-modal-close {
+            background: none; border: none; color: #ccc;
+            font-size: 1.2rem; cursor: pointer; padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+        }
+        .terminal-modal-close:hover { background: #444; color: white; }
+        #terminal-container {
+            flex: 1;
+            padding: 4px;
+        }
+        #terminal-container .xterm { height: 100%; }
+    </style>
+
+    <!-- SSH Password Input Modal -->
+    <div class="ssh-password-overlay" id="ssh-password-modal">
+        <div class="ssh-password-modal">
+            <h2 id="ssh-password-title"><i class="fas fa-key"></i> SSH Login</h2>
+            <form class="ssh-password-form" id="ssh-password-form">
+                <div>
+                    <label style="display: block; font-weight: 600; color: var(--dark); margin-bottom: 0.5rem;">
+                        SSH Lozinka:
+                    </label>
+                    <input 
+                        type="password" 
+                        id="ssh-password-input" 
+                        placeholder="Unesite SSH lozinku..." 
+                        required
+                        autocomplete="off"
+                    >
+                </div>
+                <div class="ssh-password-buttons">
+                    <button type="submit" id="ssh-password-submit" class="btn btn-primary">
+                        <i class="fas fa-sign-in-alt"></i> Prijavi se
+                    </button>
+                    <button type="button" id="ssh-password-cancel" class="btn">
+                        <i class="fas fa-times"></i> Otkaži
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="terminal-modal-overlay" id="terminal-modal">
+        <div class="terminal-modal">
+            <div class="terminal-modal-header">
+                <div class="terminal-title">
+                    <span class="terminal-status-dot" id="terminal-status-dot"></span>
+                    <span id="terminal-title-text">SSH Terminal</span>
+                </div>
+                <button class="terminal-modal-close" onclick="closeTerminal()" title="Close">&times;</button>
+            </div>
+            <div id="terminal-container"></div>
+        </div>
+    </div>
+    <script>
+    // ==================== SSH TERMINAL CLIENT ====================
+    let _term = null, _fitAddon = null, _termSocket = null, _termComputerId = null;
+
+    function openTerminal(computerId, computerName) {
+        // Check if auto-login is enabled for this computer
+        const btn = document.querySelector(`[data-terminal-btn="${computerId}"]`);
+        const sshAutoLogin = btn ? btn.getAttribute('data-ssh-auto-login') === 'true' : false;
+        
+        // If auto-login is disabled, show password dialog
+        if (!sshAutoLogin) {
+            showSSHPasswordDialog(computerId, computerName);
+            return;
+        }
+        
+        // If auto-login is enabled, open terminal normally
+        openTerminalWithPassword(computerId, computerName, null);
+    }
+
+    function showSSHPasswordDialog(computerId, computerName) {
+        const modal = document.getElementById('ssh-password-modal');
+        const passwordInput = document.getElementById('ssh-password-input');
+        const titleEl = document.getElementById('ssh-password-title');
+        
+        // Set title and reset input
+        titleEl.textContent = `SSH Login - ${computerName}`;
+        passwordInput.value = '';
+        passwordInput.focus();
+        
+        // Show modal
+        modal.classList.add('active');
+        
+        // Handle submit
+        const handleSubmit = function(e) {
+            if (e) e.preventDefault();
+            const password = passwordInput.value;
+            
+            if (!password) {
+                alert('SSH lozinka je obavezna');
+                return;
+            }
+            
+            modal.classList.remove('active');
+            cleanupPasswordDialog();
+            openTerminalWithPassword(computerId, computerName, password);
+        };
+        
+        // Handle cancel
+        const handleCancel = function() {
+            modal.classList.remove('active');
+            cleanupPasswordDialog();
+            _termComputerId = null;
+        };
+        
+        // Attach handlers
+        const form = document.getElementById('ssh-password-form');
+        const submitBtn = document.getElementById('ssh-password-submit');
+        const cancelBtn = document.getElementById('ssh-password-cancel');
+        
+        form.onsubmit = handleSubmit;
+        submitBtn.onclick = handleSubmit;
+        cancelBtn.onclick = handleCancel;
+        
+        // Allow Escape to cancel
+        const handleEscape = function(e) {
+            if (e.key === 'Escape') handleCancel();
+        };
+        document.addEventListener('keydown', handleEscape);
+        modal._escapeHandler = handleEscape;
+    }
+
+    function cleanupPasswordDialog() {
+        const modal = document.getElementById('ssh-password-modal');
+        const form = document.getElementById('ssh-password-form');
+        const passwordInput = document.getElementById('ssh-password-input');
+        const submitBtn = document.getElementById('ssh-password-submit');
+        const cancelBtn = document.getElementById('ssh-password-cancel');
+        
+        if (modal._escapeHandler) {
+            document.removeEventListener('keydown', modal._escapeHandler);
+            delete modal._escapeHandler;
+        }
+        
+        form.onsubmit = null;
+        submitBtn.onclick = null;
+        cancelBtn.onclick = null;
+        
+        // ⚠️ SECURITY: Clear password field from memory
+        passwordInput.value = '';
+    }
+
+    function openTerminalWithPassword(computerId, computerName, manualPassword) {
+        const overlay = document.getElementById('terminal-modal');
+        overlay.classList.add('active');
+        document.getElementById('terminal-title-text').textContent = 'SSH: ' + computerName;
+        const dot = document.getElementById('terminal-status-dot');
+        dot.className = 'terminal-status-dot';
+
+        const container = document.getElementById('terminal-container');
+        container.innerHTML = '';
+
+        _term = new Terminal({
+            cursorBlink: true,
+            fontSize: 14,
+            fontFamily: "'Cascadia Code', 'Fira Code', 'Consolas', monospace",
+            theme: {
+                background: '#1e1e1e',
+                foreground: '#d4d4d4',
+                cursor: '#aeafad',
+                selectionBackground: '#264f78',
+            },
+            scrollback: 5000,
+        });
+        _fitAddon = new FitAddon.FitAddon();
+        _term.loadAddon(_fitAddon);
+        _term.open(container);
+        _fitAddon.fit();
+
+        _termComputerId = computerId;
+
+        // Use existing Socket.IO connection or create one
+        if (!_termSocket || !_termSocket.connected) {
+            _termSocket = io({ transports: ['websocket', 'polling'] });
+        }
+
+        _termSocket.off('terminal_ready');
+        _termSocket.off('terminal_output');
+        _termSocket.off('terminal_error');
+        _termSocket.off('terminal_closed');
+
+        _termSocket.on('terminal_ready', function(d) {
+            dot.className = 'terminal-status-dot connected';
+        });
+        _termSocket.on('terminal_output', function(d) {
+            if (_term) _term.write(d.data);
+        });
+        _termSocket.on('terminal_error', function(d) {
+            dot.className = 'terminal-status-dot error';
+            if (_term) _term.write('\r\n\x1b[1;31mError: ' + d.message + '\x1b[0m\r\n');
+        });
+        _termSocket.on('terminal_closed', function(d) {
+            dot.className = 'terminal-status-dot error';
+            if (_term) _term.write('\r\n\x1b[1;33m' + (d.reason || 'Disconnected') + '\x1b[0m\r\n');
+            // Auto-close terminal after 2 seconds
+            setTimeout(function() {
+                closeTerminal();
+            }, 2000);
+        });
+
+        _term.onData(function(data) {
+            _termSocket.emit('terminal_input', { data: data });
+        });
+
+        _termSocket.emit('terminal_connect', {
+            computer_id: computerId,
+            cols: _term.cols,
+            rows: _term.rows,
+            manual_password: manualPassword  // Send manual password if provided
+        });
+
+        // ⚠️ SECURITY: Clear password from memory immediately after sending
+        if (manualPassword) {
+            manualPassword = null;
+        }
+
+        // Handle resize
+        const resizeObserver = new ResizeObserver(function() {
+            if (_fitAddon && _term) {
+                _fitAddon.fit();
+                _termSocket.emit('terminal_resize', { cols: _term.cols, rows: _term.rows });
+            }
+        });
+        resizeObserver.observe(container);
+        _term._resizeObserver = resizeObserver;
+    }
+
+    function closeTerminal() {
+        const overlay = document.getElementById('terminal-modal');
+        overlay.classList.remove('active');
+        if (_term) {
+            if (_term._resizeObserver) _term._resizeObserver.disconnect();
+            _term.dispose();
+            _term = null;
+        }
+        if (_termSocket) {
+            _termSocket.emit('terminal_disconnect', {});
+            // Don't disconnect the socket itself, just the terminal session
+        }
+        _termComputerId = null;
+    }
+
+    // Close on Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && document.getElementById('terminal-modal').classList.contains('active')) {
+            closeTerminal();
+        }
+    });
+
+    {% if current_user.is_authenticated %}
+    // Socket.IO: Listen for role changes to show/hide menu items and reload page if needed
+    (function() {
+        var socket = _globalSocket;
+        var currentUserId = _currentUserId;
+        
+        socket.on('computer_role_changed', function(data) {
+            if (data.user_id === currentUserId) {
+                var path = window.location.pathname;
+                if (!data.has_access) {
+                    {% if not current_user.is_admin %}
+                    // Show removal toast
+                    var remToast = document.createElement('div');
+                    remToast.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:9999;width:calc(100% - 2rem);max-width:500px;' +
+                        'background:#721c24;color:#fff;padding:1rem 1.25rem;border-radius:0.5rem;' +
+                        'box-shadow:0 4px 16px rgba(0,0,0,0.35);font-weight:600;display:flex;align-items:center;gap:0.6rem;';
+                    remToast.innerHTML = '<i class="fas fa-ban" style="font-size:1.1rem;"></i> Admin vam je uklonio pristup računaru';
+                    document.body.appendChild(remToast);
+
+                    // Animate and remove the computer card from DOM (works on dashboard & preferences)
+                    var remCard = document.querySelector('[data-computer-id="' + data.computer_id + '"]');
+                    if (remCard) {
+                        remCard.style.transition = 'opacity 0.5s, transform 0.5s';
+                        var remOverlay = document.createElement('div');
+                        remOverlay.style.cssText = 'position:absolute;inset:0;background:rgba(220,53,69,0.12);' +
+                            'border-radius:0.75rem;display:flex;align-items:center;justify-content:center;' +
+                            'flex-direction:column;gap:0.4rem;color:#dc3545;font-weight:700;pointer-events:none;';
+                        remOverlay.innerHTML = '<i class="fas fa-ban" style="font-size:1.4rem;"></i><span>Pristup uklonjen</span>';
+                        if (getComputedStyle(remCard).position === 'static') remCard.style.position = 'relative';
+                        remCard.appendChild(remOverlay);
+                        setTimeout(function() {
+                            remCard.style.opacity = '0';
+                            remCard.style.transform = 'scale(0.92)';
+                            setTimeout(function() { if (remCard.parentNode) remCard.remove(); }, 600);
+                        }, 2200);
+                    }
+
+                    // Redirect with delay if on preferences/edit page
+                    if (path.includes('/computers/preferences') ||
+                        path.includes('/computers/' + data.computer_id + '/edit')) {
+                        setTimeout(function() { window.location.href = '/'; }, 3200);
+                    }
+
+                    // Update nav link + remove toast
+                    setTimeout(function() {
+                        fetch('/api/user/has-computers')
+                            .then(function(r) { return r.json(); })
+                            .then(function(result) {
+                                var prefLink = document.querySelector('a[href="{{ url_for("computer_preferences") }}"]');
+                                if (prefLink) {
+                                    prefLink.parentElement.style.display = result.has_computers ? '' : 'none';
+                                }
+                            });
+                        if (remToast.parentNode) remToast.remove();
+                    }, 3500);
+                    {% endif %}
+                } else {
+                    {% if not current_user.is_admin %}
+                    var prefLink2 = document.querySelector('a[href="{{ url_for("computer_preferences") }}"]');
+                    if (prefLink2) prefLink2.parentElement.style.display = '';
+                    {% endif %}
+                    // Reload to show new computer on dashboard or preferences
+                    var gainToast = document.createElement('div');
+                    gainToast.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:9999;width:calc(100% - 2rem);max-width:500px;' +
+                        'background:#155724;color:#fff;padding:1rem 1.25rem;border-radius:0.5rem;' +
+                        'box-shadow:0 4px 16px rgba(0,0,0,0.25);font-weight:600;display:flex;align-items:center;gap:0.6rem;';
+                    gainToast.innerHTML = '<i class="fas fa-check" style="font-size:1.1rem;"></i> Dodat vam je pristup novom računaru';
+                    document.body.appendChild(gainToast);
+                    setTimeout(function() {
+                        if (gainToast.parentNode) gainToast.remove();
+                        location.reload();
+                    }, 1500);
+                }
+            }
+        });
+    })();
+    {% endif %}
+
+    // Auto-dismiss flash toast notifications
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.toast-container .alert').forEach(function(alert) {
+            setTimeout(function() {
+                alert.style.transition = 'opacity 0.4s, transform 0.4s';
+                alert.style.opacity = '0';
+                alert.style.transform = 'translateY(-8px)';
+                setTimeout(function() { if (alert.parentNode) alert.remove(); }, 400);
+            }, 5000);
+        });
+    });
+
+    // Hamburger menu toggle
+    document.addEventListener('DOMContentLoaded', function() {
+        var toggle = document.getElementById('navbar-toggle');
+        var menu = document.getElementById('navbar-menu');
+        if (toggle && menu) {
+            toggle.addEventListener('click', function() {
+                menu.classList.toggle('open');
+                var icon = toggle.querySelector('i');
+                if (menu.classList.contains('open')) {
+                    icon.classList.remove('fa-bars');
+                    icon.classList.add('fa-times');
+                } else {
+                    icon.classList.remove('fa-times');
+                    icon.classList.add('fa-bars');
+                }
+            });
+            // Close menu when a link is clicked
+            menu.querySelectorAll('a').forEach(function(link) {
+                link.addEventListener('click', function() {
+                    menu.classList.remove('open');
+                    var icon = toggle.querySelector('i');
+                    icon.classList.remove('fa-times');
+                    icon.classList.add('fa-bars');
+                });
+            });
+        }
+    });
+    </script>
     
     {% block extra_js %}{% endblock %}
 </body>

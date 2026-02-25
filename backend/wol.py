@@ -263,21 +263,33 @@ def shutdown_computer_ssh(host: str, username: str, password: str, port: int = 2
             shutdown_cmd = 'sudo shutdown -h now'
         
         # Execute shutdown command
-        stdin, stdout, stderr = client.exec_command(shutdown_cmd, timeout=5)
-        
-        # Check for errors
-        error = stderr.read().decode('utf-8').strip()
-        if error and 'shutdown' not in error.lower():
-            return False, f"Shutdown command failed: {error}"
+        try:
+            stdin, stdout, stderr = client.exec_command(shutdown_cmd, timeout=5)
+            
+            # Try to read errors, but the connection may drop
+            try:
+                error = stderr.read().decode('utf-8').strip()
+                if error and 'shutdown' not in error.lower():
+                    return False, f"Shutdown command failed: {error}"
+            except (paramiko.SSHException, socket.error, EOFError, OSError):
+                # Connection dropped while reading - shutdown is working
+                pass
+        except (paramiko.SSHException, socket.error, EOFError, OSError):
+            # Connection dropped after sending command - shutdown is working
+            pass
         
         return True, f"Shutdown command sent successfully to {host}"
         
     except paramiko.AuthenticationException:
         return False, "SSH authentication failed. Check username and password."
-    except paramiko.SSHException as e:
-        return False, f"SSH connection failed: {str(e)}"
+    except paramiko.NoValidConnectionsError:
+        return False, "Cannot connect to SSH server. Check host and port."
     except socket.timeout:
         return False, "SSH connection timed out"
+    except socket.error as e:
+        return False, f"Network error: {str(e)}"
+    except paramiko.SSHException as e:
+        return False, f"SSH connection failed: {str(e)}"
     except Exception as e:
         return False, f"Error: {str(e)}"
     finally:
