@@ -19,10 +19,18 @@
 
 ## ⚙️ Automatska Konfiguracija
 
-Logo se automatski koristi u aplikaciji:
-- Mountovano u Nginx kao `/images/imi_logo.png`
-- `LOGO_URL` u docker-compose.prod.yml pokazuje na `/images/imi_logo.png`
+**Logo je BUILDAN u Docker image tokom build procesa:**
+- Logo se kopira iz `frontend/images/` u Docker image
+- **NIJE mountovan** sa host sistema (ne može se menjati spolja)
+- Za promenu loga potreban je **rebuild kontejnera**
 - Prikazuje se u navbar-u umesto default ikonice
+- Automatski fallback na ikonicu ako logo ne postoji
+
+**Prednosti:**
+- ✅ Logo je zapečaćen u image - sigurnost
+- ✅ Ne može se obrisati spolja bez rebuilda
+- ✅ Konzistentno kroz sve kontejnere
+- ✅ Brže učitavanje (interno u kontejneru)
 
 ## 📝 Kako dodati logo:
 
@@ -40,16 +48,16 @@ Logo se automatski koristi u aplikaciji:
    - LOGO_URL=/images/company_logo.webp
    ```
 
-3. **Restart kontejnera (OBAVEZNO!):**
+3. **Rebuild kontejnera (OBAVEZNO!):**
    ```bash
-   docker compose -f docker-compose.prod.yml restart frontend
+   docker compose -f docker-compose.prod.yml up -d --build
    # ili
    ./update_deploy.sh
    ```
 
 4. **Refresh browser** (Ctrl+Shift+R)
 
-Logo će se automatski prikazati!
+Logo će biti BUILDAN u Docker image!
 
 **Napomena:** Možeš koristiti bilo koji naziv fajla (npr. `my_logo.png`, `brand.webp`), samo ga referenciši u `LOGO_URL`.
 
@@ -59,8 +67,8 @@ Logo će se automatski prikazati!
 # 1. Obriši logo fajl
 rm frontend/images/imi_logo.png
 
-# 2. Restart kontejnera (OBAVEZNO!)
-docker compose -f docker-compose.prod.yml restart frontend
+# 2. Rebuild kontejnera (OBAVEZNO!)
+docker compose -f docker-compose.prod.yml up -d --build frontend
 
 # 3. Hard refresh browser (Ctrl+Shift+R)
 ```
@@ -69,9 +77,11 @@ Aplikacija će automatski prikazati default ikonicu ako logo ne postoji ili se n
 
 ## ⚠️ Važno:
 
-- **Restart kontejnera je OBAVEZAN** nakon bilo kakve promene loga (dodavanje/izmena/brisanje)
-- Docker volume se mountuje pri startu kontejnera, pa promene van kontejnera nisu vidljive dok se ne restartuje
-- Uvek hard refresh browser (`Ctrl+Shift+R`) posle promene da očistiš keš
+- **Rebuild je OBAVEZAN** posle bilo kakve promene loga (dodavanje/izmena/brisanje)
+- Logo se **kopira u Docker image** tokom build procesa, ne mountuje se sa hosta
+- Logo je **zapečaćen u image** - ne može se menjati spolja bez rebuilda
+- Ovo daje **sigurnost** - niko ne može promeniti logo bez ponovnog build-a
+- Uvek hard refresh browser (`Ctrl+Shift+R`) posle rebuilda da očistiš keš
 - Ako logo fajl ne postoji ili ne može da se učita, aplikacija automatski koristi default ikonicu (fallback)
 
 ---
