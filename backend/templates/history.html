@@ -63,6 +63,33 @@
         border: 1px solid var(--border);
         border-radius: 4px;
         font-size: 0.95rem;
+        transition: all 0.3s;
+        background: white;
+    }
+    
+    .filter-group input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+    }
+    
+    .filter-group input[type="date"] {
+        color: var(--text);
+        cursor: pointer;
+    }
+    
+    .filter-group input[type="date"]::-webkit-calendar-picker-indicator {
+        cursor: pointer;
+        opacity: 0.6;
+        transition: opacity 0.3s;
+    }
+    
+    .filter-group input[type="date"]::-webkit-calendar-picker-indicator:hover {
+        opacity: 1;
+    }
+    
+    .filter-group input[type="date"]:invalid {
+        color: #999;
     }
     
     .filter-actions {
@@ -157,9 +184,6 @@
                 <input type="date" id="date_to" name="date_to" value="{{ date_to or '' }}">
             </div>
             <div class="filter-actions">
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-filter"></i> Filtriraj
-                </button>
                 <a href="{{ url_for('history') }}" class="btn btn-secondary">
                     <i class="fas fa-redo"></i> Resetuj
                 </a>
@@ -319,6 +343,30 @@ document.querySelectorAll('input[name="deleteOption"]').forEach(radio => {
             dateRangeInputs.querySelectorAll('input').forEach(input => input.disabled = true);
         }
     });
+});
+
+// Auto-submit form on filter changes
+const filterForm = document.querySelector('.search-filters');
+const searchInput = document.getElementById('search');
+const dateFromInput = document.getElementById('date_from');
+const dateToInput = document.getElementById('date_to');
+
+// Debounce function for text input
+let searchTimeout;
+searchInput.addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        filterForm.submit();
+    }, 500); // Wait 500ms after user stops typing
+});
+
+// Instant submit for date changes
+dateFromInput.addEventListener('change', function() {
+    filterForm.submit();
+});
+
+dateToInput.addEventListener('change', function() {
+    filterForm.submit();
 });
 </script>
 {% endblock %}

@@ -6,7 +6,16 @@ Copyright © 2026 Filip Andrić. All rights reserved.
 
 This file contains customizable branding and application settings.
 Modify these values to personalize the application for different clients or deployments.
+
+Environment Variables (docker-compose.prod.yml):
+- COMPANY_NAME: Company name shown in navbar
+- APP_NAME: Application name
+- APP_DESCRIPTION: Short description
+- LOGO_URL: URL to external logo (optional)
+- PRIMARY_COLOR: Primary color in hex format (optional)
+- FOOTER_TEXT: Custom footer text (optional)
 """
+import os
 
 # Application Branding
 APP_NAME = "WOL Manager"
@@ -81,22 +90,30 @@ For business inquiries: contact@example.com
 """
 
 def get_app_info():
-    """Returns application information as a dictionary"""
+    """Returns application information as a dictionary
+    
+    Prioritizes environment variables from docker-compose.prod.yml,
+    then falls back to hardcoded values from this file.
+    """
     return {
-        'name': APP_NAME,
-        'tagline': APP_TAGLINE,
+        'name': os.getenv('APP_NAME', APP_NAME),
+        'tagline': os.getenv('APP_DESCRIPTION', APP_TAGLINE),
         'icon': APP_ICON,
         'version': VERSION,
         'author': AUTHOR_NAME,
-        'company': COMPANY_NAME,
-        'footer': FOOTER_TEXT,
+        'company': os.getenv('COMPANY_NAME', COMPANY_NAME),
+        'logo_url': os.getenv('LOGO_URL', COMPANY_LOGO_URL),
+        'footer': os.getenv('FOOTER_TEXT', FOOTER_TEXT),
         'license': LICENSE
     }
 
 def get_theme_colors():
-    """Returns theme colors as a dictionary"""
+    """Returns theme colors as a dictionary
+    
+    Allows PRIMARY_COLOR to be overridden via environment variable.
+    """
     return {
-        'primary': PRIMARY_COLOR,
+        'primary': os.getenv('PRIMARY_COLOR', PRIMARY_COLOR),
         'secondary': SECONDARY_COLOR,
         'success': SUCCESS_COLOR,
         'warning': WARNING_COLOR,

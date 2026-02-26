@@ -1,14 +1,24 @@
-# 🚀 ComputerRunner - Wake-on-LAN Manager
+# 🚀 ComputerRunner - Wake-on-LAN Manager v2.0
 
 Sistem za upravljanje računarima preko mreže sa **Wake-on-LAN**, **SSH Remote Shutdown** i **AES-256 enkripcijom**.
 
 ## ✨ Funkcionalnosti
 
+### Core Features
 - 🔌 **Wake-on-LAN** - Buđenje računara preko mreže
 - 🔴 **Remote Shutdown** - Gašenje preko SSH (opciono)
 - 🟢 **Real-Time Status** - Automatski monitoring (online/offline)
-- 👥 **Multi-User** - Admin/User uloge
+- 👥 **Multi-User** - Admin/User uloge sa granularnim permisijama
 - 🔐 **Sigurnost** - AES-256 enkripcija SSH kredencijala, rate limiting, audit log
+
+### v2.0 New Features ⭐
+- 🎨 **Easy Branding** - Prilagođavanje kompanije/loga kroz environment variables (bez editovanja koda!)
+- 🔔 **Live Notifications** - Real-time obaveštenja o dodelama/uklanjanjima računara
+- 🎯 **Smart Filters** - Auto-submit filteri u istoriji (on-change, debounce search)
+- 📊 **Timeline Visualization** - Vizuelna vremenska osa sa online/offline periodima (crveno/zeleno)
+- 📱 **Full-Width Layout** - Potpuno responsive dashboard bez praznog prostora
+- 🚀 **Deployment Automation** - Automatizovani deployment script sa backup/restore
+- 🔄 **Migration System** - Sigurne database migracije za upgrades
 
 ## 🛠️ Stack
 
@@ -18,19 +28,17 @@ Flask + PostgreSQL + Socket.IO + Nginx + Docker
 
 ## 🚀 Brzi Start
 
-### Development
+### Production Deployment
 ```bash
-docker compose -f docker-compose.dev.yml up -d
-```
-
-### Production
-```bash
-docker compose -f docker-compose.prod.yml up -d
+# Quick start
+docker compose -f docker-compose.prod.yml up -d --build
 ```
 
 **Admin pristup:** `admin` / `admin123` (promeni nakon prve prijave!)
 
-📖 **Detaljno uputstvo:** Pogledaj [DEPLOY.md](DEPLOY.md)
+📖 **Deployment:** [DEPLOY.md](DEPLOY.md) | [QUICK_DEPLOY.md](QUICK_DEPLOY.md)  
+🎨 **Branding:** [BRANDING_V2.md](BRANDING_V2.md)  
+🔄 **Migrations:** [MIGRATION_v2.md](MIGRATION_v2.md)
 
 ---
 
@@ -85,28 +93,7 @@ docker compose -f docker-compose.prod.yml up -d
 
 ---
 
-## 📦 Brza Instalacija
-
-### 🖥️ Development (Live Reload sa Volumes)
-
-```bash
-git clone <repo-url>
-cd WOL-manager
-
-# Pokreni development verziju
-docker compose -f docker-compose.dev.yml up -d --build
-```
-
-**Pristup:** http://localhost:13223  
-**Login:** `admin` / `admin123` ⚠️ *Promeni lozinku!*
-
-**Dev Features:**
-- ✅ Live reload kod izmena Python/HTML/CSS fajlova
-- ✅ Debug mode uključen
-- ✅ Volumes montiran za backend i frontend
-- ✅ Flask auto-reload
-
----
+## 📦 Production Deployment
 
 ### 🐧 Production (Linux Server) - Secure Build
 

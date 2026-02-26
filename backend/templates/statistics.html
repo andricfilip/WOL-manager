@@ -167,10 +167,40 @@
         height: 100%;
         min-width: 2px;
         transition: all 0.3s;
+        position: relative;
+        cursor: pointer;
     }
-    .timeline-segment.online { background: #28a745; }
-    .timeline-segment.offline { background: #f0f0f0; }
-    .timeline-segment:hover { opacity: 0.8; }
+    .timeline-segment.online { 
+        background: #28a745;
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2);
+    }
+    .timeline-segment.offline { 
+        background: #dc3545;
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2);
+    }
+    .timeline-segment:hover { 
+        opacity: 0.8;
+        filter: brightness(1.1);
+    }
+    .timeline-legend {
+        display: flex;
+        gap: 1rem;
+        margin-top: 0.5rem;
+        font-size: 0.7rem;
+        color: #666;
+    }
+    .timeline-legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+    .timeline-legend-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 2px;
+    }
+    .timeline-legend-dot.online { background: #28a745; }
+    .timeline-legend-dot.offline { background: #dc3545; }
 
     .loading-overlay {
         display: flex;
@@ -473,7 +503,15 @@ function renderStats(stats, days) {
                 if (t > startTime) {
                     const pct = ((t - lastTime) / totalMs * 100).toFixed(2);
                     if (pct > 0.1) {
-                        segments.push({ status: lastStatus, pct: pct });
+                        const durationMs = t - lastTime;
+                        const durationHours = (durationMs / 3600000).toFixed(1);
+                        const durationDays = (durationMs / 86400000).toFixed(1);
+                        segments.push({ 
+                            status: lastStatus, 
+                            pct: pct,
+                            durationHours: durationHours,
+                            durationDays: durationDays
+                        });
                     }
                     lastTime = t;
                 }
@@ -483,15 +521,42 @@ function renderStats(stats, days) {
             // Final segment
             const finalPct = ((Date.now() - lastTime) / totalMs * 100).toFixed(2);
             if (finalPct > 0.1) {
-                segments.push({ status: lastStatus, pct: finalPct });
+                const durationMs = Date.now() - lastTime;
+                const durationHours = (durationMs / 3600000).toFixed(1);
+                const durationDays = (durationMs / 86400000).toFixed(1);
+                segments.push({ 
+                    status: lastStatus, 
+                    pct: finalPct,
+                    durationHours: durationHours,
+                    durationDays: durationDays
+                });
             }
             
             if (segments.length > 0) {
+                const totalOnlineHours = segments.filter(s => s.status === 'online').reduce((sum, s) => sum + parseFloat(s.durationHours), 0).toFixed(1);
+                const totalOfflineHours = segments.filter(s => s.status === 'offline').reduce((sum, s) => sum + parseFloat(s.durationHours), 0).toFixed(1);
+                
                 timelineHtml = `
                     <div class="timeline-container">
-                        <div class="timeline-label">Aktivnost (${days} ${days === 1 ? 'dan' : days < 5 ? 'dana' : 'dana'})</div>
+                        <div class="timeline-label">Vremenska osa aktivnosti (${days} ${days === 1 ? 'dan' : days < 5 ? 'dana' : 'dana'})</div>
                         <div class="timeline-bar">
-                            ${segments.map(s => `<div class="timeline-segment ${s.status}" style="width: ${s.pct}%;" title="${s.status === 'online' ? 'Online' : 'Offline'}"></div>`).join('')}
+                            ${segments.map(s => {
+                                const statusLabel = s.status === 'online' ? 'Online' : 'Offline';
+                                const tooltip = days > 2 
+                                    ? `${statusLabel}: ${s.durationDays}d (${s.durationHours}h)`
+                                    : `${statusLabel}: ${s.durationHours}h`;
+                                return `<div class="timeline-segment ${s.status}" style="width: ${s.pct}%;" title="${tooltip}"></div>`;
+                            }).join('')}
+                        </div>
+                        <div class="timeline-legend">
+                            <div class="timeline-legend-item">
+                                <div class="timeline-legend-dot online"></div>
+                                <span>Online: ${totalOnlineHours}h</span>
+                            </div>
+                            <div class="timeline-legend-item">
+                                <div class="timeline-legend-dot offline"></div>
+                                <span>Offline: ${totalOfflineHours}h</span>
+                            </div>
                         </div>
                     </div>`;
             }
