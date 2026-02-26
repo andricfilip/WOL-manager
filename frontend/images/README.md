@@ -7,10 +7,15 @@
 
 ## 🎨 Logo Specifikacije
 
-**Format:** PNG ili SVG  
+**Format:** PNG, SVG ili WebP  
 **Dimenzije:** 200x60px (aspect ratio 3:1)  
 **Pozadina:** Providna (transparent)  
 **Max visina u navbar-u:** 32px (automatski skaliranje)
+
+**Podržani formati:**
+- `.png` - Preporučeno za fotografije/slike sa transparentnošću
+- `.webp` - Manji fajl, moderne browsere
+- `.svg` - Vektorska grafika, najbolja skalabilnost
 
 ## ⚙️ Automatska Konfiguracija
 
@@ -24,18 +29,29 @@ Logo se automatski koristi u aplikaciji:
 1. **Stavi logo fajl u ovaj folder:**
    ```bash
    cp /path/to/your/logo.png frontend/images/imi_logo.png
+   # ili
+   cp /path/to/your/logo.webp frontend/images/company_logo.webp
    ```
 
-2. **Restart kontejnera (OBAVEZNO!):**
+2. **Ažuriraj LOGO_URL u docker-compose.prod.yml:**
+   ```yaml
+   - LOGO_URL=/images/imi_logo.png
+   # ili
+   - LOGO_URL=/images/company_logo.webp
+   ```
+
+3. **Restart kontejnera (OBAVEZNO!):**
    ```bash
    docker compose -f docker-compose.prod.yml restart frontend
    # ili
    ./update_deploy.sh
    ```
 
-3. **Refresh browser** (Ctrl+Shift+R)
+4. **Refresh browser** (Ctrl+Shift+R)
 
 Logo će se automatski prikazati!
+
+**Napomena:** Možeš koristiti bilo koji naziv fajla (npr. `my_logo.png`, `brand.webp`), samo ga referenciši u `LOGO_URL`.
 
 ## 🗑️ Brisanje loga (vraćanje na default ikonicu):
 
