@@ -3,6 +3,7 @@
 {% block title %}WoL History{% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <style>
     table {
         width: 100%;
@@ -73,23 +74,77 @@
         box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
     }
     
-    .filter-group input[type="date"] {
+    .filter-group input[type="text"].flatpickr-input {
+        cursor: pointer;
+    }
+    
+    /* Flatpickr custom styling */
+    .flatpickr-calendar {
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        font-family: inherit;
+    }
+    
+    .flatpickr-months {
+        background: var(--primary);
+        border-radius: 8px 8px 0 0;
+        padding: 0.5rem 0;
+    }
+    
+    .flatpickr-month,
+    .flatpickr-current-month {
+        color: white;
+    }
+    
+    .flatpickr-current-month .flatpickr-monthDropdown-months,
+    .flatpickr-current-month input.cur-year {
+        color: white;
+        font-weight: 600;
+    }
+    
+    .flatpickr-prev-month:hover svg,
+    .flatpickr-next-month:hover svg {
+        fill: white;
+    }
+    
+    .flatpickr-prev-month svg,
+    .flatpickr-next-month svg {
+        fill: rgba(255,255,255,0.8);
+    }
+    
+    .flatpickr-weekday {
+        color: var(--primary);
+        font-weight: 600;
+    }
+    
+    .flatpickr-day {
         color: var(--text);
-        cursor: pointer;
+        border-radius: 4px;
     }
     
-    .filter-group input[type="date"]::-webkit-calendar-picker-indicator {
-        cursor: pointer;
-        opacity: 0.6;
-        transition: opacity 0.3s;
+    .flatpickr-day:hover {
+        background: var(--light);
+        border-color: var(--light);
     }
     
-    .filter-group input[type="date"]::-webkit-calendar-picker-indicator:hover {
-        opacity: 1;
+    .flatpickr-day.selected,
+    .flatpickr-day.selected:hover {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
     }
     
-    .filter-group input[type="date"]:invalid {
-        color: #999;
+    .flatpickr-day.today {
+        border-color: var(--primary);
+        color: var(--primary);
+        font-weight: 600;
+    }
+    
+    .flatpickr-day.today:hover {
+        background: var(--primary);
+        color: white;
     }
     
     .filter-actions {
@@ -177,13 +232,16 @@
             </div>
             <div class="filter-group">
                 <label for="date_from"><i class="fas fa-calendar"></i> Od datuma</label>
-                <input type="date" id="date_from" name="date_from" value="{{ date_from or '' }}">
+                <input type="text" id="date_from" name="date_from" value="{{ date_from or '' }}" placeholder="Izaberi datum...">
             </div>
             <div class="filter-group">
                 <label for="date_to"><i class="fas fa-calendar"></i> Do datuma</label>
-                <input type="date" id="date_to" name="date_to" value="{{ date_to or '' }}">
+                <input type="text" id="date_to" name="date_to" value="{{ date_to or '' }}" placeholder="Izaberi datum...">
             </div>
             <div class="filter-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-filter"></i> Filtriraj
+                </button>
                 <a href="{{ url_for('history') }}" class="btn btn-secondary">
                     <i class="fas fa-redo"></i> Resetuj
                 </a>
@@ -344,29 +402,75 @@ document.querySelectorAll('input[name="deleteOption"]').forEach(radio => {
         }
     });
 });
+</script>
 
-// Auto-submit form on filter changes
-const filterForm = document.querySelector('.search-filters');
-const searchInput = document.getElementById('search');
-const dateFromInput = document.getElementById('date_from');
-const dateToInput = document.getElementById('date_to');
-
-// Debounce function for text input
-let searchTimeout;
-searchInput.addEventListener('input', function() {
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => {
-        filterForm.submit();
-    }, 500); // Wait 500ms after user stops typing
+<!-- Flatpickr -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+// Initialize Flatpickr datepickers
+flatpickr('#date_from', {
+    dateFormat: 'Y-m-d',
+    allowInput: true,
+    locale: {
+        firstDayOfWeek: 1,
+        weekdays: {
+            shorthand: ['Ned', 'Pon', 'Uto', 'Sre', 'Čet', 'Pet', 'Sub'],
+            longhand: ['Nedelja', 'Ponedeljak', 'Utorak', 'Sreda', 'Četvrtak', 'Petak', 'Subota']
+        },
+        months: {
+            shorthand: ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun', 'Jul', 'Avg', 'Sep', 'Okt', 'Nov', 'Dec'],
+            longhand: ['Januar', 'Februar', 'Mart', 'April', 'Maj', 'Jun', 'Jul', 'Avgust', 'Septembar', 'Oktobar', 'Novembar', 'Decembar']
+        }
+    }
 });
 
-// Instant submit for date changes
-dateFromInput.addEventListener('change', function() {
-    filterForm.submit();
+flatpickr('#date_to', {
+    dateFormat: 'Y-m-d',
+    allowInput: true,
+    locale: {
+        firstDayOfWeek: 1,
+        weekdays: {
+            shorthand: ['Ned', 'Pon', 'Uto', 'Sre', 'Čet', 'Pet', 'Sub'],
+            longhand: ['Nedelja', 'Ponedeljak', 'Utorak', 'Sreda', 'Četvrtak', 'Petak', 'Subota']
+        },
+        months: {
+            shorthand: ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun', 'Jul', 'Avg', 'Sep', 'Okt', 'Nov', 'Dec'],
+            longhand: ['Januar', 'Februar', 'Mart', 'April', 'Maj', 'Jun', 'Jul', 'Avgust', 'Septembar', 'Oktobar', 'Novembar', 'Decembar']
+        }
+    }
 });
 
-dateToInput.addEventListener('change', function() {
-    filterForm.submit();
+// Flatpickr for delete modal date inputs
+flatpickr('#deleteFromDate', {
+    dateFormat: 'Y-m-d',
+    allowInput: true,
+    locale: {
+        firstDayOfWeek: 1,
+        weekdays: {
+            shorthand: ['Ned', 'Pon', 'Uto', 'Sre', 'Čet', 'Pet', 'Sub'],
+            longhand: ['Nedelja', 'Ponedeljak', 'Utorak', 'Sreda', 'Četvrtak', 'Petak', 'Subota']
+        },
+        months: {
+            shorthand: ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun', 'Jul', 'Avg', 'Sep', 'Okt', 'Nov', 'Dec'],
+            longhand: ['Januar', 'Februar', 'Mart', 'April', 'Maj', 'Jun', 'Jul', 'Avgust', 'Septembar', 'Oktobar', 'Novembar', 'Decembar']
+        }
+    }
+});
+
+flatpickr('#deleteToDate', {
+    dateFormat: 'Y-m-d',
+    allowInput: true,
+    locale: {
+        firstDayOfWeek: 1,
+        weekdays: {
+            shorthand: ['Ned', 'Pon', 'Uto', 'Sre', 'Čet', 'Pet', 'Sub'],
+            longhand: ['Nedelja', 'Ponedeljak', 'Utorak', 'Sreda', 'Četvrtak', 'Petak', 'Subota']
+        },
+        months: {
+            shorthand: ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun', 'Jul', 'Avg', 'Sep', 'Okt', 'Nov', 'Dec'],
+            longhand: ['Januar', 'Februar', 'Mart', 'April', 'Maj', 'Jun', 'Jul', 'Avgust', 'Septembar', 'Oktobar', 'Novembar', 'Decembar']
+        }
+    }
 });
 </script>
 {% endblock %}
