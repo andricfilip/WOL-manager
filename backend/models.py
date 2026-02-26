@@ -58,6 +58,10 @@ class User(UserMixin, db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
     
+    def get_id(self):
+        """Override get_id to always return string of user ID"""
+        return str(self.id)
+    
     def __repr__(self):
         return f'<User {self.username}>'
 

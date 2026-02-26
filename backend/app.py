@@ -8,7 +8,7 @@ from config import config
 from models import db, User, Computer, WOLLog, ShutdownLog, AuditLog, ComputerGroup, UptimeLog, AppSettings, UserComputerPreference
 from wol import send_wol_packet, validate_mac_address, check_host_status, shutdown_computer_ssh
 from encryption import verify_encryption_setup
-from security import init_security
+from security import init_security, admin_required, validate_admin_status
 import app_config  # Application branding and configuration
 import auth
 import os
@@ -545,7 +545,9 @@ def admin_users():
 @login_required
 def admin_add_user():
     """Admin: Add new user"""
-    if not current_user.is_admin:
+    # SECURITY: Validate admin status from database to prevent session manipulation
+    if not validate_admin_status(current_user.id):
+        logger.warning(f"Unauthorized user creation attempt by user {current_user.id}")
         flash('Pristup odbijen', 'error')
         return redirect(url_for('dashboard'))
     
@@ -604,7 +606,9 @@ def admin_add_user():
 @login_required
 def toggle_admin(user_id):
     """Admin: Toggle user admin status"""
-    if not current_user.is_admin:
+    # SECURITY: Validate admin status from database to prevent session manipulation
+    if not validate_admin_status(current_user.id):
+        logger.warning(f"Unauthorized admin toggle attempt by user {current_user.id}")
         return jsonify({'success': False, 'message': 'Pristup odbijen'}), 403
     
     user = User.query.get_or_404(user_id)
@@ -978,6 +982,11 @@ def update_profile():
     data = request.get_json() or {}
     new_username = data.get('username', '').strip()
     new_email = data.get('email', '').strip()
+    
+    # SECURITY: Block any attempt to modify is_admin or privileged fields
+    if 'is_admin' in data or 'can_view_groups' in data:
+        logger.warning(f"Privilege escalation attempt by user {current_user.id} ({current_user.username})")
+        return jsonify({'success': False, 'message': 'Pristup odbijen'}), 403
     
     if not new_username or not new_email:
         return jsonify({'success': False, 'message': 'Sva polja su obavezna'}), 400

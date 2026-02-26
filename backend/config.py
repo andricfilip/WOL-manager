@@ -8,7 +8,7 @@ class Config:
         'postgresql://wol_user:wol_password@postgres:5432/wol_db'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
-    REMEMBER_COOKIE_DURATION = timedelta(days=3)
+    REMEMBER_COOKIE_DURATION = timedelta(days=7)  # Extended to 7 days
     WOL_BROADCAST_IP = '255.255.255.255'  # Default broadcast
     WOL_PORT = 9
     
@@ -20,7 +20,7 @@ class Config:
     SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', 'false').lower() == 'true'
     SESSION_COOKIE_HTTPONLY = os.environ.get('SESSION_COOKIE_HTTPONLY', 'true').lower() == 'true'
     SESSION_COOKIE_SAMESITE = os.environ.get('SESSION_COOKIE_SAMESITE', 'Lax')
-    PERMANENT_SESSION_LIFETIME = timedelta(days=3)  # 3-day session without idle logout
+    PERMANENT_SESSION_LIFETIME = timedelta(days=7)  # Extended to 7 days
     
     # Rate limiting
     RATELIMIT_ENABLED = True

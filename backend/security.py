@@ -3,7 +3,9 @@ Security middleware for Flask application
 Adds security headers and protections
 """
 
-from flask import make_response
+from flask import make_response, flash, redirect, url_for
+from flask_login import current_user
+from functools import wraps
 import logging
 
 logger = logging.getLogger(__name__)
@@ -130,3 +132,52 @@ def is_safe_redirect_url(target):
         return True
     
     return False
+
+
+def admin_required(f):
+    """
+    Decorator for admin-only routes.
+    Always validates admin status from database to prevent token/session manipulation.
+    
+    Usage:
+        @app.route('/admin/something')
+        @login_required
+        @admin_required
+        def admin_route():
+            ...
+    """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # Check if user is authenticated
+        if not current_user.is_authenticated:
+            flash('Molim prijavite se da pristupite ovoj stranici', 'error')
+            return redirect(url_for('auth.login'))
+        
+        # CRITICAL: Always re-fetch user from database to prevent session manipulation
+        from models import User, db
+        db_user = db.session.get(User, current_user.id)
+        
+        if not db_user or not db_user.is_admin:
+            logger.warning(f"Unauthorized admin access attempt by user {current_user.id} ({current_user.username})")
+            flash('Pristup odbijen - potrebne su admin privilegije', 'error')
+            return redirect(url_for('dashboard'))
+        
+        return f(*args, **kwargs)
+    
+    return decorated_function
+
+
+def validate_admin_status(user_id):
+    """
+    Validate admin status directly from database.
+    Use this for critical operations to prevent privilege escalation.
+    
+    Args:
+        user_id: User ID to check
+        
+    Returns:
+        True if user is admin, False otherwise
+    """
+    from models import User, db
+    user = db.session.get(User, user_id)
+    return user and user.is_admin
