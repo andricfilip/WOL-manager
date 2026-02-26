@@ -19,7 +19,7 @@ NC='\033[0m' # No Color
 # Step 1: Backup
 echo -e "${YELLOW}[1/7] Kreiranje backup-a baze...${NC}"
 BACKUP_FILE="wol_backup_$(date +%Y%m%d_%H%M%S).sql"
-docker exec computer-runner-db pg_dump -U computer_runner computer_runner > "$BACKUP_FILE"
+docker compose -f docker-compose.prod.yml exec -T db pg_dump -U computer_runner computer_runner > "$BACKUP_FILE"
 if [ -f "$BACKUP_FILE" ]; then
     echo -e "${GREEN}✅ Backup kreiran: $BACKUP_FILE ($(du -h $BACKUP_FILE | cut -f1))${NC}"
 else
@@ -57,23 +57,23 @@ echo -e "${YELLOW}[6/7] Pokretanje migracija baze...${NC}"
 echo ""
 
 echo "  → migrate_user_computer_preferences.py"
-docker exec computer-runner-backend python migrate_user_computer_preferences.py
+docker compose -f docker-compose.prod.yml exec -T backend python migrate_user_computer_preferences.py
 echo ""
 
 echo "  → migrate_user_computer_roles.py"
-docker exec computer-runner-backend python migrate_user_computer_roles.py
+docker compose -f docker-compose.prod.yml exec -T backend python migrate_user_computer_roles.py
 echo ""
 
 echo "  → migrate_ssh_auto_login.py"
-docker exec computer-runner-backend python migrate_ssh_auto_login.py
+docker compose -f docker-compose.prod.yml exec -T backend python migrate_ssh_auto_login.py
 echo ""
 
 echo "  → migrate_created_by.py"
-docker exec computer-runner-backend python migrate_created_by.py
+docker compose -f docker-compose.prod.yml exec -T backend python migrate_created_by.py
 echo ""
 
 echo "  → migrate_remove_ssh_terminal_setting.py"
-docker exec computer-runner-backend python migrate_remove_ssh_terminal_setting.py
+docker compose -f docker-compose.prod.yml exec -T backend python migrate_remove_ssh_terminal_setting.py
 echo ""
 
 echo -e "${GREEN}✅ Sve migracije završene${NC}"
