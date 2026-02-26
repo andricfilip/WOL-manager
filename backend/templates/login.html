@@ -3,15 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - ComputerRunner</title>
+    <title>Prijava - {{ app_info.company }}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --primary: #0066cc;
+            --primary: {{ app_colors.primary }};
             --secondary: #00a8e8;
             --light: #f8f9fa;
             --dark: #2c3e50;
             --border: #dee2e6;
+            --text: #333;
         }
 
         * {
@@ -22,7 +23,8 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            background: radial-gradient(1200px 600px at 20% -10%, rgba(255,255,255,0.35), transparent 60%),
+                        linear-gradient(135deg, var(--primary), var(--secondary));
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -33,21 +35,51 @@
             background: white;
             padding: 3rem;
             border-radius: 1rem;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.18);
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
         }
 
-        .login-box h1 {
-            text-align: center;
+        .brand {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .brand-logo {
+            height: 40px;
+            max-width: 160px;
+            object-fit: contain;
+        }
+
+        .brand-icon {
+            font-size: 2rem;
             color: var(--primary);
-            margin-bottom: 0.5rem;
-            font-size: 1.8rem;
+        }
+
+        .brand-text {
+            text-align: left;
+        }
+
+        .brand-company {
+            font-weight: 700;
+            color: var(--dark);
+            font-size: 1rem;
+            line-height: 1.1;
+        }
+
+        .brand-app {
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 1.25rem;
+            line-height: 1.1;
         }
 
         .subtitle {
             text-align: center;
-            color: #999;
+            color: #7a7a7a;
             margin-bottom: 2rem;
             font-size: 0.9rem;
         }
@@ -134,6 +166,12 @@
             border-radius: 0.5rem;
             margin-bottom: 1rem;
             border-left: 4px solid;
+            transition: opacity 0.4s, transform 0.4s;
+        }
+
+        .alert.hide {
+            opacity: 0;
+            transform: translateY(-6px);
         }
 
         .alert-error {
@@ -153,8 +191,8 @@
                 max-width: 100%;
             }
 
-            .login-box h1 {
-                font-size: 1.5rem;
+            .brand-app {
+                font-size: 1.1rem;
             }
 
             .subtitle {
@@ -178,16 +216,27 @@
                 padding: 1.5rem 1rem;
             }
 
-            .login-box h1 {
-                font-size: 1.3rem;
+            .brand-app {
+                font-size: 1rem;
             }
         }
     </style>
 </head>
 <body>
     <div class="login-box">
-        <h1><i class="fas fa-desktop"></i> ComputerRunner</h1>
-        <p class="subtitle">Wake-on-LAN Menadžer</p>
+        <div class="brand">
+            {% if app_info.logo_url %}
+                <img src="{{ app_info.logo_url }}" alt="{{ app_info.company }}" class="brand-logo" onerror="this.style.display='none'; document.getElementById('login-brand-icon').style.display='inline-block';">
+                <i class="{{ app_info.icon }} brand-icon" id="login-brand-icon" style="display:none;"></i>
+            {% else %}
+                <i class="{{ app_info.icon }} brand-icon"></i>
+            {% endif %}
+            <div class="brand-text">
+                <div class="brand-company">{{ app_info.company }}</div>
+                <div class="brand-app">{{ app_info.name }}</div>
+            </div>
+        </div>
+        <p class="subtitle">{{ app_info.tagline }}</p>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -230,6 +279,14 @@
         document.querySelector('form').addEventListener('submit', function(e) {
             // Forma će biti obrađena normalno sa POST metodom
             // Kredencijali se nikada ne vide u URL-u jer je POST
+        });
+
+        // Auto-dismiss alerts after a short delay
+        document.querySelectorAll('.alert').forEach(function(alert) {
+            setTimeout(function() {
+                alert.classList.add('hide');
+                setTimeout(function() { if (alert.parentNode) alert.remove(); }, 400);
+            }, 3500);
         });
     </script>
 </body>
