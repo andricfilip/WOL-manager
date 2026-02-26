@@ -438,7 +438,12 @@
         <div class="navbar-content">
             <a href="{{ url_for('dashboard') }}" class="navbar-brand">
                 {% if app_info.logo_url %}
-                    <img src="{{ app_info.logo_url }}" alt="{{ app_info.company }}" style="height: 32px; max-width: 150px; object-fit: contain; margin-right: 0.5rem;">
+                    <img src="{{ app_info.logo_url }}" 
+                         alt="{{ app_info.company }}" 
+                         id="navbar-logo"
+                         style="height: 32px; max-width: 150px; object-fit: contain; margin-right: 0.5rem;"
+                         onerror="this.style.display='none'; document.getElementById('navbar-icon-fallback').style.display='inline-block';">
+                    <i class="{{ app_info.icon }}" id="navbar-icon-fallback" style="display: none;"></i>
                 {% else %}
                     <i class="{{ app_info.icon }}"></i>
                 {% endif %}
