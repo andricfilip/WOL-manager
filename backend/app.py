@@ -829,7 +829,7 @@ def dashboard():
                 return jsonify({'success': False, 'message': 'Nemate dozvolu za ovu akciju'}), 403
             
             # Send WOL packet
-            success, message = send_wol_packet(computer.mac_address)
+            success, message = send_wol_packet(computer.mac_address, ip_address=computer.ip_address)
             
             # Log the action
             log = WOLLog(
@@ -2139,7 +2139,7 @@ def wake_group(group_id):
             results.append({'name': computer.name, 'success': False, 'message': 'Pristup odbijen'})
             continue
         
-        success, message = send_wol_packet(computer.mac_address)
+        success, message = send_wol_packet(computer.mac_address, ip_address=computer.ip_address)
         
         log = WOLLog(user_id=current_user.id, computer_id=computer.id, status='sent' if success else 'failed')
         db.session.add(log)

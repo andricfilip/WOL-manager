@@ -160,40 +160,63 @@ def create_magic_packet(mac_address: str) -> bytes:
     
     return magic_packet
 
-def send_wol_packet(mac_address: str, broadcast_ip: str = '192.168.5.255', port: int = 9) -> Tuple[bool, str]:
+def _get_broadcast_addresses(ip_address: str = None) -> list:
+    """Calculate all broadcast addresses to try for a given target IP."""
+    targets = ['255.255.255.255']  # Limited broadcast — always try first
+
+    if ip_address:
+        parts = ip_address.strip().split('.')
+        if len(parts) == 4:
+            try:
+                # Subnet-directed broadcast assuming /24 (most common home/office network)
+                subnet_bcast = f"{parts[0]}.{parts[1]}.{parts[2]}.255"
+                if subnet_bcast not in targets:
+                    targets.append(subnet_bcast)
+            except Exception:
+                pass
+
+    return targets
+
+
+def send_wol_packet(mac_address: str, ip_address: str = None, broadcast_ip: str = None, port: int = 9) -> Tuple[bool, str]:
     """
-    Send Wake-on-LAN packet
-    
+    Send Wake-on-LAN magic packet.
+
     Args:
         mac_address: MAC address of the target computer
-        broadcast_ip: Broadcast IP address
+        ip_address:  IP address of the target (used to derive subnet broadcast)
+        broadcast_ip: Override broadcast address (optional)
         port: UDP port (default 9)
-    
+
     Returns:
         Tuple: (success: bool, message: str)
     """
     try:
-        # Create magic packet
         magic_packet = create_magic_packet(mac_address)
-        
-        # Create UDP socket
+
+        # Build list of broadcast targets to try
+        targets = _get_broadcast_addresses(ip_address)
+        if broadcast_ip and broadcast_ip not in targets:
+            targets.append(broadcast_ip)
+
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)  # Enable broadcast
-        
-        # Send to specific broadcast address (local network)
-        sock.sendto(magic_packet, (broadcast_ip, port))
-        
-        # Also try general broadcast for good measure
-        try:
-            sock.sendto(magic_packet, ('255.255.255.255', port))
-        except:
-            pass
-        
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+
+        sent_to = []
+        for target in targets:
+            try:
+                sock.sendto(magic_packet, (target, port))
+                sent_to.append(target)
+            except Exception:
+                pass
+
         sock.close()
-        
-        return True, f"WOL packet sent to {broadcast_ip}:{port}"
-    
+
+        if sent_to:
+            return True, f"WOL packet sent to: {', '.join(sent_to)}"
+        return False, "Failed to send WOL packet — socket error on all broadcast addresses"
+
     except ValueError as e:
         return False, f"Invalid MAC address: {str(e)}"
     except socket.error as e:
