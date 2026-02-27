@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Profile{% endblock %}
+{% block title %}{{ t('profile_title') }}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -76,80 +76,80 @@
 
 {% block content %}
 <div class="profile-container">
-    <h1 style="margin-bottom: 1.5rem;">User Profile</h1>
+    <h1 style="margin-bottom: 1.5rem;">{{ t('profile_title') }}</h1>
 
     <div class="card">
         <div class="profile-info">
             <div class="info-row">
-                <span class="info-label"><i class="fas fa-user"></i> Username</span>
+                <span class="info-label"><i class="fas fa-user"></i> {{ t('col_username') }}</span>
                 <span class="info-value" id="display-username">{{ current_user.username }}</span>
             </div>
 
             <div class="info-row">
-                <span class="info-label"><i class="fas fa-envelope"></i> Email</span>
+                <span class="info-label"><i class="fas fa-envelope"></i> {{ t('col_email') }}</span>
                 <span class="info-value" id="display-email">{{ current_user.email }}</span>
             </div>
 
             <div class="info-row">
-                <span class="info-label"><i class="fas fa-shield-alt"></i> Role</span>
+                <span class="info-label"><i class="fas fa-shield-alt"></i> {{ t('col_role') }}</span>
                 <span class="info-value">
                     {% if current_user.is_admin %}
                         <span style="color: #2a9d8f; font-weight: 600;">
-                            <i class="fas fa-crown"></i> Administrator
+                            <i class="fas fa-crown"></i> {{ t('badge_admin_label') }}
                         </span>
                     {% else %}
                         <span style="color: #0066cc; font-weight: 600;">
-                            <i class="fas fa-user"></i> Regular User
+                            <i class="fas fa-user"></i> {{ t('badge_user_label') }}
                         </span>
                     {% endif %}
                 </span>
             </div>
 
             <div class="info-row">
-                <span class="info-label"><i class="fas fa-calendar"></i> Member Since</span>
+                <span class="info-label"><i class="fas fa-calendar"></i> {{ t('label_member_since') }}</span>
                 <span class="info-value">{{ current_user.created_at.strftime('%B %d, %Y') }}</span>
             </div>
         </div>
     </div>
 
     <div class="card">
-        <h2 style="margin-bottom: 1.5rem;">Izmeni Profil</h2>
+        <h2 style="margin-bottom: 1.5rem;">{{ t('profile_edit_section') }}</h2>
 
         <div class="form-group">
-            <label for="editUsername"><i class="fas fa-user"></i> Korisničko ime</label>
+            <label for="editUsername"><i class="fas fa-user"></i> {{ t('col_username') }}</label>
             <input type="text" id="editUsername" value="{{ current_user.username }}" required minlength="3">
         </div>
 
         <div class="form-group">
-            <label for="editEmail"><i class="fas fa-envelope"></i> Email</label>
+            <label for="editEmail"><i class="fas fa-envelope"></i> {{ t('col_email') }}</label>
             <input type="email" id="editEmail" value="{{ current_user.email }}" required>
         </div>
 
         <button type="button" class="btn btn-primary" onclick="updateProfile()">
-            <i class="fas fa-save"></i> Sačuvaj Izmene
+            <i class="fas fa-save"></i> {{ t('btn_save_profile') }}
         </button>
     </div>
 
     <div class="card">
-        <h2 style="margin-bottom: 1.5rem;">Change Password</h2>
+        <h2 style="margin-bottom: 1.5rem;">{{ t('profile_change_pw') }}</h2>
 
         <div class="form-group">
-            <label for="oldPassword"><i class="fas fa-lock"></i> Current Password</label>
+            <label for="oldPassword"><i class="fas fa-lock"></i> {{ t('label_current_pw') }}</label>
             <input type="password" id="oldPassword" required>
         </div>
 
         <div class="form-group">
-            <label for="newPassword"><i class="fas fa-key"></i> New Password</label>
+            <label for="newPassword"><i class="fas fa-key"></i> {{ t('label_new_pw') }}</label>
             <input type="password" id="newPassword" required>
         </div>
 
         <div class="form-group">
-            <label for="confirmPassword"><i class="fas fa-key"></i> Confirm New Password</label>
+            <label for="confirmPassword"><i class="fas fa-key"></i> {{ t('label_confirm_pw') }}</label>
             <input type="password" id="confirmPassword" required>
         </div>
 
         <button type="button" class="btn btn-primary" onclick="changePassword()">
-            <i class="fas fa-save"></i> Update Password
+            <i class="fas fa-save"></i> {{ t('btn_update_pw') }}
         </button>
     </div>
 </div>
@@ -161,7 +161,7 @@
         const email = document.getElementById('editEmail').value.trim();
 
         if (!username || !email) {
-            alert('Sva polja su obavezna');
+            alert('{{ t("all_fields_required") }}');
             return;
         }
 
@@ -180,10 +180,10 @@
                 const navUsername = document.querySelector('.navbar-menu .fa-user')?.closest('a')?.querySelector('.hide-mobile');
                 if (navUsername) navUsername.textContent = username;
             } else {
-                alert(`Greška: ${result.message}`);
+                alert(`{{ t('error_prefix') }}: ${result.message}`);
             }
         } catch (error) {
-            alert(`Greška: ${error.message}`);
+            alert(`{{ t('error_prefix') }}: ${error.message}`);
         }
     }
 
@@ -193,12 +193,12 @@
         const confirmPassword = document.getElementById('confirmPassword').value;
         
         if (!oldPassword || !newPassword || !confirmPassword) {
-            alert('All fields are required');
+            alert('{{ t("all_fields_required") }}');
             return;
         }
         
         if (newPassword !== confirmPassword) {
-            alert('New passwords do not match');
+            alert('{{ t("pw_mismatch") }}');
             return;
         }
         

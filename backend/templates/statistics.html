@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Statistika{% endblock %}
+{% block title %}{{ t('stats_title') }}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -274,12 +274,12 @@
 
 {% block content %}
 <div class="stats-header">
-    <h1><i class="fas fa-chart-bar"></i> Statistika</h1>
+    <h1><i class="fas fa-chart-bar"></i> {{ t('stats_title') }}</h1>
     <div class="period-selector">
-        <button class="period-btn" data-days="1"><i class="fas fa-clock"></i> 24 sata</button>
-        <button class="period-btn active" data-days="7"><i class="fas fa-calendar-week"></i> 7 dana</button>
-        <button class="period-btn" data-days="30"><i class="fas fa-calendar-alt"></i> 30 dana</button>
-        <button class="period-btn" data-days="90"><i class="fas fa-calendar"></i> 90 dana</button>
+        <button class="period-btn" data-days="1"><i class="fas fa-clock"></i> {{ t('stats_24h') }}</button>
+        <button class="period-btn active" data-days="7"><i class="fas fa-calendar-week"></i> {{ t('stats_7d') }}</button>
+        <button class="period-btn" data-days="30"><i class="fas fa-calendar-alt"></i> {{ t('stats_30d') }}</button>
+        <button class="period-btn" data-days="90"><i class="fas fa-calendar"></i> {{ t('stats_90d') }}</button>
     </div>
 </div>
 
@@ -287,19 +287,19 @@
 <div class="summary-row" id="summary-row">
     <div class="summary-card">
         <div class="big-number green" id="sum-online">-</div>
-        <div class="label">Trenutno online</div>
+        <div class="label">{{ t('stats_online_now') }}</div>
     </div>
     <div class="summary-card">
         <div class="big-number blue" id="sum-wol">-</div>
-        <div class="label">WoL ukupno</div>
+        <div class="label">{{ t('stats_wol_total') }}</div>
     </div>
     <div class="summary-card">
         <div class="big-number red" id="sum-shutdown">-</div>
-        <div class="label">Gašenja ukupno</div>
+        <div class="label">{{ t('stats_shutdowns_total') }}</div>
     </div>
     <div class="summary-card">
         <div class="big-number purple" id="sum-uptime">-</div>
-        <div class="label">Prosečan uptime</div>
+        <div class="label">{{ t('stats_avg_uptime') }}</div>
     </div>
 </div>
 
@@ -307,13 +307,13 @@
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
     <!-- Uptime Chart -->
     <div class="card">
-        <h3 style="margin: 0 0 1rem 0;"><i class="fas fa-chart-pie"></i> Status računara</h3>
+        <h3 style="margin: 0 0 1rem 0;"><i class="fas fa-chart-pie"></i> {{ t('stats_status_chart') }}</h3>
         <canvas id="uptimeChart" style="max-height: 250px;"></canvas>
     </div>
     
     <!-- Activity Chart -->
     <div class="card">
-        <h3 style="margin: 0 0 1rem 0;"><i class="fas fa-chart-bar"></i> Aktivnost</h3>
+        <h3 style="margin: 0 0 1rem 0;"><i class="fas fa-chart-bar"></i> {{ t('stats_activity_chart') }}</h3>
         <canvas id="activityChart" style="max-height: 250px;"></canvas>
     </div>
 </div>
@@ -321,12 +321,23 @@
 <!-- Stats Grid -->
 <div id="stats-container">
     <div class="loading-overlay">
-        <i class="fas fa-spinner fa-spin"></i> Učitavam statistiku...
+        <i class="fas fa-spinner fa-spin"></i> {{ t('stats_loading') }}
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
+// Translated strings for JS (rendered server-side by Jinja2)
+const _T = {
+    loading: '{{ t("stats_loading") }}',
+    no_data: '{{ t("stats_no_data") }}',
+    error: '{{ t("stats_error") }}',
+    unknown: '{{ t("stats_unknown") }}',
+    shutdowns: '{{ t("stats_shutdowns_label") }}',
+    timeline_label: '{{ t("stats_timeline_label") }}',
+    day: '{{ t("stats_day") }}',
+    days: '{{ t("stats_days") }}'
+};
 let currentDays = 7;
 
 async function loadStatistics(days) {
@@ -338,21 +349,21 @@ async function loadStatistics(days) {
     });
     
     const container = document.getElementById('stats-container');
-    container.innerHTML = '<div class="loading-overlay"><i class="fas fa-spinner fa-spin"></i> Učitavam statistiku...</div>';
+    container.innerHTML = '<div class="loading-overlay"><i class="fas fa-spinner fa-spin"></i> ' + _T.loading + '</div>';
     
     try {
         const resp = await fetch(`/api/statistics/data?days=${days}`);
         const data = await resp.json();
         
         if (!data.success) {
-            container.innerHTML = '<div class="loading-overlay">Greška pri učitavanju</div>';
+            container.innerHTML = '<div class="loading-overlay">' + _T.error + '</div>';
             return;
         }
         
         renderStats(data.stats, days);
         renderSummary(data.stats);
     } catch (err) {
-        container.innerHTML = '<div class="loading-overlay">Greška pri učitavanju statistike</div>';
+        container.innerHTML = '<div class="loading-overlay">' + _T.error + '</div>';
         console.error(err);
     }
 }
@@ -393,7 +404,7 @@ function renderCharts(stats) {
     uptimeChart = new Chart(ctxUptime, {
         type: 'doughnut',
         data: {
-            labels: ['Online', 'Offline', 'Nepoznato'],
+            labels: ['Online', 'Offline', _T.unknown],
             datasets: [{
                 data: [onlineCount, offlineCount, unknownCount],
                 backgroundColor: ['#28a745', '#dc3545', '#6c757d'],
@@ -433,7 +444,7 @@ function renderCharts(stats) {
                     borderWidth: 1
                 },
                 {
-                    label: 'Gašenja',
+                    label: _T.shutdowns,
                     data: sortedStats.map(s => s.shutdown_count),
                     backgroundColor: 'rgba(220, 53, 69, 0.7)',
                     borderColor: 'rgba(220, 53, 69, 1)',
@@ -470,7 +481,7 @@ function renderStats(stats, days) {
     const container = document.getElementById('stats-container');
     
     if (!stats.length) {
-        container.innerHTML = '<div class="loading-overlay">Nema podataka za prikaz</div>';
+        container.innerHTML = '<div class="loading-overlay">' + _T.no_data + '</div>';
         return;
     }
     
@@ -478,7 +489,7 @@ function renderStats(stats, days) {
     
     stats.forEach(stat => {
         const statusClass = stat.current_status === 'online' ? 'online' : stat.current_status === 'offline' ? 'offline' : 'unknown';
-        const statusLabel = stat.current_status === 'online' ? 'Online' : stat.current_status === 'offline' ? 'Offline' : 'Nepoznato';
+        const statusLabel = stat.current_status === 'online' ? 'Online' : stat.current_status === 'offline' ? 'Offline' : _T.unknown;
         
         let osIcon = '<i class="fas fa-desktop" style="color: #999;"></i>';
         if (stat.current_status === 'online') {
@@ -538,7 +549,7 @@ function renderStats(stats, days) {
                 
                 timelineHtml = `
                     <div class="timeline-container">
-                        <div class="timeline-label">Vremenska osa aktivnosti (${days} ${days === 1 ? 'dan' : days < 5 ? 'dana' : 'dana'})</div>
+                        <div class="timeline-label">${_T.timeline_label} (${days} ${days === 1 ? _T.day : _T.days})</div>
                         <div class="timeline-bar">
                             ${segments.map(s => {
                                 const statusLabel = s.status === 'online' ? 'Online' : 'Offline';
@@ -579,7 +590,7 @@ function renderStats(stats, days) {
                 </div>
                 <div class="metric">
                     <div class="metric-value red">${stat.shutdown_count}</div>
-                    <div class="metric-label">Gašenja</div>
+                    <div class="metric-label">${_T.shutdowns}</div>
                 </div>
             </div>
             <div class="uptime-bar-container">

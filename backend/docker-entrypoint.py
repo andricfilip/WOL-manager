@@ -163,6 +163,59 @@ def run_migrations(database_url):
         else:
             print("✓ 'os_type' column already exists")
         
+        # Add ssh_auto_login column if missing
+        if 'ssh_auto_login' not in columns:
+            print("\n➜ Adding 'ssh_auto_login' column...")
+            with engine.connect() as conn:
+                conn.execute(text(
+                    "ALTER TABLE computer ADD COLUMN ssh_auto_login BOOLEAN DEFAULT false"
+                ))
+                conn.commit()
+            print("✓ 'ssh_auto_login' column added")
+            needs_migration = True
+        else:
+            print("✓ 'ssh_auto_login' column already exists")
+        
+        # Add created_by_id column if missing
+        if 'created_by_id' not in columns:
+            print("\n➜ Adding 'created_by_id' column...")
+            with engine.connect() as conn:
+                conn.execute(text(
+                    'ALTER TABLE computer ADD COLUMN created_by_id INTEGER REFERENCES "user"(id)'
+                ))
+                conn.commit()
+            print("✓ 'created_by_id' column added")
+            needs_migration = True
+        else:
+            print("✓ 'created_by_id' column already exists")
+        
+        # Check and migrate user table
+        user_columns = [col['name'] for col in inspector.get_columns('user')]
+        
+        if 'can_view_groups' not in user_columns:
+            print("\n➜ Adding 'can_view_groups' column to user...")
+            with engine.connect() as conn:
+                conn.execute(text(
+                    'ALTER TABLE "user" ADD COLUMN can_view_groups BOOLEAN DEFAULT true'
+                ))
+                conn.commit()
+            print("✓ 'can_view_groups' column added")
+            needs_migration = True
+        else:
+            print("✓ 'can_view_groups' column already exists")
+        
+        if 'ssh_terminal_auto_login' not in user_columns:
+            print("\n➜ Adding 'ssh_terminal_auto_login' column to user...")
+            with engine.connect() as conn:
+                conn.execute(text(
+                    'ALTER TABLE "user" ADD COLUMN ssh_terminal_auto_login BOOLEAN DEFAULT false'
+                ))
+                conn.commit()
+            print("✓ 'ssh_terminal_auto_login' column added")
+            needs_migration = True
+        else:
+            print("✓ 'ssh_terminal_auto_login' column already exists")
+        
         # Create computer_group table if missing
         if 'computer_group' not in inspector.get_table_names():
             print("\n➜ Creating 'computer_group' table...")
@@ -182,6 +235,28 @@ def run_migrations(database_url):
             needs_migration = True
         else:
             print("✓ 'computer_group' table already exists")
+        
+        # Add allow_wake and allow_shutdown to computer_group if missing
+        if 'computer_group' in inspector.get_table_names():
+            group_columns = [col['name'] for col in inspector.get_columns('computer_group')]
+            if 'allow_wake' not in group_columns:
+                print("\n➜ Adding 'allow_wake' column to computer_group...")
+                with engine.connect() as conn:
+                    conn.execute(text(
+                        "ALTER TABLE computer_group ADD COLUMN allow_wake BOOLEAN DEFAULT true"
+                    ))
+                    conn.commit()
+                print("✓ 'allow_wake' column added")
+                needs_migration = True
+            if 'allow_shutdown' not in group_columns:
+                print("\n➜ Adding 'allow_shutdown' column to computer_group...")
+                with engine.connect() as conn:
+                    conn.execute(text(
+                        "ALTER TABLE computer_group ADD COLUMN allow_shutdown BOOLEAN DEFAULT true"
+                    ))
+                    conn.commit()
+                print("✓ 'allow_shutdown' column added")
+                needs_migration = True
         
         # Create group_computers M2M table if missing
         if 'group_computers' not in inspector.get_table_names():

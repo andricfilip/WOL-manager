@@ -17,8 +17,12 @@
     
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%230066cc;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%2300a8e8;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='100' fill='url(%23grad)'/%3E%3Cg fill='white'%3E%3Crect x='120' y='140' width='272' height='200' rx='12' stroke='white' stroke-width='12' fill='none'/%3E%3Crect x='220' y='340' width='72' height='60' rx='6'/%3E%3Crect x='180' y='390' width='152' height='16' rx='8'/%3E%3Ccircle cx='256' cy='240' r='50' stroke='white' stroke-width='14' fill='none' stroke-dasharray='220 90' stroke-dashoffset='45'/%3E%3Cline x1='256' y1='190' x2='256' y2='240' stroke='white' stroke-width='14' stroke-linecap='round'/%3E%3C/g%3E%3C/svg%3E">
+    <!-- PWA Icons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/imi_logo.png">
+    <link rel="manifest" href="/manifest.json">
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.4.3/dist/css/tom-select.css">
     <style>
         :root {
             --primary: {{ app_colors.primary }};
@@ -283,8 +287,93 @@
             border: 1px solid var(--border);
             border-radius: 0.3rem;
             font-size: 1rem;
-            transition: border-color 0.3s;
+            transition: border-color 0.3s, box-shadow 0.3s;
             min-height: 44px; /* Touch-friendly */
+            background: white;
+            color: var(--dark);
+            font-family: inherit;
+        }
+
+        /* Tom Select — custom theme to match WOL Manager design */
+        .ts-wrapper {
+            width: 100%;
+            padding: 0 !important;
+        }
+        .ts-wrapper .ts-control {
+            padding: 0.65rem 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 0.3rem;
+            font-size: 1rem;
+            min-height: 44px;
+            background: white;
+            color: var(--dark);
+            font-family: inherit;
+            cursor: pointer;
+            box-shadow: none !important;
+            display: flex;
+            align-items: center;
+            flex-wrap: nowrap;
+        }
+        /* Chevron arrow */
+        .ts-wrapper.single .ts-control::after {
+            content: '';
+            width: 14px;
+            height: 9px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%230066cc' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-size: contain;
+            border: none;
+            margin-left: auto;
+            flex-shrink: 0;
+            transition: transform 0.2s;
+        }
+        .ts-wrapper.single.is-open .ts-control::after {
+            transform: rotate(180deg);
+        }
+        /* Focus / hover */
+        .ts-wrapper.focus .ts-control,
+        .ts-wrapper.single.input-active .ts-control {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0,102,204,0.1) !important;
+            outline: none;
+        }
+        .ts-wrapper:not(.focus):hover .ts-control {
+            border-color: var(--primary);
+        }
+        /* Dropdown panel */
+        .ts-dropdown {
+            border: 1px solid rgba(0,102,204,0.4);
+            border-radius: 0.3rem;
+            box-shadow: 0 4px 16px rgba(0,102,204,0.12);
+            font-family: inherit;
+            font-size: 1rem;
+            margin-top: 3px;
+            z-index: 9999;
+            background: white;
+        }
+        .ts-dropdown .ts-dropdown-content {
+            max-height: 220px;
+            padding: 4px 0;
+        }
+        .ts-dropdown .option {
+            padding: 0.6rem 0.85rem;
+            color: var(--dark);
+            cursor: pointer;
+            transition: background 0.12s;
+        }
+        .ts-dropdown .option:hover,
+        .ts-dropdown .option.active {
+            background: #f0f7ff;
+            color: var(--primary);
+        }
+        .ts-dropdown .option.selected {
+            background: var(--primary);
+            color: white;
+            font-weight: 600;
+        }
+        .ts-dropdown .option.selected:hover {
+            background: #005ab5;
+            color: white;
         }
 
         .form-group input:focus,
@@ -428,8 +517,9 @@
             }
         }
 
-        {% block extra_css %}{% endblock %}
     </style>
+    {% block extra_css %}{% endblock %}
+    {% block extra_head %}{% endblock %}
 </head>
 <body>
     <div class="page-wrapper">
@@ -454,29 +544,29 @@
             </button>
             <ul class="navbar-menu" id="navbar-menu">
                 <li><a href="{{ url_for('dashboard') }}" {% if request.endpoint == 'dashboard' %}class="active"{% endif %}>
-                    <i class="fas fa-home"></i> Dashboard
+                    <i class="fas fa-home"></i> {{ t('nav_dashboard') }}
                 </a></li>
                 {% if not current_user.is_admin %}
                 <li><a href="{{ url_for('computer_preferences') }}" {% if request.endpoint == 'computer_preferences' %}class="active"{% endif %}>
-                    <i class="fas fa-sliders-h"></i> <span class="hide-mobile">Podesavanja racunara</span>
+                    <i class="fas fa-sliders-h"></i> <span class="hide-mobile">{{ t('nav_preferences') }}</span>
                 </a></li>
                 {% endif %}
                 <li><a href="{{ url_for('statistics') }}" {% if request.endpoint == 'statistics' %}class="active"{% endif %}>
-                    <i class="fas fa-chart-bar"></i> <span class="hide-mobile">Statistika</span>
+                    <i class="fas fa-chart-bar"></i> <span class="hide-mobile">{{ t('nav_statistics') }}</span>
                 </a></li>
                 {% if current_user.is_admin %}
                 <li><a href="{{ url_for('admin_computers') }}" {% if 'admin' in request.endpoint %}class="active"{% endif %}>
-                    <i class="fas fa-cog"></i> Admin
+                    <i class="fas fa-cog"></i> {{ t('nav_admin') }}
                 </a></li>
                 {% endif %}
                 <li><a href="{{ url_for('history') }}" {% if request.endpoint == 'history' %}class="active"{% endif %}>
-                    <i class="fas fa-history"></i> <span class="hide-mobile">Istorija</span>
+                    <i class="fas fa-history"></i> <span class="hide-mobile">{{ t('nav_history') }}</span>
                 </a></li>
                 <li><a href="{{ url_for('profile') }}" {% if request.endpoint == 'profile' %}class="active"{% endif %}>
                     <i class="fas fa-user"></i> <span class="hide-mobile">{{ current_user.username }}</span>
                 </a></li>
                 <li><a href="{{ url_for('auth.logout') }}">
-                    <i class="fas fa-sign-out-alt"></i> <span class="hide-mobile">Odjava</span>
+                    <i class="fas fa-sign-out-alt"></i> <span class="hide-mobile">{{ t('nav_logout') }}</span>
                 </a></li>
             </ul>
         </div>
@@ -679,22 +769,22 @@
             <form class="ssh-password-form" id="ssh-password-form">
                 <div>
                     <label style="display: block; font-weight: 600; color: var(--dark); margin-bottom: 0.5rem;">
-                        SSH Lozinka:
+                        {{ t('ssh_pass_label') }}:
                     </label>
                     <input 
                         type="password" 
                         id="ssh-password-input" 
-                        placeholder="Unesite SSH lozinku..." 
+                        placeholder="{{ t('ssh_modal_password_ph') }}" 
                         required
                         autocomplete="off"
                     >
                 </div>
                 <div class="ssh-password-buttons">
                     <button type="submit" id="ssh-password-submit" class="btn btn-primary">
-                        <i class="fas fa-sign-in-alt"></i> Prijavi se
+                        <i class="fas fa-sign-in-alt"></i> {{ t('ssh_modal_login_btn') }}
                     </button>
                     <button type="button" id="ssh-password-cancel" class="btn">
-                        <i class="fas fa-times"></i> Otkaži
+                        <i class="fas fa-times"></i> {{ t('btn_cancel') }}
                     </button>
                 </div>
             </form>
@@ -714,7 +804,7 @@
     </div>
     <script>
     // ==================== SSH TERMINAL CLIENT ====================
-    let _term = null, _fitAddon = null, _termSocket = null, _termComputerId = null;
+    let _term = null, _fitAddon = null, _termSocket = null, _termComputerId = null, _termComputerName = null;
 
     function openTerminal(computerId, computerName) {
         // Check if auto-login is enabled for this computer
@@ -739,10 +829,11 @@
         // Set title and reset input
         titleEl.textContent = `SSH Login - ${computerName}`;
         passwordInput.value = '';
-        passwordInput.focus();
         
-        // Show modal
+        // Show modal first, then focus (can't focus hidden element)
         modal.classList.add('active');
+        setTimeout(() => passwordInput.focus(), 150);
+        
         
         // Handle submit
         const handleSubmit = function(e) {
@@ -750,7 +841,7 @@
             const password = passwordInput.value;
             
             if (!password) {
-                alert('SSH lozinka je obavezna');
+                alert('{{ t("ssh_password_required") }}');
                 return;
             }
             
@@ -831,8 +922,7 @@
         _fitAddon.fit();
 
         _termComputerId = computerId;
-
-        // Use existing Socket.IO connection or create one
+        _termComputerName = computerName; // connection or create one
         if (!_termSocket || !_termSocket.connected) {
             _termSocket = io({ transports: ['websocket', 'polling'] });
         }
@@ -849,6 +939,30 @@
             if (_term) _term.write(d.data);
         });
         _termSocket.on('terminal_error', function(d) {
+            // If decryption failed on auto-login, show notification with link to fix it
+            if (d.code === 'DECRYPTION_FAILED') {
+                const savedId = _termComputerId;
+                const savedName = _termComputerName;
+                closeTerminal();
+                // Show a clear notification
+                const note = document.createElement('div');
+                note.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:9999;'
+                    + 'width:calc(100% - 2rem);max-width:540px;background:#fff;border:2px solid #dc3545;'
+                    + 'border-radius:0.5rem;box-shadow:0 4px 20px rgba(0,0,0,0.2);padding:1.25rem 1.5rem;';
+                note.innerHTML = '<div style="display:flex;align-items:flex-start;gap:0.75rem;">'
+                    + '<i class="fas fa-exclamation-triangle" style="color:#dc3545;font-size:1.4rem;flex-shrink:0;margin-top:2px;"></i>'
+                    + '<div><strong style="color:#dc3545;">{{ t("ssh_decrypt_fail_title") }}</strong>'
+                    + '<p style="margin:0.4rem 0 0.75rem;">{{ t("ssh_decrypt_fail_desc") }}</p>'
+                    + '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">'
+                    + '<a href="/computers/' + savedId + '/edit" class="btn btn-primary" style="text-decoration:none;font-size:0.9rem;">'
+                    + '<i class="fas fa-edit"></i> {{ t("ssh_decrypt_fix_btn") }}</a>'
+                    + '<button onclick="this.closest(\'div[style]\').remove()" class="btn" style="font-size:0.9rem;">'
+                    + '<i class="fas fa-times"></i> {{ t("btn_close") }}</button>'
+                    + '</div></div></div>';
+                document.body.appendChild(note);
+                setTimeout(() => { if (note.parentNode) note.remove(); }, 15000);
+                return;
+            }
             dot.className = 'terminal-status-dot error';
             if (_term) _term.write('\r\n\x1b[1;31mError: ' + d.message + '\x1b[0m\r\n');
         });
@@ -926,7 +1040,7 @@
                     remToast.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:9999;width:calc(100% - 2rem);max-width:500px;' +
                         'background:#721c24;color:#fff;padding:1rem 1.25rem;border-radius:0.5rem;' +
                         'box-shadow:0 4px 16px rgba(0,0,0,0.35);font-weight:600;display:flex;align-items:center;gap:0.6rem;';
-                    remToast.innerHTML = '<i class="fas fa-ban" style="font-size:1.1rem;"></i> Admin vam je uklonio pristup računaru';
+                    remToast.innerHTML = '<i class="fas fa-ban" style="font-size:1.1rem;"></i> {{ t("access_removed_toast") }}';
                     document.body.appendChild(remToast);
 
                     // Animate and remove the computer card from DOM (works on dashboard & preferences)
@@ -976,7 +1090,7 @@
                     gainToast.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:9999;width:calc(100% - 2rem);max-width:500px;' +
                         'background:#155724;color:#fff;padding:1rem 1.25rem;border-radius:0.5rem;' +
                         'box-shadow:0 4px 16px rgba(0,0,0,0.25);font-weight:600;display:flex;align-items:center;gap:0.6rem;';
-                    gainToast.innerHTML = '<i class="fas fa-check" style="font-size:1.1rem;"></i> Dodat vam je pristup novom računaru';
+                    gainToast.innerHTML = '<i class="fas fa-check" style="font-size:1.1rem;"></i> {{ t("access_granted_toast") }}';
                     document.body.appendChild(gainToast);
                     setTimeout(function() {
                         if (gainToast.parentNode) gainToast.remove();
@@ -1029,6 +1143,35 @@
     });
     </script>
     
+    <!-- Tom Select: styled custom dropdowns -->
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.4.3/dist/js/tom-select.complete.min.js"></script>
+    <script>
+    (function() {
+        function initTomSelects(root) {
+            root = root || document;
+            root.querySelectorAll(
+                '.form-group select:not([data-no-ts]), .lang-select:not([data-no-ts]),  .user-role-select:not([data-no-ts])'
+            ).forEach(function(el) {
+                if (el.tomselect) return; // already initialised
+                new TomSelect(el, {
+                    create: false,
+                    allowEmptyOption: true,
+                    controlInput: null,  // no search box — simple dropdown
+                    onInitialize: function() {
+                        // mirror disabled state
+                        if (el.disabled) this.disable();
+                    }
+                });
+            });
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            initTomSelects();
+        });
+        // Expose for dynamic content
+        window.initTomSelects = initTomSelects;
+    })();
+    </script>
+
     {% block extra_js %}{% endblock %}
 </body>
 </html>

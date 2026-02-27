@@ -351,9 +351,9 @@
     <div class="status-indicator status-{{ computer.status if computer.status else 'unknown' }}" data-status-badge="{{ computer.id }}">
         <span class="status-dot"></span>
         <span class="status-text">
-            {% if computer.status == 'online' %}Online
-            {% elif computer.status == 'offline' %}Offline
-            {% else %}Nepoznato{% endif %}
+            {% if computer.status == 'online' %}{{ t('status_online') }}
+            {% elif computer.status == 'offline' %}{{ t('status_offline') }}
+            {% else %}{{ t('status_unknown') }}{% endif %}
         </span>
     </div>
     <h3>
@@ -378,36 +378,36 @@
     </div>
     {% endif %}
     {% if computer.description %}
-    <div class="computer-info"><strong>Opis:</strong> {{ computer.description }}</div>
+    <div class="computer-info"><strong>{{ t('dash_opis') }}:</strong> {{ computer.description }}</div>
     {% endif %}
     {% if computer.last_wol %}
-    <div class="computer-info" data-last-wol="{{ computer.id }}"><strong>Poslednji WoL:</strong> {{ computer.last_wol.strftime('%d.%m.%Y %H:%M') }}</div>
+    <div class="computer-info" data-last-wol="{{ computer.id }}"><strong>{{ t('dash_last_wol') }}:</strong> {{ computer.last_wol.strftime('%d.%m.%Y %H:%M') }}</div>
     {% endif %}
     {% if computer.last_shutdown %}
-    <div class="computer-info" data-last-shutdown="{{ computer.id }}"><strong>Poslednje gašenje:</strong> {{ computer.last_shutdown.strftime('%d.%m.%Y %H:%M') }}</div>
+    <div class="computer-info" data-last-shutdown="{{ computer.id }}"><strong>{{ t('dash_last_shutdown') }}:</strong> {{ computer.last_shutdown.strftime('%d.%m.%Y %H:%M') }}</div>
     {% endif %}
     {% if computer.last_checked %}
-    <div class="computer-info" data-last-checked="{{ computer.id }}"><strong>Provereno:</strong> {{ computer.last_checked.strftime('%d.%m.%Y %H:%M:%S') }}</div>
+    <div class="computer-info" data-last-checked="{{ computer.id }}"><strong>{{ t('dash_checked') }}:</strong> {{ computer.last_checked.strftime('%d.%m.%Y %H:%M:%S') }}</div>
     {% endif %}
     {% set role_value = user_roles.get(computer.id, 'operator') if user_roles is defined else 'operator' %}
     {% set can_operate = current_user.is_admin or role_value in ['owner', 'operator'] %}
     <div class="computer-actions">
         <button class="wol-btn" data-wake-btn="{{ computer.id }}" data-wol-btn data-computer-id="{{ computer.id }}" data-computer-name="{{ computer.name }}" {% if computer.status == 'online' or not can_operate %}disabled{% endif %}>
-            <i class="fas fa-power-off"></i> Uključi
+            <i class="fas fa-power-off"></i> {{ t('btn_wake') }}
         </button>
         {% if computer.ssh_host and computer.ssh_username %}
         <button class="shutdown-btn" data-shutdown-btn="{{ computer.id }}" data-computer-id="{{ computer.id }}" data-computer-name="{{ computer.name }}" {% if computer.status != 'online' or not can_operate %}disabled{% endif %}>
-            <i class="fas fa-stop-circle"></i> Ugasi
+            <i class="fas fa-stop-circle"></i> {{ t('btn_shutdown') }}
         </button>
         <button class="terminal-btn" data-terminal-btn="{{ computer.id }}" data-ssh-auto-login="{{ computer.ssh_auto_login|lower }}" onclick="openTerminal({{ computer.id }}, '{{ computer.name }}')" {% if computer.status != 'online' or not can_operate %}disabled{% endif %}>
-            <i class="fas fa-terminal"></i> Terminal
+            <i class="fas fa-terminal"></i> {{ t('btn_terminal') }}
         </button>
         {% elif computer.ssh_username and computer._ssh_password_encrypted %}
         <button class="shutdown-btn" data-shutdown-btn="{{ computer.id }}" data-computer-id="{{ computer.id }}" data-computer-name="{{ computer.name }}" {% if computer.status != 'online' or not can_operate %}disabled{% endif %}>
-            <i class="fas fa-stop-circle"></i> Ugasi
+            <i class="fas fa-stop-circle"></i> {{ t('btn_shutdown') }}
         </button>
         <button class="terminal-btn" data-terminal-btn="{{ computer.id }}" data-ssh-auto-login="{{ computer.ssh_auto_login|lower }}" onclick="openTerminal({{ computer.id }}, '{{ computer.name }}')" {% if computer.status != 'online' or not can_operate %}disabled{% endif %}>
-            <i class="fas fa-terminal"></i> Terminal
+            <i class="fas fa-terminal"></i> {{ t('btn_terminal') }}
         </button>
         {% endif %}
     </div>
@@ -416,7 +416,7 @@
 
 {# ======== HEADER ======== #}
 <div class="dashboard-header">
-    <h1><i class="fas fa-desktop"></i> Moji Računari</h1>
+    <h1><i class="fas fa-desktop"></i> {{ t('dash_title') }}</h1>
 </div>
 
 {# ======== TOOLBAR: Search + Refresh + Timer ======== #}
@@ -424,19 +424,19 @@
     {% if enable_search %}
     <div class="search-box">
         <i class="fas fa-search"></i>
-        <input type="text" id="search-input" placeholder="Pretraži po nazivu, IP adresi, MAC adresi..." autocomplete="off">
+        <input type="text" id="search-input" placeholder="{{ t('dash_search_ph') }}" autocomplete="off">
     </div>
     <div class="toolbar-divider"></div>
     {% endif %}
     <button id="refresh-status-btn" class="toolbar-btn toolbar-btn-refresh">
-        <i class="fas fa-sync-alt"></i> Proveri status
+        <i class="fas fa-sync-alt"></i> {{ t('dash_check_status') }}
     </button>
     <span class="auto-refresh-info" id="refresh-info"></span>
 </div>
 {% if enable_search %}
 <div class="no-search-results" id="no-search-results">
     <i class="fas fa-search" style="font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.5;"></i>
-    <p>Nema rezultata pretrage</p>
+    <p>{{ t('dash_no_results') }}</p>
 </div>
 {% endif %}
 
@@ -453,7 +453,7 @@
     </div>
     <div class="quick-stat">
         <div class="quick-stat-icon" style="background: linear-gradient(135deg, var(--primary), var(--secondary));"><i class="fas fa-desktop"></i></div>
-        <div><div class="quick-stat-value">{{ computers|length }}</div><div class="quick-stat-label">Ukupno</div></div>
+        <div><div class="quick-stat-value">{{ computers|length }}</div><div class="quick-stat-label">{{ t('stat_total') }}</div></div>
     </div>
 </div>
 
@@ -478,7 +478,7 @@
                 {% endif %}
             </h2>
             <button class="wake-group-btn" onclick="wakeGroup({{ group.id }}, '{{ group.name }}')">
-                <i class="fas fa-power-off"></i> Uključi sve
+                <i class="fas fa-power-off"></i> {{ t('dash_wake_all') }}
             </button>
         </div>
         <div class="group-body">
@@ -506,7 +506,7 @@
 {% if ungrouped %}
 <div class="group-section">
     <div class="group-header-bar" style="background: #6c757d;">
-        <h2><i class="fas fa-desktop"></i> Moji računari</h2>
+        <h2><i class="fas fa-desktop"></i> {{ t('dash_ungrouped') }}</h2>
     </div>
     <div class="group-body">
         <div class="computer-grid">
@@ -523,8 +523,8 @@
 <div class="card">
     <div class="empty-state">
         <i class="fas fa-desktop" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
-        <p style="font-size: 1.1rem; margin-bottom: 1rem;">Nemate dodeljenih računara</p>
-        <p style="color: #999;">Kontaktirajte administratora da vam dodeli pristup računarima</p>
+        <p style="font-size: 1.1rem; margin-bottom: 1rem;">{{ t('dash_no_computers') }}</p>
+        <p style="color: #999;">{{ t('dash_no_computers_sub') }}</p>
     </div>
 </div>
 {% endif %}
@@ -535,8 +535,8 @@
     let nextRefreshTime = null;
 
     function formatTimeRemaining(seconds) {
-        if (seconds <= 0) return 'Osvežavanje...';
-        return `Sledeće osvežavanje za ${seconds}s`;
+        if (seconds <= 0) return '{{ t("dash_refreshing") }}';
+        return `{{ t("dash_next_refresh") }} ${seconds}s`;
     }
     function updateRefreshTimer() {
         const el = document.getElementById('refresh-info');
@@ -551,7 +551,8 @@
         badge.classList.remove('status-online', 'status-offline', 'status-unknown', 'status-checking');
         badge.classList.add(`status-${status}`);
         const text = badge.querySelector('.status-text');
-        if (text) text.textContent = status === 'online' ? 'Online' : status === 'offline' ? 'Offline' : 'Nepoznato';
+        const _statusLabels = { 'online': '{{ t("status_online") }}', 'offline': '{{ t("status_offline") }}', 'unknown': '{{ t("status_unknown") }}' };
+        if (text) text.textContent = _statusLabels[status] || '{{ t("status_unknown") }}';
         // Toggle buttons
         const wakeBtn = document.querySelector(`[data-wake-btn="${computerId}"]`);
         if (wakeBtn) wakeBtn.disabled = isOnline;
@@ -580,7 +581,7 @@
         shutBtn.setAttribute('data-computer-id', computerId);
         shutBtn.setAttribute('data-computer-name', computerName);
         if (!isOnline) shutBtn.disabled = true;
-        shutBtn.innerHTML = '<i class="fas fa-stop-circle"></i> Ugasi';
+        shutBtn.innerHTML = '<i class="fas fa-stop-circle"></i> {{ t("btn_shutdown") }}';
         actions.appendChild(shutBtn);
         // Add terminal button
         const termBtn = document.createElement('button');
@@ -588,7 +589,7 @@
         termBtn.setAttribute('data-terminal-btn', computerId);
         termBtn.onclick = function() { openTerminal(computerId, computerName); };
         if (!isOnline) termBtn.disabled = true;
-        termBtn.innerHTML = '<i class="fas fa-terminal"></i> Terminal';
+        termBtn.innerHTML = '<i class="fas fa-terminal"></i> {{ t("btn_terminal") }}';
         actions.appendChild(termBtn);
         // Re-bind shutdown handler
         setupShutdownButtons();
@@ -597,7 +598,7 @@
         const el = document.querySelector(`[data-last-checked="${computerId}"]`);
         if (!el) return;
         const d = new Date(timestamp);
-        el.innerHTML = `<strong>Provereno:</strong> ${d.toLocaleString('sr-RS', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'})}`;
+        el.innerHTML = `<strong>{{ t('dash_checked') }}:</strong> ${d.toLocaleString('{{ "sr-RS" if lang == "sr" else "en-US" }}', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'})}`;
     }
     function updateQuickStats() {
         let online = 0, offline = 0;
@@ -613,13 +614,13 @@
 
     async function checkAllComputersStatus() {
         const btn = document.getElementById('refresh-status-btn');
-        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Proveravam...'; }
+        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> {{ t("dash_checking") }}'; }
 
         document.querySelectorAll('[data-status-badge]').forEach(badge => {
             badge.classList.remove('status-online', 'status-offline', 'status-unknown');
             badge.classList.add('status-checking');
-            const t = badge.querySelector('.status-text');
-            if (t) t.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i>';
+            const _st = badge.querySelector('.status-text');
+            if (_st) _st.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i>';
         });
 
         try {
@@ -637,29 +638,29 @@
             document.querySelectorAll('[data-status-badge]').forEach(b => {
                 b.classList.remove('status-checking');
                 b.classList.add('status-unknown');
-                const t = b.querySelector('.status-text');
-                if (t) t.textContent = 'Greška';
+                const _st = b.querySelector('.status-text');
+                if (_st) _st.textContent = '{{ t("status_error") }}';
             });
         } finally {
-            if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> Proveri status'; }
+            if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> {{ t("dash_check_status") }}'; }
             updateQuickStats();
         }
     }
 
     async function wakeGroup(groupId, groupName) {
-        if (!confirm(`Uključiti sve računare u grupi "${groupName}"?`)) return;
+        if (!confirm(`{{ t('confirm_wake_group') }} "${groupName}"?`)) return;
         const btn = event.target.closest('button');
         btn.disabled = true;
         const orig = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Šaljem...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> {{ t("sending") }}';
         try {
             const resp = await fetch(`/api/groups/${groupId}/wake`, { method: 'POST', headers: {'Content-Type': 'application/json'} });
             const result = await resp.json();
             if (result.success) {
                 alert('✓ ' + result.message);
                 setTimeout(() => checkAllComputersStatus(), 5000);
-            } else { alert('✗ Greška: ' + result.message); }
-        } catch (err) { alert('✗ Greška: ' + err.message); }
+            } else { alert('✗ {{ t("error_prefix") }}: ' + result.message); }
+        } catch (err) { alert('✗ {{ t("error_prefix") }}: ' + err.message); }
         finally { btn.disabled = false; btn.innerHTML = orig; }
     }
 
@@ -678,16 +679,16 @@
             button.addEventListener('click', async (e) => {
                 e.preventDefault();
                 const cid = button.dataset.computerId, cname = button.dataset.computerName;
-                if (!confirm(`Ugasiti računar ${cname}?`)) return;
+                if (!confirm(`{{ t('confirm_shutdown') }} ${cname}?`)) return;
                 button.disabled = true;
                 const orig = button.innerHTML;
-                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gašenje...';
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> {{ t("shutting_down") }}';
                 try {
                     const resp = await fetch('/api/shutdown', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({computer_id: parseInt(cid)}) });
                     const result = await resp.json();
-                    if (result.success) { alert(`✓ Računar ${cname} uspešno ugašen!`); setTimeout(() => checkAllComputersStatus(), 3000); }
-                    else { alert('✗ Greška: ' + result.message); }
-                } catch (err) { alert('✗ Greška: ' + err.message); }
+                    if (result.success) { alert(`✓ ${cname} {{ t('shutdown_success') }}!`); setTimeout(() => checkAllComputersStatus(), 3000); }
+                    else { alert('✗ {{ t("error_prefix") }}: ' + result.message); }
+                } catch (err) { alert('✗ {{ t("error_prefix") }}: ' + err.message); }
                 finally { button.disabled = false; button.innerHTML = orig; }
             });
         });
@@ -700,15 +701,15 @@
                 const cid = button.dataset.computerId, cname = button.dataset.computerName;
                 button.disabled = true;
                 const orig = button.innerHTML;
-                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Šaljem...';
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> {{ t("sending") }}';
                 try {
                     const resp = await fetch('/dashboard', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({computer_id: parseInt(cid)}) });
                     const result = await resp.json();
                     if (result.success) {
-                        alert(`✓ WoL paket poslat na ${cname}!`);
+                        alert(`✓ {{ t('wol_sent') }} ${cname}!`);
                         setTimeout(() => checkAllComputersStatus(), 5000);
-                    } else { alert('✗ Greška: ' + result.message); }
-                } catch (err) { alert('✗ Greška: ' + err.message); }
+                    } else { alert('✗ {{ t("error_prefix") }}: ' + result.message); }
+                } catch (err) { alert('✗ {{ t("error_prefix") }}: ' + err.message); }
                 finally { button.disabled = false; button.innerHTML = orig; }
             });
         });

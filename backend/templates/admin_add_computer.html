@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Dodaj Računar{% endblock %}
+{% block title %}{{ t('page_add_comp') }}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -224,50 +224,50 @@
 {% block content %}
 <div style="max-width: 800px; margin: 0 auto;">
     <a href="{{ url_for('admin_computers') }}" class="back-link">
-        <i class="fas fa-arrow-left"></i> Nazad na računare
+        <i class="fas fa-arrow-left"></i> {{ t('back_to_computers') }}
     </a>
-    <h1 style="margin-bottom: 1.5rem;"><i class="fas fa-desktop"></i> Dodaj Novi Računar</h1>
+    <h1 style="margin-bottom: 1.5rem;"><i class="fas fa-desktop"></i> {{ t('page_add_comp') }}</h1>
 
     <div class="card">
         <form method="POST" action="{{ url_for('admin_add_computer') }}">
             <div class="form-group">
-                <label for="name"><i class="fas fa-tag"></i> Naziv Računara</label>
+                <label for="name"><i class="fas fa-tag"></i> {{ t('comp_name_label') }}</label>
                 <input type="text" id="name" name="name" required placeholder="npr. Server-01" autofocus>
             </div>
 
             <div class="form-group">
-                <label for="mac_address"><i class="fas fa-network-wired"></i> MAC Adresa</label>
+                <label for="mac_address"><i class="fas fa-network-wired"></i> {{ t('comp_mac_label') }}</label>
                 <input type="text" id="mac_address" name="mac_address" required 
                        placeholder="AA:BB:CC:DD:EE:FF" 
                        pattern="^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$"
                        title="Format: AA:BB:CC:DD:EE:FF">
                 <small style="color: #666; display: block; margin-top: 0.5rem;">
-                    Format: AA:BB:CC:DD:EE:FF ili AA-BB-CC-DD-EE-FF
+                    {{ t('comp_mac_format_hint') }}
                 </small>
             </div>
 
             <div class="form-group">
-                <label for="ip_address"><i class="fas fa-globe"></i> IP Adresa (opciono)</label>
+                <label for="ip_address"><i class="fas fa-globe"></i> {{ t('comp_ip_label') }}</label>
                 <input type="text" id="ip_address" name="ip_address" 
                        placeholder="192.168.1.100"
                        pattern="^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$">
             </div>
 
             <div class="form-group">
-                <label for="description"><i class="fas fa-comment"></i> Opis (opciono)</label>
+                <label for="description"><i class="fas fa-comment"></i> {{ t('comp_desc_label') }}</label>
                 <textarea id="description" name="description" rows="3" 
-                          placeholder="Kratak opis računara..."></textarea>
+                          placeholder="{{ t('comp_desc_ph') }}"></textarea>
             </div>
 
             <div class="form-group">
-                <label for="os_type"><i class="fas fa-laptop"></i> Operativni sistem</label>
+                <label for="os_type"><i class="fas fa-laptop"></i> {{ t('comp_os_label') }}</label>
                 <select id="os_type" name="os_type" required>
                     <option value="linux" selected>Linux</option>
                     <option value="windows">Windows</option>
-                    <option value="unknown">Nepoznat</option>
+                    <option value="unknown">{{ t('comp_os_unknown_opt') }}</option>
                 </select>
                 <small style="color: #666; display: block; margin-top: 0.5rem;">
-                    <i class="fas fa-info-circle"></i> Bitno za SSH shutdown komande
+                    <i class="fas fa-info-circle"></i> {{ t('comp_os_hint') }}
                 </small>
             </div>
 
@@ -275,45 +275,45 @@
             
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                 <h3 style="margin: 0; color: var(--primary);">
-                    <i class="fas fa-terminal"></i> SSH Konfiguracija (za gašenje računara)
+                    <i class="fas fa-terminal"></i> {{ t('ssh_config_section') }}
                 </h3>
                 <button type="button" class="btn btn-secondary btn-sm" onclick="showSSHHelp()" style="white-space: nowrap;">
-                    <i class="fas fa-question-circle"></i> Pomoć
+                    <i class="fas fa-question-circle"></i> {{ t('btn_help') }}
                 </button>
             </div>
             
             <div class="form-group">
-                <label for="ssh_host"><i class="fas fa-server"></i> SSH Host</label>
+                <label for="ssh_host"><i class="fas fa-server"></i> {{ t('ssh_host_label') }}</label>
                 <input type="text" id="ssh_host" name="ssh_host" 
-                       placeholder="npr. 192.168.1.100 ili računar.local">
+                       placeholder="npr. 192.168.1.100 ili racunar.local">
                 <small style="color: #666; display: block; margin-top: 0.5rem;">
-                    Ostavi prazno ako SSH koristi istu adresu kao IP adresa
+                    {{ t('ssh_host_hint') }}
                 </small>
             </div>
 
             <div class="form-group">
-                <label for="ssh_port"><i class="fas fa-ethernet"></i> SSH Port</label>
+                <label for="ssh_port"><i class="fas fa-ethernet"></i> {{ t('ssh_port_label') }}</label>
                 <input type="number" id="ssh_port" name="ssh_port" 
                        value="22" min="1" max="65535">
             </div>
 
             <div class="form-group">
-                <label for="ssh_username"><i class="fas fa-user"></i> SSH Korisničko ime</label>
+                <label for="ssh_username"><i class="fas fa-user"></i> {{ t('ssh_user_label') }}</label>
                 <input type="text" id="ssh_username" name="ssh_username" 
                        autocomplete="off" placeholder="Administrator ili username">
             </div>
 
             <div class="form-group">
-                <label for="ssh_password"><i class="fas fa-key"></i> SSH Lozinka</label>
+                <label for="ssh_password"><i class="fas fa-key"></i> {{ t('ssh_pass_label') }}</label>
                 <input type="password" id="ssh_password" name="ssh_password" 
                        autocomplete="new-password" placeholder="••••••••">
                 <small style="color: #e63946; display: block; margin-top: 0.5rem;">
-                    <i class="fas fa-exclamation-triangle"></i> Lozinka se čuva enkriptovano u bazi
+                    <i class="fas fa-exclamation-triangle"></i> {{ t('ssh_pass_stored_enc') }}
                 </small>
             </div>
 
             <div class="form-group">
-                <label><i class="fas fa-users"></i> Dodeli Korisnicima</label>
+                <label><i class="fas fa-users"></i> {{ t('assign_users_label') }}</label>
                 <div class="user-toggle-list">
                     {% if users %}
                         {% for user in users %}
@@ -333,9 +333,9 @@
                                     </div>
                                 </div>
                                 <select class="user-role-select" name="role_{{ user.id }}">
-                                    <option value="viewer">Viewer (samo pregled)</option>
-                                    <option value="operator" selected>Operator (pali/gasi)</option>
-                                    <option value="owner">Owner (menja uredjaj/SSH)</option>
+                                    <option value="viewer">{{ t('role_viewer_opt') }}</option>
+                                    <option value="operator" selected>{{ t('role_operator_opt') }}</option>
+                                    <option value="owner">{{ t('role_owner_opt') }}</option>
                                 </select>
                                 <label class="toggle-switch">
                                     <input type="checkbox" name="assigned_users" value="{{ user.id }}">
@@ -345,21 +345,21 @@
                         {% endfor %}
                     {% else %}
                         <p style="color: #999; margin: 0; text-align: center; padding: 1rem;">
-                            <i class="fas fa-info-circle"></i> Nema korisnika u sistemu
+                            <i class="fas fa-info-circle"></i> {{ t('no_users_in_system') }}
                         </p>
                     {% endif %}
                 </div>
                 <small style="color: #666; display: block; margin-top: 1rem;">
-                    <i class="fas fa-info-circle"></i> Uključite toggle za korisnike kojima želite dati pristup ovom računaru.
+                    <i class="fas fa-info-circle"></i> {{ t('toggle_access_hint') }}
                 </small>
             </div>
 
             <div style="display: flex; gap: 1rem; margin-top: 2rem;">
                 <button type="submit" class="btn btn-primary" style="flex: 1;">
-                    <i class="fas fa-plus"></i> Dodaj Računar
+                    <i class="fas fa-plus"></i> {{ t('page_add_comp') }}
                 </button>
                 <a href="{{ url_for('admin_computers') }}" class="btn" style="flex: 1; background: #999; color: white; text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center;">
-                    <i class="fas fa-times"></i> Otkaži
+                    <i class="fas fa-times"></i> {{ t('btn_cancel') }}
                 </a>
             </div>
         </form>

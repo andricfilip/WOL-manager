@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Izmeni Grupu - {{ group.name }}{% endblock %}
+{% block title %}{{ t('page_edit_group') }} - {{ group.name }}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -86,25 +86,25 @@
 
 {% block content %}
 <a href="{{ url_for('admin_groups') }}" class="back-link">
-    <i class="fas fa-arrow-left"></i> Nazad na grupe
+    <i class="fas fa-arrow-left"></i> {{ t('back_to_groups') }}
 </a>
 
 <div class="card">
-    <h2 style="margin-bottom: 1.5rem;"><i class="fas fa-edit"></i> Izmeni Grupu: {{ group.name }}</h2>
+    <h2 style="margin-bottom: 1.5rem;"><i class="fas fa-edit"></i> {{ t('page_edit_group') }}: {{ group.name }}</h2>
     
     <form method="POST">
         <div class="form-group">
-            <label>Naziv grupe *</label>
+            <label>{{ t('group_name_label') }} *</label>
             <input type="text" name="name" required value="{{ group.name }}">
         </div>
         
         <div class="form-group">
-            <label>Opis</label>
+            <label>{{ t('group_desc_label') }}</label>
             <textarea name="description" rows="2">{{ group.description or '' }}</textarea>
         </div>
         
         <div class="form-group">
-            <label>Boja</label>
+            <label>{{ t('group_color_label') }}</label>
             <div class="color-row">
                 <input type="color" name="color" id="group-color" value="{{ group.color }}" style="width: 60px; height: 44px; cursor: pointer; border: 1px solid var(--border); border-radius: 0.3rem;">
                 <div class="color-preview" id="color-preview" style="background: {{ group.color }};">
@@ -114,7 +114,7 @@
         </div>
         
         <div class="form-group">
-            <label>Ikonica</label>
+            <label>{{ t('group_icon_label') }}</label>
             <input type="hidden" name="icon" id="icon-input" value="{{ group.icon }}">
             <div class="icon-grid">
                 {% set icons = ['fas fa-folder', 'fas fa-building', 'fas fa-server', 'fas fa-network-wired', 'fas fa-home', 'fas fa-briefcase', 'fas fa-users', 'fas fa-laptop', 'fas fa-desktop', 'fas fa-hdd', 'fas fa-microchip', 'fas fa-warehouse', 'fas fa-map-marker-alt', 'fas fa-door-open'] %}
@@ -128,11 +128,11 @@
         
         <div class="form-group">
             <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
-                <i class="fas fa-shield-alt"></i> Dozvoljene Akcije
+                <i class="fas fa-shield-alt"></i> {{ t('allowed_actions_label') }}
             </label>
             <div style="background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 0.75rem; padding: 1.25rem;">
                 <p style="color: #666; font-size: 0.9rem; margin: 0 0 1rem 0;">
-                    <i class="fas fa-info-circle"></i> Izaberite koje akcije korisnici mogu izvršavati nad računarima u ovoj grupi
+                    <i class="fas fa-info-circle"></i> {{ t('actions_info_desc') }}
                 </p>
                 
                 <div style="display: grid; gap: 1rem;">
@@ -140,10 +140,10 @@
                         <input type="checkbox" name="allow_wake" value="1" {% if group.allow_wake %}checked{% endif %} style="width: 20px; height: 20px; cursor: pointer; margin-top: 0.2rem; flex-shrink: 0;">
                         <div style="flex: 1;">
                             <div style="font-weight: 600; color: #28a745; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
-                                <i class="fas fa-power-off"></i> Upali računare (Wake-on-LAN)
+                                <i class="fas fa-power-off"></i> {{ t('allow_wake_label') }}
                             </div>
                             <div style="font-size: 0.85rem; color: #666;">
-                                Korisnici mogu uključivati računare u ovoj grupi
+                                {{ t('allow_wake_desc') }}
                             </div>
                         </div>
                     </label>
@@ -152,10 +152,10 @@
                         <input type="checkbox" name="allow_shutdown" value="1" {% if group.allow_shutdown %}checked{% endif %} style="width: 20px; height: 20px; cursor: pointer; margin-top: 0.2rem; flex-shrink: 0;">
                         <div style="flex: 1;">
                             <div style="font-weight: 600; color: #dc3545; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
-                                <i class="fas fa-power-off"></i> Ugasi računare (SSH Shutdown)
+                                <i class="fas fa-power-off"></i> {{ t('allow_shutdown_label') }}
                             </div>
                             <div style="font-size: 0.85rem; color: #666;">
-                                Korisnici mogu gasiti računare u ovoj grupi (zahteva SSH)
+                                {{ t('allow_shutdown_desc') }}
                             </div>
                         </div>
                     </label>
@@ -163,7 +163,7 @@
                 
                 <div style="margin-top: 1rem; padding: 0.75rem; background: #fff3cd; border-left: 3px solid #f4a261; border-radius: 0.3rem;">
                     <small style="color: #856404;">
-                        <i class="fas fa-exclamation-triangle"></i> <strong>Napomena:</strong> Ako nijedna akcija nije izabrana, korisnici neće moći kontrolisati računare u grupi.
+                        <i class="fas fa-exclamation-triangle"></i> <strong>{{ t('actions_warning_title') }}:</strong> {{ t('actions_warning_body') }}
                     </small>
                 </div>
             </div>
@@ -172,9 +172,9 @@
         <hr style="margin: 2rem 0; border: none; border-top: 2px solid #e9ecef;">
         
         <div class="form-group">
-            <label>Računari u grupi</label>
+            <label>{{ t('comp_in_group_label') }}</label>
             <div style="margin-bottom: 0.75rem;">
-                <input type="text" id="computer-search" placeholder="🔍 Pretraži po nazivu, IP ili MAC adresi..." style="width: 100%; padding: 0.75rem; border: 2px solid var(--border); border-radius: 0.5rem; font-size: 0.95rem;">
+                <input type="text" id="computer-search" placeholder="{{ t('search_comp_ph') }}" style="width: 100%; padding: 0.75rem; border: 2px solid var(--border); border-radius: 0.5rem; font-size: 0.95rem;">
             </div>
             <div class="computer-list">
                 {% set group_computer_ids = group.computers | map(attribute='id') | list %}
@@ -195,7 +195,7 @@
                         {% endif %}
                         <div style="flex: 1;">
                             <div style="font-weight: 600; color: #333;">{{ computer.name }}</div>
-                            <div style="font-size: 0.75rem; color: #999;">{{ computer.ip_address or 'Bez IP' }} • {{ computer.mac_address }}</div>
+                            <div style="font-size: 0.75rem; color: #999;">{{ computer.ip_address or '-' }} • {{ computer.mac_address }}</div>
                         </div>
                         {% if computer.status == 'online' %}
                             <span style="padding: 0.2rem 0.5rem; background: #d4edda; color: #155724; border-radius: 0.3rem; font-size: 0.7rem; font-weight: 700;">ONLINE</span>
@@ -209,7 +209,7 @@
         </div>
         
         <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">
-            <i class="fas fa-save"></i> Sačuvaj Izmene
+            <i class="fas fa-save"></i> {{ t('btn_save_changes') }}
         </button>
     </form>
 </div>

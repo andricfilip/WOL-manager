@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Upravljanje Korisnicima{% endblock %}
+{% block title %}{{ t('page_admin_users') }}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -165,12 +165,12 @@
 {% block content %}
 <div>
     <a href="{{ url_for('admin_computers') }}" class="back-link">
-        <i class="fas fa-arrow-left"></i> Nazad na računare
+        <i class="fas fa-arrow-left"></i> {{ t('back_to_computers') }}
     </a>
     <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-        <h1>Upravljanje Korisnicima</h1>
+        <h1>{{ t('page_admin_users') }}</h1>
         <a href="{{ url_for('admin_add_user') }}" class="btn btn-primary">
-            <i class="fas fa-user-plus"></i> Dodaj Korisnika
+            <i class="fas fa-user-plus"></i> {{ t('btn_add_user_nav') }}
         </a>
     </div>
 
@@ -180,11 +180,11 @@
             <table>
                 <thead>
                     <tr>
-                        <th><i class="fas fa-user"></i> Username</th>
-                        <th><i class="fas fa-envelope"></i> Email</th>
-                        <th><i class="fas fa-shield-alt"></i> Role</th>
-                        <th><i class="fas fa-clock"></i> Joined</th>
-                        <th>Actions</th>
+                        <th><i class="fas fa-user"></i> {{ t('col_username') }}</th>
+                        <th><i class="fas fa-envelope"></i> {{ t('col_email') }}</th>
+                        <th><i class="fas fa-shield-alt"></i> {{ t('col_role') }}</th>
+                        <th><i class="fas fa-clock"></i> {{ t('col_joined') }}</th>
+                        <th>{{ t('col_actions') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -195,52 +195,52 @@
                             <td>
                                 <span class="badge {% if user.is_admin %}badge-admin{% else %}badge-user{% endif %}">
                                     {% if user.is_admin %}
-                                        <i class="fas fa-crown"></i> Admin
+                                        <i class="fas fa-crown"></i> {{ t('badge_admin_label') }}
                                     {% else %}
-                                        <i class="fas fa-user"></i> Korisnik
+                                        <i class="fas fa-user"></i> {{ t('badge_user_label') }}
                                     {% endif %}
                                 </span>
-                                {% if not user.is_admin %}
-                                    <br><small style="color: #666; font-size: 0.8rem;">
-                                        <i class="fas fa-layer-group"></i> 
-                                        {% if user.can_view_groups %}Vidi grupe{% else %}Bez grupa{% endif %}
-                                    </small>
-                                {% endif %}
+                                    {% if not user.is_admin %}
+                                        <br><small style="color: #666; font-size: 0.8rem;">
+                                            <i class="fas fa-layer-group"></i> 
+                                            {% if user.can_view_groups %}{{ t('groups_can_view') }}{% else %}{{ t('groups_no_view') }}{% endif %}
+                                        </small>
+                                    {% endif %}
                             </td>
                             <td>{{ user.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
                             <td>
                                 <div class="action-buttons">
                                     {% if user.id != current_user.id %}
-                                        <button class="btn btn-primary btn-sm" onclick="editUser({{ user.id }}, '{{ user.username }}', '{{ user.email }}')" title="Izmeni korisnika">
-                                            <i class="fas fa-edit"></i> Izmeni
+                                        <button class="btn btn-primary btn-sm" onclick="editUser({{ user.id }}, '{{ user.username }}', '{{ user.email }}')" title="{{ t('btn_edit') }}">
+                                            <i class="fas fa-edit"></i> {{ t('btn_edit') }}
                                         </button>
-                                        <button class="btn btn-warning btn-sm" onclick="toggleAdminStatus({{ user.id }})" title="Promeni admin status">
-                                            <i class="fas fa-exchange-alt"></i> Uloga
+                                        <button class="btn btn-warning btn-sm" onclick="toggleAdminStatus({{ user.id }})" title="{{ t('btn_role_toggle') }}">
+                                            <i class="fas fa-exchange-alt"></i> {{ t('btn_role_toggle') }}
                                         </button>
                                         {% if not user.is_admin %}
-                                        <button class="btn btn-secondary btn-sm" onclick="toggleGroupPermission({{ user.id }})" title="Dozvola za grupe">
-                                            <i class="fas fa-layer-group"></i> Grupe
+                                        <button class="btn btn-secondary btn-sm" onclick="toggleGroupPermission({{ user.id }})" title="{{ t('btn_groups_nav') }}">
+                                            <i class="fas fa-layer-group"></i> {{ t('btn_groups_nav') }}
                                         </button>
                                         {% else %}
                                         <button class="btn btn-secondary btn-sm" disabled style="visibility: hidden;">
-                                            <i class="fas fa-layer-group"></i> Grupe
+                                            <i class="fas fa-layer-group"></i> {{ t('btn_groups_nav') }}
                                         </button>
                                         {% endif %}
-                                        <button class="btn btn-danger btn-sm" onclick="deleteUser({{ user.id }}, '{{ user.username }}')" title="Obriši korisnika">
-                                            <i class="fas fa-trash"></i> Obriši
+                                        <button class="btn btn-danger btn-sm" onclick="deleteUser({{ user.id }}, '{{ user.username }}')" title="{{ t('btn_delete') }}">
+                                            <i class="fas fa-trash"></i> {{ t('btn_delete') }}
                                         </button>
                                     {% else %}
-                                        <button class="btn btn-primary btn-sm" disabled title="Ne možete menjati svoj nalog">
-                                            <i class="fas fa-edit"></i> Izmeni
+                                        <button class="btn btn-primary btn-sm" disabled title="{{ t('your_account_label') }}">
+                                            <i class="fas fa-edit"></i> {{ t('btn_edit') }}
                                         </button>
-                                        <button class="btn btn-warning btn-sm" disabled title="Ne možete menjati svoju ulogu">
-                                            <i class="fas fa-exchange-alt"></i> Uloga
+                                        <button class="btn btn-warning btn-sm" disabled title="{{ t('your_account_label') }}">
+                                            <i class="fas fa-exchange-alt"></i> {{ t('btn_role_toggle') }}
                                         </button>
                                         <button class="btn btn-secondary btn-sm" disabled style="visibility: hidden;">
-                                            <i class="fas fa-layer-group"></i> Grupe
+                                            <i class="fas fa-layer-group"></i> {{ t('btn_groups_nav') }}
                                         </button>
-                                        <button class="btn btn-secondary btn-sm" disabled title="Ne možete obrisati svoj nalog">
-                                            <i class="fas fa-user-shield"></i> Vaš nalog
+                                        <button class="btn btn-secondary btn-sm" disabled title="{{ t('your_account_label') }}">
+                                            <i class="fas fa-user-shield"></i> {{ t('your_account_label') }}
                                         </button>
                                     {% endif %}
                                 </div>
@@ -257,56 +257,56 @@
                         <h3><i class="fas fa-user"></i> {{ user.username }}</h3>
                         
                         <div class="mobile-info-row">
-                            <span class="mobile-info-label">Email:</span>
+                            <span class="mobile-info-label">{{ t('col_email') }}:</span>
                             <span>{{ user.email }}</span>
                         </div>
                         
                         <div class="mobile-info-row">
-                            <span class="mobile-info-label">Uloga:</span>
+                            <span class="mobile-info-label">{{ t('col_role') }}:</span>
                             <span class="badge {% if user.is_admin %}badge-admin{% else %}badge-user{% endif %}">
                                 {% if user.is_admin %}
-                                    <i class="fas fa-crown"></i> Admin
+                                    <i class="fas fa-crown"></i> {{ t('badge_admin_label') }}
                                 {% else %}
-                                    <i class="fas fa-user"></i> Korisnik
+                                    <i class="fas fa-user"></i> {{ t('badge_user_label') }}
                                 {% endif %}
                             </span>
                         </div>
                         
                         {% if not user.is_admin %}
                         <div class="mobile-info-row">
-                            <span class="mobile-info-label">Grupe:</span>
+                            <span class="mobile-info-label">{{ t('btn_groups_nav') }}:</span>
                             <span class="badge" style="background: {% if user.can_view_groups %}#28a745{% else %}#6c757d{% endif %}; color: white;">
                                 <i class="fas fa-layer-group"></i> 
-                                {% if user.can_view_groups %}Vidi grupe{% else %}Bez grupa{% endif %}
+                                {% if user.can_view_groups %}{{ t('groups_can_view') }}{% else %}{{ t('groups_no_view') }}{% endif %}
                             </span>
                         </div>
                         {% endif %}
                         
                         <div class="mobile-info-row">
-                            <span class="mobile-info-label">Joined:</span>
+                            <span class="mobile-info-label">{{ t('col_joined') }}:</span>
                             <span style="font-size: 0.9rem;">{{ user.created_at.strftime('%Y-%m-%d') }}</span>
                         </div>
                         
                         {% if user.id != current_user.id %}
                             <div class="mobile-actions">
                                 <button class="btn btn-primary btn-sm" onclick="editUser({{ user.id }}, '{{ user.username }}', '{{ user.email }}')">
-                                    <i class="fas fa-edit"></i> Izmeni
+                                    <i class="fas fa-edit"></i> {{ t('btn_edit') }}
                                 </button>
                                 <button class="btn btn-warning btn-sm" onclick="toggleAdminStatus({{ user.id }})">
-                                    <i class="fas fa-exchange-alt"></i> Promeni Ulogu
+                                    <i class="fas fa-exchange-alt"></i> {{ t('btn_change_role') }}
                                 </button>
                                 {% if not user.is_admin %}
                                 <button class="btn btn-secondary btn-sm" onclick="toggleGroupPermission({{ user.id }})">
-                                    <i class="fas fa-layer-group"></i> Grupe
+                                    <i class="fas fa-layer-group"></i> {{ t('btn_groups_nav') }}
                                 </button>
                                 {% endif %}
                                 <button class="btn btn-danger btn-sm" onclick="deleteUser({{ user.id }}, '{{ user.username }}')">
-                                    <i class="fas fa-trash"></i> Obriši
+                                    <i class="fas fa-trash"></i> {{ t('btn_delete') }}
                                 </button>
                             </div>
                         {% else %}
                             <div style="margin-top: 1rem; text-align: center; color: #999; font-size: 0.9rem;">
-                                <i class="fas fa-user-shield"></i> Vaš nalog
+                                <i class="fas fa-user-shield"></i> {{ t('your_account_label') }}
                             </div>
                         {% endif %}
                     </div>
@@ -316,7 +316,7 @@
         {% else %}
             <div style="text-align: center; padding: 2rem; color: #999;">
                 <i class="fas fa-users" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5;"></i>
-                <p>No users found</p>
+                <p>{{ t('no_users_found') }}</p>
             </div>
         {% endif %}
     </div>
@@ -325,22 +325,22 @@
 <!-- Edit User Modal -->
 <div id="editUserModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 10000; align-items: center; justify-content: center;">
     <div style="background: white; border-radius: 0.75rem; padding: 2rem; max-width: 450px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
-        <h2 style="margin: 0 0 1.5rem 0; color: var(--dark);"><i class="fas fa-user-edit"></i> Izmeni Korisnika</h2>
+        <h2 style="margin: 0 0 1.5rem 0; color: var(--dark);"><i class="fas fa-user-edit"></i> {{ t('modal_edit_user_title') }}</h2>
         <input type="hidden" id="editUserId">
         <div class="form-group">
-            <label for="editUsername"><i class="fas fa-user"></i> Korisničko ime</label>
+            <label for="editUsername"><i class="fas fa-user"></i> {{ t('col_username') }}</label>
             <input type="text" id="editUsername" required minlength="3">
         </div>
         <div class="form-group">
-            <label for="editEmail"><i class="fas fa-envelope"></i> Email</label>
+            <label for="editEmail"><i class="fas fa-envelope"></i> {{ t('col_email') }}</label>
             <input type="email" id="editEmail" required>
         </div>
         <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
             <button class="btn btn-primary" onclick="saveUserEdit()" style="flex: 1;">
-                <i class="fas fa-save"></i> Sačuvaj
+                <i class="fas fa-save"></i> {{ t('modal_save') }}
             </button>
             <button class="btn btn-secondary" onclick="closeEditModal()" style="flex: 1;">
-                <i class="fas fa-times"></i> Otkaži
+                <i class="fas fa-times"></i> {{ t('btn_cancel') }}
             </button>
         </div>
     </div>
@@ -366,7 +366,7 @@
         const email = document.getElementById('editEmail').value.trim();
 
         if (!username || !email) {
-            alert('Sva polja su obavezna');
+            alert('{{ t("all_fields_required") }}');
             return;
         }
 
@@ -382,15 +382,15 @@
                 closeEditModal();
                 location.reload();
             } else {
-                alert(`Greška: ${result.message}`);
+                alert(`{{ t('error_prefix') }}: ${result.message}`);
             }
         } catch (error) {
-            alert(`Greška: ${error.message}`);
+            alert(`{{ t('error_prefix') }}: ${error.message}`);
         }
     }
 
     async function toggleAdminStatus(userId) {
-        if (!confirm('Da li ste sigurni da želite promeniti admin status?')) {
+        if (!confirm('{{ t("confirm_toggle_admin") }}')) {
             return;
         }
         
@@ -408,15 +408,15 @@
                 alert(result.message);
                 location.reload();
             } else {
-                alert(`Greška: ${result.message}`);
+                alert(`{{ t('error_prefix') }}: ${result.message}`);
             }
         } catch (error) {
-            alert(`Greška: ${error.message}`);
+            alert(`{{ t('error_prefix') }}: ${error.message}`);
         }
     }
     
     async function toggleGroupPermission(userId) {
-        if (!confirm('Da li želite promeniti dozvolu za grupe?')) {
+        if (!confirm('{{ t("confirm_toggle_groups") }}')) {
             return;
         }
         
@@ -434,15 +434,15 @@
                 alert(result.message);
                 location.reload();
             } else {
-                alert(`Greška: ${result.message}`);
+                alert(`{{ t('error_prefix') }}: ${result.message}`);
             }
         } catch (error) {
-            alert(`Greška: ${error.message}`);
+            alert(`{{ t('error_prefix') }}: ${error.message}`);
         }
     }
     
     async function deleteUser(userId, username) {
-        if (!confirm(`Da li ste sigurni da želite obrisati korisnika "${username}"? Ova akcija se ne može poništiti.`)) {
+        if (!confirm(`{{ t('confirm_del_user') }} "${username}"?`)) {
             return;
         }
         

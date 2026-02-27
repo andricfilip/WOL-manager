@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Upravljanje Računarima{% endblock %}
+{% block title %}{{ t('page_admin_comp') }}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -171,19 +171,19 @@
 {% block content %}
 <div>
     <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-        <h1>Upravljanje Računarima</h1>
+        <h1>{{ t('page_admin_comp') }}</h1>
         <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
             <a href="{{ url_for('admin_users') }}" class="btn btn-secondary">
-                <i class="fas fa-users"></i> Korisnici
+                <i class="fas fa-users"></i> {{ t('btn_users_nav') }}
             </a>
             <a href="{{ url_for('admin_groups') }}" class="btn btn-secondary">
-                <i class="fas fa-layer-group"></i> Grupe
+                <i class="fas fa-layer-group"></i> {{ t('btn_groups_nav') }}
             </a>
             <a href="{{ url_for('admin_settings') }}" class="btn btn-secondary">
-                <i class="fas fa-cog"></i> Podešavanja
+                <i class="fas fa-cog"></i> {{ t('btn_settings_nav') }}
             </a>
             <a href="{{ url_for('admin_add_computer') }}" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Dodaj Računar
+                <i class="fas fa-plus"></i> {{ t('btn_add_computer') }}
             </a>
         </div>
     </div>
@@ -194,12 +194,12 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Naziv</th>
-                        <th>Status</th>
-                        <th>MAC Adresa</th>
-                        <th>IP Adresa</th>
-                        <th>Dodeljeni Korisnici</th>
-                        <th>Akcije</th>
+                        <th>{{ t('col_name') }}</th>
+                        <th>{{ t('col_status') }}</th>
+                        <th>{{ t('col_mac') }}</th>
+                        <th>{{ t('col_ip') }}</th>
+                        <th>{{ t('col_assigned_users') }}</th>
+                        <th>{{ t('col_actions') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -224,12 +224,9 @@
                             <td>
                                 <span class="status-badge status-{{ computer.status if computer.status else 'unknown' }}">
                                     <span class="status-dot"></span>
-                                    {% if computer.status == 'online' %}
-                                        Online
-                                    {% elif computer.status == 'offline' %}
-                                        Offline
-                                    {% else %}
-                                        Nepoznato
+                                    {% if computer.status == 'online' %}{{ t('status_online') }}
+                                    {% elif computer.status == 'offline' %}{{ t('status_offline') }}
+                                    {% else %}{{ t('status_unknown') }}
                                     {% endif %}
                                 </span>
                             </td>
@@ -247,20 +244,20 @@
                                     {% endfor %}
                                     {% if users_list | length > 3 %}
                                     <span class="user-badge" style="background: #f5f5f5; color: #666;">
-                                        ... još {{ users_list | length - 3 }}
+                                        ... {{ t('more_users_suffix') }} {{ users_list | length - 3 }}
                                     </span>
                                     {% endif %}
                                 {% else %}
-                                    <span style="color: #999;"><i>Nema dodeljenih korisnika</i></span>
+                                    <span style="color: #999;"><i>{{ t('no_assigned_users') }}</i></span>
                                 {% endif %}
                             </td>
                             <td>
                                 <div class="action-buttons">
-                                    <a href="{{ url_for('admin_edit_computer', computer_id=computer.id) }}" class="btn btn-primary btn-sm" title="Izmeni računar">
-                                        <i class="fas fa-edit"></i> Izmeni
+                                    <a href="{{ url_for('admin_edit_computer', computer_id=computer.id) }}" class="btn btn-primary btn-sm" title="{{ t('btn_edit') }}">
+                                        <i class="fas fa-edit"></i> {{ t('btn_edit') }}
                                     </a>
-                                    <button class="btn btn-danger btn-sm" onclick="deleteComputer({{ computer.id }}, '{{ computer.name }}')" title="Obriši računar">
-                                        <i class="fas fa-trash"></i> Obriši
+                                    <button class="btn btn-danger btn-sm" onclick="deleteComputer({{ computer.id }}, '{{ computer.name }}')" title="{{ t('btn_delete') }}">
+                                        <i class="fas fa-trash"></i> {{ t('btn_delete') }}
                                     </button>
                                 </div>
                             </td>
@@ -290,15 +287,12 @@
                     </h3>
                     
                     <div class="mobile-info-row">
-                        <span class="mobile-info-label">Status:</span>
+                        <span class="mobile-info-label">{{ t('col_status') }}:</span>
                         <span class="status-badge status-{{ computer.status if computer.status else 'unknown' }}">
                             <span class="status-dot"></span>
-                            {% if computer.status == 'online' %}
-                                Online
-                            {% elif computer.status == 'offline' %}
-                                Offline
-                            {% else %}
-                                Nepoznato
+                            {% if computer.status == 'online' %}{{ t('status_online') }}
+                            {% elif computer.status == 'offline' %}{{ t('status_offline') }}
+                            {% else %}{{ t('status_unknown') }}
                             {% endif %}
                         </span>
                     </div>
@@ -314,7 +308,7 @@
                     </div>
                     
                     <div class="mobile-info-row">
-                        <span class="mobile-info-label">Korisnici:</span>
+                        <span class="mobile-info-label">{{ t('col_assigned_users') }}:</span>
                         <div class="assigned-users">
                             {% set users_list = computer.assigned_users.all() %}
                             {% if users_list %}
@@ -327,21 +321,21 @@
                                 {% endfor %}
                                 {% if users_list | length > 3 %}
                                 <span class="user-badge" style="background: #f5f5f5; color: #666;">
-                                    ... još {{ users_list | length - 3 }}
+                                    ... {{ t('more_users_suffix') }} {{ users_list | length - 3 }}
                                 </span>
                                 {% endif %}
                             {% else %}
-                                <span style="color: #999; font-size: 0.85rem;"><i>Nema</i></span>
+                                <span style="color: #999; font-size: 0.85rem;"><i>{{ t('no_assigned_users') }}</i></span>
                             {% endif %}
                         </div>
                     </div>
                     
                     <div class="mobile-actions">
                         <a href="{{ url_for('admin_edit_computer', computer_id=computer.id) }}" class="btn btn-primary btn-sm">
-                            <i class="fas fa-edit"></i> Izmeni
+                            <i class="fas fa-edit"></i> {{ t('btn_edit') }}
                         </a>
                         <button class="btn btn-danger btn-sm" onclick="deleteComputer({{ computer.id }}, '{{ computer.name }}')">
-                            <i class="fas fa-trash"></i> Obriši
+                            <i class="fas fa-trash"></i> {{ t('btn_delete') }}
                         </button>
                     </div>
                 </div>
@@ -351,8 +345,8 @@
         <div class="card">
             <div style="text-align: center; padding: 3rem; color: #999;">
                 <i class="fas fa-desktop" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
-                <p style="font-size: 1.1rem; margin-bottom: 1rem;">Nema računara u sistemu</p>
-                <a href="{{ url_for('admin_add_computer') }}" class="btn btn-primary">Dodaj Prvi Računar</a>
+                <p style="font-size: 1.1rem; margin-bottom: 1rem;">{{ t('no_computers_msg') }}</p>
+                <a href="{{ url_for('admin_add_computer') }}" class="btn btn-primary">{{ t('add_first_computer') }}</a>
             </div>
         </div>
     {% endif %}
@@ -360,7 +354,7 @@
 
 <script>
     function deleteComputer(computerId, computerName) {
-        if (!confirm(`Da li ste sigurni da želite da obrišete računar "${computerName}"?`)) {
+        if (!confirm(`{{ t('confirm_delete_comp') }} "${computerName}"?`)) {
             return;
         }
         
@@ -372,13 +366,13 @@
         }).then(response => response.json())
         .then(result => {
             if (result.success) {
-                alert(`Računar "${computerName}" je obrisan!`);
+                alert(`"${computerName}" {{ t('comp_deleted') }}!`);
                 location.reload();
             } else {
-                alert(`Greška: ${result.message}`);
+                alert(`{{ t('error_prefix') }}: ${result.message}`);
             }
         }).catch(error => {
-            alert(`Greška: ${error.message}`);
+            alert(`{{ t('error_prefix') }}: ${error.message}`);
         });
     }
 </script>

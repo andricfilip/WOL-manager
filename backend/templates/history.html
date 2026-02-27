@@ -3,7 +3,6 @@
 {% block title %}WoL History{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <style>
     table {
         width: 100%;
@@ -74,82 +73,6 @@
         box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
     }
     
-    .filter-group input[type="text"].flatpickr-input {
-        cursor: pointer;
-    }
-    
-    /* Flatpickr custom styling */
-    .flatpickr-calendar {
-        background: white;
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-        font-family: inherit;
-        z-index: 9999 !important;
-    }
-    
-    .flatpickr-months {
-        background: var(--primary);
-        border-radius: 8px 8px 0 0;
-        padding: 0.5rem 0;
-    }
-    
-    .flatpickr-month,
-    .flatpickr-current-month {
-        color: white;
-    }
-    
-    .flatpickr-current-month .flatpickr-monthDropdown-months,
-    .flatpickr-current-month input.cur-year {
-        color: white;
-        font-weight: 600;
-    }
-    
-    .flatpickr-prev-month:hover svg,
-    .flatpickr-next-month:hover svg {
-        fill: white;
-    }
-    
-    .flatpickr-prev-month svg,
-    .flatpickr-next-month svg {
-        fill: rgba(255,255,255,0.8);
-        width: 14px;
-        height: 14px;
-    }
-    
-    .flatpickr-weekday {
-        color: var(--primary);
-        font-weight: 600;
-    }
-    
-    .flatpickr-day {
-        color: var(--text);
-        border-radius: 4px;
-    }
-    
-    .flatpickr-day:hover {
-        background: var(--light);
-        border-color: var(--light);
-    }
-    
-    .flatpickr-day.selected,
-    .flatpickr-day.selected:hover {
-        background: var(--primary);
-        border-color: var(--primary);
-        color: white;
-    }
-    
-    .flatpickr-day.today {
-        border-color: var(--primary);
-        color: var(--primary);
-        font-weight: 600;
-    }
-    
-    .flatpickr-day.today:hover {
-        background: var(--primary);
-        color: white;
-    }
-    
     .filter-actions {
         display: flex;
         gap: 0.5rem;
@@ -217,11 +140,11 @@
 {% block content %}
 <div>
     <div class="page-header">
-        <h1><i class="fas fa-history"></i> Wake-on-LAN Istorija</h1>
+        <h1><i class="fas fa-history"></i> {{ t('history_title') }}</h1>
         {% if current_user.is_admin %}
         <div class="header-actions">
-            <button class="btn btn-warning" onclick="showDeleteLogsModal()" title="Obriši logove">
-                <i class="fas fa-trash"></i> Obriši Logove
+            <button class="btn btn-warning" onclick="showDeleteLogsModal()" title="{{ t('delete_logs') }}">
+                <i class="fas fa-trash"></i> {{ t('delete_logs') }}
             </button>
         </div>
         {% endif %}
@@ -230,23 +153,23 @@
     <div class="card" style="margin-bottom: 1rem;">
         <form method="GET" action="{{ url_for('history') }}" class="search-filters">
             <div class="filter-group">
-                <label for="search"><i class="fas fa-search"></i> Pretraga</label>
-                <input type="text" id="search" name="search" placeholder="Ime računara ili korisnika..." value="{{ search_query or '' }}">
+                <label for="search"><i class="fas fa-search"></i> {{ t('search_label') }}</label>
+                <input type="text" id="search" name="search" placeholder="{{ t('search_placeholder') }}" value="{{ search_query or '' }}">
             </div>
             <div class="filter-group">
-                <label for="date_from"><i class="fas fa-calendar"></i> Od datuma</label>
-                <input type="text" id="date_from" name="date_from" value="{{ date_from or '' }}" placeholder="Izaberi datum...">
+                <label for="date_from"><i class="fas fa-calendar"></i> {{ t('date_from_label') }}</label>
+                <input type="date" id="date_from" name="date_from" value="{{ date_from or '' }}">
             </div>
             <div class="filter-group">
-                <label for="date_to"><i class="fas fa-calendar"></i> Do datuma</label>
-                <input type="text" id="date_to" name="date_to" value="{{ date_to or '' }}" placeholder="Izaberi datum...">
+                <label for="date_to"><i class="fas fa-calendar"></i> {{ t('date_to_label') }}</label>
+                <input type="date" id="date_to" name="date_to" value="{{ date_to or '' }}">
             </div>
             <div class="filter-actions">
                 <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-filter"></i> Filtriraj
+                    <i class="fas fa-filter"></i> {{ t('btn_filter') }}
                 </button>
                 <a href="{{ url_for('history') }}" class="btn btn-secondary">
-                    <i class="fas fa-redo"></i> Resetuj
+                    <i class="fas fa-redo"></i> {{ t('btn_reset') }}
                 </a>
             </div>
         </form>
@@ -257,10 +180,10 @@
             <table>
                 <thead>
                     <tr>
-                        <th><i class="fas fa-desktop"></i> Computer</th>
-                        <th><i class="fas fa-user"></i> User</th>
-                        <th><i class="fas fa-clock"></i> Timestamp</th>
-                        <th><i class="fas fa-signal"></i> Status</th>
+                        <th><i class="fas fa-desktop"></i> {{ t('col_computer') }}</th>
+                        <th><i class="fas fa-user"></i> {{ t('col_user') }}</th>
+                        <th><i class="fas fa-clock"></i> {{ t('col_timestamp') }}</th>
+                        <th><i class="fas fa-signal"></i> {{ t('col_status') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -272,9 +195,9 @@
                             <td>
                                 <span class="status-{{ log.status }}">
                                     {% if log.status == 'sent' %}
-                                        <i class="fas fa-check-circle"></i> Sent
+                                        <i class="fas fa-check-circle"></i> {{ t('status_sent') }}
                                     {% else %}
-                                        <i class="fas fa-times-circle"></i> Failed
+                                        <i class="fas fa-times-circle"></i> {{ t('status_failed') }}
                                     {% endif %}
                                 </span>
                             </td>
@@ -285,7 +208,7 @@
         {% else %}
             <div style="text-align: center; padding: 2rem; color: #999;">
                 <i class="fas fa-history" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5;"></i>
-                <p>Nema pronađenih logova</p>
+                <p>{{ t('no_logs') }}</p>
             </div>
         {% endif %}
     </div>
@@ -295,21 +218,21 @@
 {% if current_user.is_admin %}
 <div id="deleteLogsModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 10000; padding: 2rem;">
     <div style="background: white; max-width: 500px; margin: 2rem auto; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
-        <h2 style="margin-bottom: 1.5rem; color: #dc3545;"><i class="fas fa-exclamation-triangle"></i> Brisanje Logova</h2>
+        <h2 style="margin-bottom: 1.5rem; color: #dc3545;"><i class="fas fa-exclamation-triangle"></i> {{ t('del_logs_title') }}</h2>
         
         <div style="margin-bottom: 1.5rem;">
             <label style="display: flex; align-items: center; margin-bottom: 1rem; cursor: pointer;">
                 <input type="radio" name="deleteOption" value="range" checked style="margin-right: 0.5rem;">
-                <span>Obriši logove za period</span>
+                <span>{{ t('del_logs_range') }}</span>
             </label>
             
             <div id="dateRangeInputs" style="margin-left: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap;">
                 <div style="flex: 1; min-width: 150px;">
-                    <label style="display: block; margin-bottom: 0.3rem; font-size: 0.9rem;">Od datuma:</label>
+                    <label style="display: block; margin-bottom: 0.3rem; font-size: 0.9rem;">{{ t('date_from_label') }}:</label>
                     <input type="date" id="deleteFromDate" class="form-control">
                 </div>
                 <div style="flex: 1; min-width: 150px;">
-                    <label style="display: block; margin-bottom: 0.3rem; font-size: 0.9rem;">Do datuma:</label>
+                    <label style="display: block; margin-bottom: 0.3rem; font-size: 0.9rem;">{{ t('date_to_label') }}:</label>
                     <input type="date" id="deleteToDate" class="form-control">
                 </div>
             </div>
@@ -318,16 +241,16 @@
         <div style="margin-bottom: 1.5rem;">
             <label style="display: flex; align-items: center; cursor: pointer;">
                 <input type="radio" name="deleteOption" value="all" style="margin-right: 0.5rem;">
-                <span style="color: #dc3545; font-weight: 600;">Obriši SVE logove</span>
+                <span style="color: #dc3545; font-weight: 600;">{{ t('del_logs_all') }}</span>
             </label>
         </div>
         
         <div style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1.5rem;">
             <button class="btn btn-secondary" onclick="hideDeleteLogsModal()">
-                <i class="fas fa-times"></i> Otkaži
+                <i class="fas fa-times"></i> {{ t('btn_cancel') }}
             </button>
             <button class="btn btn-danger" onclick="confirmDeleteLogs()">
-                <i class="fas fa-trash"></i> Obriši
+                <i class="fas fa-trash"></i> {{ t('btn_delete') }}
             </button>
         </div>
     </div>
@@ -354,15 +277,15 @@ function confirmDeleteLogs() {
         const toDate = document.getElementById('deleteToDate').value;
         
         if (!fromDate || !toDate) {
-            alert('Molimo unesite oba datuma za period brisanja.');
+            alert('{{ t("del_logs_dates_required") }}');
             return;
         }
         
         deleteData.from_date = fromDate;
         deleteData.to_date = toDate;
-        confirmMessage = `Da li ste sigurni da želite obrisati sve logove od ${fromDate} do ${toDate}?`;
+        confirmMessage = `{{ t('del_logs_confirm_range') }} ${fromDate} - ${toDate}?`;
     } else {
-        confirmMessage = 'Da li ste sigurni da želite obrisati SVE logove? Ova akcija se ne može poništiti!';
+        confirmMessage = '{{ t("del_logs_confirm_all") }}';
     }
     
     if (!confirm(confirmMessage)) {
@@ -383,12 +306,12 @@ function confirmDeleteLogs() {
             hideDeleteLogsModal();
             location.reload();
         } else {
-            alert('Greška: ' + data.message);
+            alert('{{ t("error_prefix") }}: ' + data.message);
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Došlo je do greške prilikom brisanja logova.');
+        alert('{{ t("del_logs_error") }}');
     });
 }
 
@@ -405,75 +328,56 @@ document.querySelectorAll('input[name="deleteOption"]').forEach(radio => {
         }
     });
 });
+
+// Client-side live filtering - no page reload
+(function() {
+    const searchInput = document.getElementById('search');
+    const dateFrom = document.getElementById('date_from');
+    const dateTo = document.getElementById('date_to');
+    const tbody = document.querySelector('table tbody');
+
+    if (!tbody) return;
+
+    function filterTable() {
+        const q = (searchInput ? searchInput.value : '').toLowerCase().trim();
+        const from = dateFrom ? dateFrom.value : '';
+        const to = dateTo ? dateTo.value : '';
+        const rows = tbody.querySelectorAll('tr:not(#no-filter-results)');
+        let visible = 0;
+
+        rows.forEach(function(row) {
+            const cells = row.querySelectorAll('td');
+            if (cells.length < 3) return;
+            const col0 = cells[0].textContent.toLowerCase();
+            const col1 = cells[1].textContent.toLowerCase();
+            const dateStr = cells[2].textContent.trim().substring(0, 10);
+            const matchesText = !q || col0.includes(q) || col1.includes(q);
+            const matchesFrom = !from || dateStr >= from;
+            const matchesTo = !to || dateStr <= to;
+            const show = matchesText && matchesFrom && matchesTo;
+            row.style.display = show ? '' : 'none';
+            if (show) visible++;
+        });
+
+        let noResults = document.getElementById('no-filter-results');
+        if (visible === 0 && rows.length > 0) {
+            if (!noResults) {
+                noResults = document.createElement('tr');
+                noResults.id = 'no-filter-results';
+                noResults.innerHTML = '<td colspan="4" style="text-align:center;padding:2rem;color:#999;"><i class="fas fa-search" style="margin-right:0.5rem;opacity:0.5;"></i>{{ t("no_filter_results") }}</td>';
+                tbody.appendChild(noResults);
+            }
+            noResults.style.display = '';
+        } else if (noResults) {
+            noResults.style.display = 'none';
+        }
+    }
+
+    if (searchInput) searchInput.addEventListener('input', filterTable);
+    if (dateFrom) dateFrom.addEventListener('change', filterTable);
+    if (dateTo) dateTo.addEventListener('change', filterTable);
+})();
 </script>
 
-<!-- Flatpickr -->
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script>
-// Initialize Flatpickr datepickers
-flatpickr('#date_from', {
-    dateFormat: 'Y-m-d',
-    allowInput: true,
-    locale: {
-        firstDayOfWeek: 1,
-        weekdays: {
-            shorthand: ['Ned', 'Pon', 'Uto', 'Sre', 'Čet', 'Pet', 'Sub'],
-            longhand: ['Nedelja', 'Ponedeljak', 'Utorak', 'Sreda', 'Četvrtak', 'Petak', 'Subota']
-        },
-        months: {
-            shorthand: ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun', 'Jul', 'Avg', 'Sep', 'Okt', 'Nov', 'Dec'],
-            longhand: ['Januar', 'Februar', 'Mart', 'April', 'Maj', 'Jun', 'Jul', 'Avgust', 'Septembar', 'Oktobar', 'Novembar', 'Decembar']
-        }
-    }
-});
 
-flatpickr('#date_to', {
-    dateFormat: 'Y-m-d',
-    allowInput: true,
-    locale: {
-        firstDayOfWeek: 1,
-        weekdays: {
-            shorthand: ['Ned', 'Pon', 'Uto', 'Sre', 'Čet', 'Pet', 'Sub'],
-            longhand: ['Nedelja', 'Ponedeljak', 'Utorak', 'Sreda', 'Četvrtak', 'Petak', 'Subota']
-        },
-        months: {
-            shorthand: ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun', 'Jul', 'Avg', 'Sep', 'Okt', 'Nov', 'Dec'],
-            longhand: ['Januar', 'Februar', 'Mart', 'April', 'Maj', 'Jun', 'Jul', 'Avgust', 'Septembar', 'Oktobar', 'Novembar', 'Decembar']
-        }
-    }
-});
-
-// Flatpickr for delete modal date inputs
-flatpickr('#deleteFromDate', {
-    dateFormat: 'Y-m-d',
-    allowInput: true,
-    locale: {
-        firstDayOfWeek: 1,
-        weekdays: {
-            shorthand: ['Ned', 'Pon', 'Uto', 'Sre', 'Čet', 'Pet', 'Sub'],
-            longhand: ['Nedelja', 'Ponedeljak', 'Utorak', 'Sreda', 'Četvrtak', 'Petak', 'Subota']
-        },
-        months: {
-            shorthand: ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun', 'Jul', 'Avg', 'Sep', 'Okt', 'Nov', 'Dec'],
-            longhand: ['Januar', 'Februar', 'Mart', 'April', 'Maj', 'Jun', 'Jul', 'Avgust', 'Septembar', 'Oktobar', 'Novembar', 'Decembar']
-        }
-    }
-});
-
-flatpickr('#deleteToDate', {
-    dateFormat: 'Y-m-d',
-    allowInput: true,
-    locale: {
-        firstDayOfWeek: 1,
-        weekdays: {
-            shorthand: ['Ned', 'Pon', 'Uto', 'Sre', 'Čet', 'Pet', 'Sub'],
-            longhand: ['Nedelja', 'Ponedeljak', 'Utorak', 'Sreda', 'Četvrtak', 'Petak', 'Subota']
-        },
-        months: {
-            shorthand: ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun', 'Jul', 'Avg', 'Sep', 'Okt', 'Nov', 'Dec'],
-            longhand: ['Januar', 'Februar', 'Mart', 'April', 'Maj', 'Jun', 'Jul', 'Avgust', 'Septembar', 'Oktobar', 'Novembar', 'Decembar']
-        }
-    }
-});
-</script>
 {% endblock %}

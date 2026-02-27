@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Podesavanja Racunara{% endblock %}
+{% block title %}{{ t('prefs_title') }}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -98,9 +98,9 @@
 {% block content %}
 <div>
     <a href="{{ url_for('dashboard') }}" class="back-link" style="display: inline-flex; align-items: center; gap: 0.5rem; color: var(--primary); text-decoration: none; margin-bottom: 1rem;">
-        <i class="fas fa-arrow-left"></i> Nazad
+        <i class="fas fa-arrow-left"></i> {{ t('back_label') }}
     </a>
-    <h1 style="margin-bottom: 1.5rem;"><i class="fas fa-sliders-h"></i> Podesavanja racunara</h1>
+    <h1 style="margin-bottom: 1.5rem;"><i class="fas fa-sliders-h"></i> {{ t('prefs_title') }}</h1>
 
     {% if computers %}
     <div class="prefs-grid">
@@ -128,7 +128,7 @@
             </label>
             {% else %}
             <span data-ssh-status="{{ computer.id }}" style="font-weight: 600; color: {% if computer.ssh_auto_login %}var(--success){% else %}#999{% endif %};">
-                {% if computer.ssh_auto_login %}<i class="fas fa-check-circle"></i> Uključen{% else %}<i class="fas fa-times-circle"></i> Isključen{% endif %}
+                {% if computer.ssh_auto_login %}<i class="fas fa-check-circle"></i> {{ t('ssh_enabled') }}{% else %}<i class="fas fa-times-circle"></i> {{ t('ssh_disabled') }}{% endif %}
             </span>
             {% endif %}
         </div>
@@ -136,7 +136,7 @@
         <div class="pref-actions">
             {% if can_change_ssh %}
             <a href="{{ url_for('edit_computer', computer_id=computer.id) }}" class="btn btn-primary" style="text-decoration: none;">
-                <i class="fas fa-edit"></i> Izmeni uredjaj
+                <i class="fas fa-edit"></i> {{ t('btn_edit_device') }}
             </a>
             {% endif %}
         </div>
@@ -145,7 +145,7 @@
 </div>
 {% else %}
 <div class="card">
-    <p style="color: #999; margin: 0;">Nemate dodeljenih racunara.</p>
+    <p style="color: #999; margin: 0;">{{ t('prefs_no_computers') }}</p>
 </div>
 {% endif %}
 
@@ -162,10 +162,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     body: JSON.stringify({ ssh_auto_login: value })
                 });
                 const data = await resp.json();
-                if (!data.success) throw new Error(data.message || 'Greska');
+                if (!data.success) throw new Error(data.message || '{{ t("error_prefix") }}');
             } catch (err) {
                 input.checked = !value;
-                alert('Ne mogu da sacuvam SSH podesavanje. Pokusaj ponovo.');
+                alert('{{ t("prefs_ssh_save_error") }}');
             }
         });
     });
@@ -184,8 +184,8 @@ document.addEventListener('DOMContentLoaded', function() {
             toggle.checked = data.ssh_auto_login;
             if (fromOther) {
                 showSshToast(data.ssh_auto_login
-                    ? 'SSH Auto-Login je UKLJUČEN od strane admina'
-                    : 'SSH Auto-Login je ISKLJUČEN od strane admina');
+                    ? '{{ t("ssh_autologin_enabled_by_admin") }}'
+                    : '{{ t("ssh_autologin_disabled_by_admin") }}');
             }
         }
 
@@ -194,15 +194,15 @@ document.addEventListener('DOMContentLoaded', function() {
         if (statusSpan) {
             if (data.ssh_auto_login) {
                 statusSpan.style.color = 'var(--success)';
-                statusSpan.innerHTML = '<i class="fas fa-check-circle"></i> Uključen';
+                statusSpan.innerHTML = '<i class="fas fa-check-circle"></i> {{ t("ssh_enabled") }}';
             } else {
                 statusSpan.style.color = '#999';
-                statusSpan.innerHTML = '<i class="fas fa-times-circle"></i> Isključen';
+                statusSpan.innerHTML = '<i class="fas fa-times-circle"></i> {{ t("ssh_disabled") }}';
             }
             if (fromOther && !toggle) {
                 showSshToast(data.ssh_auto_login
-                    ? 'SSH Auto-Login je UKLJUČEN od strane admina'
-                    : 'SSH Auto-Login je ISKLJUČEN od strane admina');
+                    ? '{{ t("ssh_autologin_enabled_by_admin") }}'
+                    : '{{ t("ssh_autologin_disabled_by_admin") }}');
             }
         }
     });

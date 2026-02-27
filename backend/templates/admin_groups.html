@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Upravljanje Grupama{% endblock %}
+{% block title %}{{ t('page_admin_groups') }}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -141,13 +141,13 @@
 
 {% block content %}
 <a href="{{ url_for('admin_computers') }}" class="back-link">
-    <i class="fas fa-arrow-left"></i> Nazad na računare
+    <i class="fas fa-arrow-left"></i> {{ t('back_to_computers') }}
 </a>
 
 <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-    <h1><i class="fas fa-layer-group"></i> Grupe Računara</h1>
+    <h1><i class="fas fa-layer-group"></i> {{ t('page_admin_groups') }}</h1>
     <a href="{{ url_for('admin_add_group') }}" class="btn btn-primary">
-        <i class="fas fa-plus"></i> Nova Grupa
+        <i class="fas fa-plus"></i> {{ t('btn_new_group') }}
     </a>
 </div>
 
@@ -168,10 +168,10 @@
                 </div>
             </div>
             <div style="display: flex; gap: 0.5rem; flex-shrink: 0;">
-                <a href="{{ url_for('admin_edit_group', group_id=group.id) }}" class="btn btn-primary btn-sm" title="Izmeni grupu">
+                <a href="{{ url_for('admin_edit_group', group_id=group.id) }}" class="btn btn-primary btn-sm" title="{{ t('btn_edit') }}">
                     <i class="fas fa-edit"></i>
                 </a>
-                <button class="btn btn-danger btn-sm" onclick="deleteGroup({{ group.id }}, '{{ group.name }}')" title="Obriši grupu">
+                <button class="btn btn-danger btn-sm" onclick="deleteGroup({{ group.id }}, '{{ group.name }}')" title="{{ t('btn_delete') }}">
                     <i class="fas fa-trash"></i>
                 </button>
             </div>
@@ -188,16 +188,16 @@
                 {% endfor %}
                 {% if group.computers | length > 3 %}
                 <span class="computer-tag" style="background: #f5f5f5; color: #666;">
-                    ... još {{ group.computers | length - 3 }}
+                    ... {{ t('more_users_suffix') }} {{ group.computers | length - 3 }}
                 </span>
                 {% endif %}
             {% else %}
-                <span style="color: #999; font-size: 0.85rem;">Nema dodeljenih računara</span>
+                <span style="color: #999; font-size: 0.85rem;">{{ t('no_comp_in_group') }}</span>
             {% endif %}
         </div>
         
         <div style="font-size: 0.8rem; color: #999; margin-top: 0.5rem;">
-            <i class="fas fa-desktop"></i> {{ group.computers | length }} računar(a)
+            <i class="fas fa-desktop"></i> {{ group.computers | length }} {{ t('comp_count_suffix') }}
         </div>
     </div>
     {% endfor %}
@@ -206,15 +206,15 @@
 <div class="card">
     <div class="empty-state">
         <i class="fas fa-layer-group" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
-        <p style="font-size: 1.1rem;">Nema kreiranih grupa</p>
-        <p style="margin-top: 0.5rem;">Kreirajte grupe da organizujete računare</p>
+        <p style="font-size: 1.1rem;">{{ t('groups_empty_msg') }}</p>
+        <p style="margin-top: 0.5rem;">{{ t('groups_empty_hint') }}</p>
     </div>
 </div>
 {% endif %}
 
 <script>
 async function deleteGroup(groupId, groupName) {
-    if (!confirm(`Da li ste sigurni da želite da obrišete grupu "${groupName}"?\n\nRačunari neće biti obrisani.`)) return;
+    if (!confirm(`{{ t('delete_group_confirm') }} "${groupName}"?\n\n{{ t('delete_group_note') }}`)) return;
     
     try {
         const response = await fetch(`/admin/groups/${groupId}/delete`, {
@@ -226,10 +226,10 @@ async function deleteGroup(groupId, groupName) {
         if (result.success) {
             location.reload();
         } else {
-            alert('Greška: ' + result.message);
+            alert('{{ t("error_prefix") }}: ' + result.message);
         }
     } catch (error) {
-        alert('Greška: ' + error.message);
+        alert('{{ t("error_prefix") }}: ' + error.message);
     }
 }
 </script>

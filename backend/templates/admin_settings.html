@@ -1,21 +1,21 @@
 {% extends "base.html" %}
 
-{% block title %}Podešavanja{% endblock %}
+{% block title %}{{ t('page_settings') }}{% endblock %}
 
 {% block content %}
 <div class="container">
     <a href="{{ url_for('admin_computers') }}" class="back-link">
-        <i class="fas fa-arrow-left"></i> Nazad
+        <i class="fas fa-arrow-left"></i> {{ t('back_to_computers') }}
     </a>
     
     <div class="page-header">
-        <h1>⚙️ Podešavanja aplikacije</h1>
+        <h1>⚙️ {{ t('page_settings') }}</h1>
     </div>
 
     <div class="card">
         <div class="card-header">
-            <h2>Funkcionalnosti</h2>
-            <p class="text-muted">Uključite ili isključite određene funkcionalnosti aplikacije</p>
+            <h2>{{ t('section_features') }}</h2>
+            <p class="text-muted">{{ t('section_features_desc') }}</p>
         </div>
         <div class="card-body">
             <form method="POST">
@@ -23,11 +23,10 @@
                     <div class="setting-item">
                         <div class="setting-info">
                             <label class="setting-label">
-                                <i class="fas fa-folder"></i> Grupe računara
+                                <i class="fas fa-folder"></i> {{ t('groups_feature_label') }}
                             </label>
                             <p class="setting-description">
-                                Omogućava organizaciju računara u grupe za lakše upravljanje. 
-                                <strong>Preporučeno za veće mreže.</strong>
+                                {{ t('groups_feature_desc') }}
                             </p>
                         </div>
                         <label class="toggle-switch">
@@ -39,11 +38,10 @@
                     <div class="setting-item">
                         <div class="setting-info">
                             <label class="setting-label">
-                                <i class="fas fa-search"></i> Pretraživanje
+                                <i class="fas fa-search"></i> {{ t('search_feature_label') }}
                             </label>
                             <p class="setting-description">
-                                Omogućava pretraživanje računara po nazivu i MAC adresi. 
-                                <strong>Manje korisno za male mreže sa nekoliko računara.</strong>
+                                {{ t('search_feature_desc') }}
                             </p>
                         </div>
                         <label class="toggle-switch">
@@ -51,11 +49,26 @@
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
+
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <label class="setting-label">
+                                <i class="fas fa-language"></i> Jezik / Language
+                            </label>
+                            <p class="setting-description">
+                                {{ t('settings_lang_desc') }}
+                            </p>
+                        </div>
+                        <select name="app_language" class="lang-select">
+                            <option value="sr" {% if settings.app_language == 'sr' %}selected{% endif %}>&#127480;&#127479; Srpski</option>
+                            <option value="en" {% if settings.app_language == 'en' %}selected{% endif %}>&#127468;&#127463; English</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="form-actions">
                     <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Sačuvaj podešavanja
+                        <i class="fas fa-save"></i> {{ t('btn_save_settings') }}
                     </button>
                 </div>
             </form>
@@ -64,20 +77,20 @@
 
     <div class="card" style="margin-top: 2rem;">
         <div class="card-header">
-            <h2>📊 Informacije o sistemu</h2>
+            <h2>📊 {{ t('section_system_info') }}</h2>
         </div>
         <div class="card-body">
             <div class="info-grid">
                 <div class="info-item">
-                    <span class="info-label">Platforma:</span>
+                    <span class="info-label">{{ t('sysinfo_platform') }}</span>
                     <span class="info-value">Linux / Docker</span>
                 </div>
                 <div class="info-item">
-                    <span class="info-label">Raspberry Pi podrška:</span>
-                    <span class="info-value">✅ Podržano (ARM/ARM64)</span>
+                    <span class="info-label">{{ t('sysinfo_rpi') }}</span>
+                    <span class="info-value">✅ {{ t('sysinfo_rpi_supported') }}</span>
                 </div>
                 <div class="info-item">
-                    <span class="info-label">Python verzija:</span>
+                    <span class="info-label">{{ t('sysinfo_python') }}</span>
                     <span class="info-value">3.9+</span>
                 </div>
             </div>
@@ -130,6 +143,13 @@
     color: #666;
     font-size: 0.9rem;
     line-height: 1.5;
+}
+
+/* lang-select — Tom Select wrapper width constraint */
+.ts-wrapper.lang-select {
+    width: 160px !important;
+    flex-shrink: 0;
+    margin-left: 1rem;
 }
 
 /* Toggle Switch */
