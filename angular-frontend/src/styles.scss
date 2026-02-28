@@ -28,6 +28,7 @@
 
   --accent: #0066cc;
   --accent-hover: #0052a3;
+  --accent-glow: rgba(0,102,204,0.15);
   --success: #22c55e;
   --danger: #ef4444;
   --warning: #f59e0b;
@@ -71,6 +72,7 @@ html.dark {
 
   --accent: #3b82f6;
   --accent-hover: #2563eb;
+  --accent-glow: rgba(59,130,246,0.2);
 
   --chip-bg: #334155;
   --chip-text: #cbd5e1;
@@ -233,6 +235,35 @@ html.dark .input-wrapper input { color: var(--text-primary) !important; }
 html.dark .form-group label { color: var(--text-label) !important; }
 html.dark .login-footer p { color: var(--text-muted) !important; }
 html.dark .checkbox-label { color: var(--text-secondary) !important; }
+
+/* ===== NATIVE SELECT - custom styling ===== */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: var(--bg-input);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 32px !important;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: border-color 0.2s, background-color 0.25s;
+}
+select:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+}
+select option {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  padding: 8px;
+}
+html.dark select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+}
 
 /* ===== UTILITIES ===== */
 .container { max-width: 1200px; margin: 0 auto; padding: 24px; }

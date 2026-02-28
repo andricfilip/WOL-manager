@@ -82,10 +82,13 @@ import { User } from '../../../models/user.model';
               <label>Password</label>
               <input type="password" [(ngModel)]="newUser.password" placeholder="Min 6 characters">
             </div>
-            <div class="form-group checkbox-group">
-              <label class="checkbox-label">
+            <div class="form-group toggle-group">
+              <span class="toggle-label">Admin privileges</span>
+              <label class="toggle-switch">
                 <input type="checkbox" [(ngModel)]="newUser.is_admin">
-                <span>Admin privileges</span>
+                <span class="toggle-track">
+                  <span class="toggle-thumb"></span>
+                </span>
               </label>
             </div>
           </div>
@@ -127,48 +130,79 @@ import { User } from '../../../models/user.model';
   `,
   styles: [`
     .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    .section-header h2 { margin: 0; font-size: 1.3rem; font-weight: 700; color: #1e293b; }
+    .section-header h2 { margin: 0; font-size: 1.3rem; font-weight: 700; color: var(--text-heading); }
     .btn { padding: 10px 20px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 0.85rem; transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px; }
     .btn-sm { padding: 8px 16px; font-size: 0.8rem; }
     .btn-xs { padding: 6px 10px; font-size: 0.75rem; }
-    .btn-primary { background: #0066cc; color: white; }
-    .btn-outline { background: white; border: 1px solid #e2e8f0; color: #475569; }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-outline { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-secondary); }
     .btn-danger { background: #ef4444; color: white; }
     .btn-success { background: #10b981; color: white; }
     .btn-warning { background: #f59e0b; color: white; }
-    .btn-secondary { background: #e2e8f0; color: #475569; }
+    .btn-secondary { background: var(--bg-badge); color: var(--text-secondary); }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .loading { text-align: center; padding: 60px; }
-    .loader { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top-color: #0066cc; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto; }
+    .loader { width: 40px; height: 40px; border: 4px solid var(--loader-track); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .table-container { background: white; border-radius: 14px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; overflow-x: auto; }
+    .table-container { background: var(--bg-card); border-radius: 14px; overflow: hidden; box-shadow: var(--shadow); border: 1px solid var(--border); overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; min-width: 700px; }
-    th { background: #f8fafc; padding: 12px 16px; text-align: left; font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; border-bottom: 2px solid #e2e8f0; }
-    td { padding: 12px 16px; font-size: 0.85rem; color: #475569; border-bottom: 1px solid #f1f5f9; }
-    tr:hover { background: #fafbfd; }
-    .bold { font-weight: 600; color: #1e293b; }
-    .time { color: #94a3b8; font-size: 0.8rem; }
+    th { background: var(--bg-page); padding: 12px 16px; text-align: left; font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; border-bottom: 2px solid var(--border); }
+    td { padding: 12px 16px; font-size: 0.85rem; color: var(--text-secondary); border-bottom: 1px solid var(--border); }
+    tr:hover td { background: var(--bg-row-hover); }
+    .bold { font-weight: 600; color: var(--text-primary); }
+    .time { color: var(--text-muted); font-size: 0.8rem; }
     .badge { display: inline-block; padding: 3px 10px; border-radius: 10px; font-size: 0.7rem; font-weight: 600; }
     .badge-admin { background: #eff6ff; color: #1e40af; }
-    .badge-user { background: #f1f5f9; color: #64748b; }
+    .badge-user { background: var(--bg-badge); color: var(--text-secondary); }
     .badge-success { background: #ecfdf5; color: #065f46; }
-    .badge-muted { background: #f1f5f9; color: #94a3b8; }
+    .badge-muted { background: var(--bg-badge); color: var(--text-muted); }
     .actions { display: flex; gap: 6px; }
 
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 10000; }
-    .modal-card { background: white; border-radius: 16px; width: 90%; max-width: 440px; overflow: hidden; }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid #e2e8f0; }
-    .modal-header h2 { margin: 0; font-size: 1.1rem; }
-    .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #94a3b8; }
+    .modal-overlay { position: fixed; inset: 0; background: var(--bg-overlay); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 10000; }
+    .modal-card { background: var(--bg-card); border-radius: 16px; width: 90%; max-width: 440px; overflow: hidden; border: 1px solid var(--border); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid var(--border); }
+    .modal-header h2 { margin: 0; font-size: 1.1rem; color: var(--text-heading); }
+    .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted); }
     .modal-body { padding: 24px; }
-    .modal-footer { display: flex; gap: 10px; justify-content: flex-end; padding: 16px 24px; background: #f8fafc; }
+    .modal-footer { display: flex; gap: 10px; justify-content: flex-end; padding: 16px 24px; background: var(--bg-page); border-top: 1px solid var(--border); }
     .form-group { margin-bottom: 16px; }
-    .form-group label { display: block; font-weight: 600; margin-bottom: 6px; color: #334155; font-size: 0.85rem; }
-    .form-group input { width: 100%; padding: 10px 14px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 0.9rem; outline: none; box-sizing: border-box; }
-    .form-group input:focus { border-color: #0066cc; }
-    .checkbox-group { margin-top: 8px; }
-    .checkbox-label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
-    .checkbox-label input { accent-color: #0066cc; }
+    .form-group label { display: block; font-weight: 600; margin-bottom: 6px; color: var(--text-label); font-size: 0.85rem; }
+    .form-group input[type=text], .form-group input[type=email], .form-group input[type=password] {
+      width: 100%; padding: 10px 14px; border: 2px solid var(--border); border-radius: 10px; font-size: 0.9rem; outline: none;
+      box-sizing: border-box; background: var(--bg-input); color: var(--text-primary); transition: border-color 0.2s;
+    }
+    .form-group input[type=text]:focus, .form-group input[type=email]:focus, .form-group input[type=password]:focus { border-color: var(--accent); }
+
+    /* Toggle Switch */
+    .toggle-group {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-top: 1px solid var(--border);
+      margin-top: 4px;
+    }
+    .toggle-label { font-weight: 600; color: var(--text-label); font-size: 0.85rem; }
+    .toggle-switch { display: inline-flex; align-items: center; cursor: pointer; }
+    .toggle-switch input { display: none; }
+    .toggle-track {
+      width: 44px; height: 24px;
+      background: var(--loader-track);
+      border-radius: 12px;
+      position: relative;
+      transition: background 0.25s;
+    }
+    .toggle-switch input:checked + .toggle-track { background: var(--accent); }
+    .toggle-thumb {
+      position: absolute;
+      top: 3px; left: 3px;
+      width: 18px; height: 18px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.25s;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    }
+    .toggle-switch input:checked + .toggle-track .toggle-thumb { transform: translateX(20px); }
   `]
 })
 export class AdminUsersComponent implements OnInit {

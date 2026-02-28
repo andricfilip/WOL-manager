@@ -140,7 +140,8 @@ import { SshTerminalComponent } from '../../components/ssh-terminal/ssh-terminal
           {{ shuttingDown[computer.id] ? '⏳ Shutting down...' : '🔌 Shutdown' }}
         </button>
         <button class="btn btn-terminal" (click)="openTerminal(computer)"
-                *ngIf="computer.has_ssh && computer.status === 'online' && canOperate(computer, group)">
+                [disabled]="computer.status !== 'online'"
+                *ngIf="computer.has_ssh && canOperate(computer, group)">
           💻 Terminal
         </button>
       </div>
@@ -163,10 +164,10 @@ import { SshTerminalComponent } from '../../components/ssh-terminal/ssh-terminal
       gap: 16px;
     }
     .header-left { display: flex; align-items: baseline; gap: 12px; }
-    .header-left h1 { font-size: 2rem; font-weight: 800; color: #1a365d; margin: 0; }
+    .header-left h1 { font-size: 2rem; font-weight: 800; color: var(--text-heading); margin: 0; }
     .computer-count {
-      background: #e2e8f0;
-      color: #475569;
+      background: var(--bg-badge);
+      color: var(--text-secondary);
       padding: 4px 12px;
       border-radius: 20px;
       font-size: 0.85rem;
@@ -176,13 +177,13 @@ import { SshTerminalComponent } from '../../components/ssh-terminal/ssh-terminal
     .search-box {
       display: flex;
       align-items: center;
-      background: white;
-      border: 2px solid #e2e8f0;
+      background: var(--bg-input);
+      border: 2px solid var(--border);
       border-radius: 12px;
       padding: 0 12px;
       transition: all 0.2s;
     }
-    .search-box:focus-within { border-color: #0066cc; box-shadow: 0 0 0 3px rgba(0,102,204,0.1); }
+    .search-box:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,102,204,0.1); }
     .search-icon { margin-right: 8px; }
     .search-box input {
       border: none;
@@ -191,13 +192,15 @@ import { SshTerminalComponent } from '../../components/ssh-terminal/ssh-terminal
       outline: none;
       min-width: 200px;
       background: transparent;
+      color: var(--text-primary);
     }
+    .search-box input::placeholder { color: var(--text-muted); }
     .search-clear {
       background: none;
       border: none;
       font-size: 1.3rem;
       cursor: pointer;
-      color: #94a3b8;
+      color: var(--text-muted);
       padding: 0 4px;
     }
     .btn {
@@ -214,11 +217,11 @@ import { SshTerminalComponent } from '../../components/ssh-terminal/ssh-terminal
     }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .btn-outline {
-      background: white;
-      border: 2px solid #e2e8f0;
-      color: #475569;
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      color: var(--text-secondary);
     }
-    .btn-outline:hover:not(:disabled) { border-color: #0066cc; color: #0066cc; }
+    .btn-outline:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
     .btn-success { background: linear-gradient(135deg, #10b981, #059669); color: white; }
     .btn-success:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(16,185,129,0.4); }
     .btn-sm { padding: 8px 16px; font-size: 0.8rem; }
@@ -227,19 +230,19 @@ import { SshTerminalComponent } from '../../components/ssh-terminal/ssh-terminal
     .loading-state, .empty-state {
       text-align: center;
       padding: 80px 20px;
-      color: #64748b;
+      color: var(--text-secondary);
     }
     .loader {
       width: 48px; height: 48px;
-      border: 4px solid #e2e8f0;
-      border-top-color: #0066cc;
+      border: 4px solid var(--loader-track);
+      border-top-color: var(--accent);
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
       margin: 0 auto 20px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
     .empty-icon { font-size: 4rem; margin-bottom: 16px; }
-    .empty-state h2 { color: #334155; margin-bottom: 8px; }
+    .empty-state h2 { color: var(--text-heading); margin-bottom: 8px; }
 
     /* Groups */
     .group-section { margin-bottom: 32px; }
@@ -248,18 +251,18 @@ import { SshTerminalComponent } from '../../components/ssh-terminal/ssh-terminal
       justify-content: space-between;
       align-items: center;
       padding: 12px 16px;
-      background: white;
+      background: var(--bg-card);
       border-radius: 12px;
       margin-bottom: 16px;
-      border-left: 4px solid #0066cc;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      border-left: 4px solid var(--accent);
+      box-shadow: var(--shadow);
     }
     .group-info { display: flex; align-items: center; gap: 10px; }
     .group-icon { font-size: 1.2rem; }
-    .group-name { font-size: 1.1rem; font-weight: 700; color: #1e293b; margin: 0; }
+    .group-name { font-size: 1.1rem; font-weight: 700; color: var(--text-heading); margin: 0; }
     .group-badge {
-      background: #f1f5f9;
-      color: #64748b;
+      background: var(--bg-badge);
+      color: var(--text-secondary);
       padding: 2px 10px;
       border-radius: 12px;
       font-size: 0.8rem;
@@ -273,10 +276,10 @@ import { SshTerminalComponent } from '../../components/ssh-terminal/ssh-terminal
       gap: 16px;
     }
     .computer-card {
-      background: white;
+      background: var(--bg-card);
       border-radius: 16px;
       padding: 20px;
-      border: 2px solid #e2e8f0;
+      border: 2px solid var(--border);
       transition: all 0.3s ease;
       position: relative;
       overflow: hidden;
@@ -288,15 +291,15 @@ import { SshTerminalComponent } from '../../components/ssh-terminal/ssh-terminal
       left: 0;
       right: 0;
       height: 3px;
-      background: #e2e8f0;
+      background: var(--border);
       transition: all 0.3s;
     }
     .computer-card.online::before { background: linear-gradient(90deg, #10b981, #34d399); }
     .computer-card.offline::before { background: linear-gradient(90deg, #ef4444, #f87171); }
     .computer-card:hover {
       transform: translateY(-4px);
-      box-shadow: 0 12px 30px rgba(0,0,0,0.1);
-      border-color: #cbd5e1;
+      box-shadow: var(--shadow-lg);
+      border-color: var(--accent);
     }
     .card-header-row {
       display: flex;
@@ -307,7 +310,7 @@ import { SshTerminalComponent } from '../../components/ssh-terminal/ssh-terminal
     .card-header-row h3 {
       font-size: 1.1rem;
       font-weight: 700;
-      color: #1e293b;
+      color: var(--text-heading);
       margin: 0;
     }
     .status-badge {
@@ -341,14 +344,14 @@ import { SshTerminalComponent } from '../../components/ssh-terminal/ssh-terminal
       font-size: 0.85rem;
     }
     .detail-label {
-      color: #94a3b8;
+      color: var(--text-muted);
       font-weight: 600;
       min-width: 52px;
       text-transform: uppercase;
       font-size: 0.7rem;
       letter-spacing: 0.5px;
     }
-    .detail-value { color: #475569; }
+    .detail-value { color: var(--text-secondary); }
     .detail-value.mac { font-family: 'Consolas', monospace; font-size: 0.8rem; }
     .detail-value.time { font-size: 0.8rem; color: #94a3b8; }
 

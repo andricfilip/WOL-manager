@@ -96,7 +96,7 @@ import { User } from '../../models/user.model';
   `,
   styles: [`
     .profile-page { padding: 24px; max-width: 1200px; margin: 0 auto; }
-    .page-header h1 { font-size: 2rem; font-weight: 800; color: #1a365d; margin: 0 0 32px; }
+    .page-header h1 { font-size: 2rem; font-weight: 800; color: var(--text-heading); margin: 0 0 32px; }
 
     .profile-grid {
       display: grid;
@@ -104,18 +104,18 @@ import { User } from '../../models/user.model';
       gap: 20px;
     }
     .card {
-      background: white;
+      background: var(--bg-card);
       border-radius: 16px;
       overflow: hidden;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-      border: 1px solid #e2e8f0;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
     }
     .card-header {
       padding: 18px 24px;
-      border-bottom: 1px solid #f1f5f9;
-      background: #f8fafc;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-page);
     }
-    .card-header h2 { margin: 0; font-size: 1rem; font-weight: 700; color: #1e293b; }
+    .card-header h2 { margin: 0; font-size: 1rem; font-weight: 700; color: var(--text-heading); }
     .card-body { padding: 24px; }
 
     .user-avatar { text-align: center; margin-bottom: 24px; }
@@ -133,8 +133,8 @@ import { User } from '../../models/user.model';
     }
     .info-grid { display: flex; flex-direction: column; gap: 16px; }
     .info-item { display: flex; flex-direction: column; gap: 4px; }
-    .info-label { font-size: 0.75rem; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
-    .info-value { font-size: 0.95rem; color: #1e293b; font-weight: 500; }
+    .info-label { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .info-value { font-size: 0.95rem; color: var(--text-primary); font-weight: 500; }
     .role-badge {
       display: inline-flex;
       align-items: center;
@@ -143,8 +143,8 @@ import { User } from '../../models/user.model';
       border-radius: 8px;
       font-size: 0.85rem;
       font-weight: 600;
-      background: #f1f5f9;
-      color: #64748b;
+      background: var(--bg-badge);
+      color: var(--text-secondary);
       width: fit-content;
     }
     .role-badge.admin { background: #eff6ff; color: #1e40af; }
@@ -154,20 +154,22 @@ import { User } from '../../models/user.model';
       display: block;
       margin-bottom: 6px;
       font-weight: 600;
-      color: #334155;
+      color: var(--text-label);
       font-size: 0.85rem;
     }
     .form-group input {
       width: 100%;
       padding: 10px 14px;
-      border: 2px solid #e2e8f0;
+      border: 2px solid var(--border);
       border-radius: 10px;
       font-size: 0.9rem;
       outline: none;
       transition: border-color 0.2s;
       box-sizing: border-box;
+      background: var(--bg-input);
+      color: var(--text-primary);
     }
-    .form-group input:focus { border-color: #0066cc; box-shadow: 0 0 0 3px rgba(0,102,204,0.1); }
+    .form-group input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
 
     .btn {
       padding: 10px 24px;

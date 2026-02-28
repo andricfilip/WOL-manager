@@ -128,27 +128,27 @@ Chart.register(...registerables);
       flex-wrap: wrap;
       gap: 16px;
     }
-    .page-header h1 { font-size: 2rem; font-weight: 800; color: #1a365d; margin: 0; }
-    .period-selector { display: flex; gap: 4px; background: #f1f5f9; border-radius: 12px; padding: 4px; }
+    .page-header h1 { font-size: 2rem; font-weight: 800; color: var(--text-heading); margin: 0; }
+    .period-selector { display: flex; gap: 3px; background: var(--bg-badge); border-radius: 10px; padding: 3px; }
     .period-btn {
-      padding: 8px 16px;
+      padding: 6px 13px;
       border: none;
-      border-radius: 8px;
+      border-radius: 7px;
       background: transparent;
-      color: #64748b;
+      color: var(--text-secondary);
       font-weight: 600;
       cursor: pointer;
       transition: all 0.2s;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
     }
-    .period-btn.active { background: white; color: #0066cc; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    .period-btn:hover:not(.active) { color: #334155; }
+    .period-btn.active { background: var(--bg-card); color: var(--accent); box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+    .period-btn:hover:not(.active) { color: var(--text-primary); }
 
-    .loading-state { text-align: center; padding: 80px 20px; color: #64748b; }
+    .loading-state { text-align: center; padding: 80px 20px; color: var(--text-secondary); }
     .loader {
       width: 48px; height: 48px;
-      border: 4px solid #e2e8f0;
-      border-top-color: #0066cc;
+      border: 4px solid var(--loader-track);
+      border-top-color: var(--accent);
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
       margin: 0 auto 20px;
@@ -157,24 +157,24 @@ Chart.register(...registerables);
 
     .stats-summary {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 16px;
-      margin-bottom: 32px;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin-bottom: 28px;
     }
     .stat-card {
-      background: white;
-      border-radius: 16px;
-      padding: 24px;
+      background: var(--bg-card);
+      border-radius: 14px;
+      padding: 16px 18px;
       display: flex;
       align-items: center;
-      gap: 16px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-      border: 1px solid #e2e8f0;
+      gap: 12px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
     }
-    .stat-icon { font-size: 2rem; }
+    .stat-icon { font-size: 1.6rem; }
     .stat-info { display: flex; flex-direction: column; }
-    .stat-value { font-size: 1.8rem; font-weight: 800; color: #1e293b; }
-    .stat-label { font-size: 0.85rem; color: #64748b; margin-top: 2px; }
+    .stat-value { font-size: 1.5rem; font-weight: 800; color: var(--text-heading); line-height: 1.1; }
+    .stat-label { font-size: 0.78rem; color: var(--text-muted); margin-top: 3px; }
 
     .charts-row {
       display: grid;
@@ -183,42 +183,42 @@ Chart.register(...registerables);
       margin-bottom: 32px;
     }
     .chart-card {
-      background: white;
+      background: var(--bg-card);
       border-radius: 16px;
       padding: 24px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-      border: 1px solid #e2e8f0;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
     }
-    .chart-card h3 { margin: 0 0 16px; font-size: 1rem; color: #334155; }
+    .chart-card h3 { margin: 0 0 16px; font-size: 1rem; color: var(--text-secondary); font-weight: 700; }
     .chart-card.wide { }
     .chart-card canvas { max-height: 300px; }
 
-    .computer-stats h2 { font-size: 1.3rem; font-weight: 700; color: #1e293b; margin-bottom: 16px; }
+    .computer-stats h2 { font-size: 1.3rem; font-weight: 700; color: var(--text-heading); margin-bottom: 16px; }
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 14px;
     }
     .stat-detail-card {
-      background: white;
+      background: var(--bg-card);
       border-radius: 14px;
-      padding: 20px;
-      border: 1px solid #e2e8f0;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      padding: 18px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
     }
     .stat-detail-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
     .stat-name {
       display: flex;
       align-items: center;
       gap: 8px;
       font-weight: 700;
-      font-size: 1rem;
-      color: #1e293b;
+      font-size: 0.95rem;
+      color: var(--text-heading);
     }
     .stat-status {
       padding: 3px 10px;
@@ -235,11 +235,11 @@ Chart.register(...registerables);
       gap: 12px;
     }
     .metric { display: flex; flex-direction: column; }
-    .metric-value { font-size: 1.2rem; font-weight: 700; color: #334155; }
-    .metric-label { font-size: 0.75rem; color: #94a3b8; margin-top: 2px; }
+    .metric-value { font-size: 1.15rem; font-weight: 700; color: var(--text-primary); }
+    .metric-label { font-size: 0.73rem; color: var(--text-muted); margin-top: 2px; }
     .metric-bar {
       height: 4px;
-      background: #f1f5f9;
+      background: var(--loader-track);
       border-radius: 2px;
       margin-top: 6px;
       overflow: hidden;
@@ -323,6 +323,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit {
     const online = this.stats.filter(s => s.current_status === 'online').length;
     const offline = this.stats.filter(s => s.current_status === 'offline').length;
     const unknown = this.stats.filter(s => s.current_status === 'unknown').length;
+    const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim();
 
     this.pieChart = new Chart(this.pieChartRef.nativeElement, {
       type: 'doughnut',
@@ -339,7 +340,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit {
         responsive: true,
         maintainAspectRatio: true,
         plugins: {
-          legend: { position: 'bottom', labels: { padding: 16 } }
+          legend: { position: 'bottom', labels: { padding: 16, color: textColor } }
         },
         cutout: '65%'
       }
@@ -349,6 +350,8 @@ export class StatisticsComponent implements OnInit, AfterViewInit {
   private renderBarChart(): void {
     if (!this.barChartRef?.nativeElement) return;
     this.barChart?.destroy();
+    const textColor  = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim();
+    const gridColor  = getComputedStyle(document.documentElement).getPropertyValue('--border').trim();
 
     this.barChart = new Chart(this.barChartRef.nativeElement, {
       type: 'bar',
@@ -379,11 +382,11 @@ export class StatisticsComponent implements OnInit, AfterViewInit {
         responsive: true,
         maintainAspectRatio: true,
         plugins: {
-          legend: { position: 'bottom', labels: { padding: 16 } }
+          legend: { position: 'bottom', labels: { padding: 16, color: textColor } }
         },
         scales: {
-          y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
-          x: { grid: { display: false } }
+          y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor } },
+          x: { grid: { display: false }, ticks: { color: textColor } }
         }
       }
     });
