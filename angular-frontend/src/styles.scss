@@ -1,5 +1,85 @@
 /* xterm styles imported via angular.json */
 
+/* ===== CSS VARIJABLE - TEMA ===== */
+:root {
+  --bg-page: #f0f4f8;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f8fafc;
+  --bg-input: #ffffff;
+  --bg-sidebar: #ffffff;
+  --bg-nav: rgba(255,255,255,0.95);
+  --bg-nav-border: #e2e8f0;
+  --bg-overlay: rgba(0,0,0,0.5);
+  --bg-badge: #f1f5f9;
+  --bg-row-hover: #f8fafc;
+  --bg-footer: #f8fafc;
+  --bg-code: #f1f5f9;
+
+  --text-primary: #1e293b;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --text-label: #334155;
+  --text-heading: #1e293b;
+
+  --border: #e2e8f0;
+  --border-focus: #0066cc;
+  --shadow: 0 1px 4px rgba(0,0,0,0.06);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.10);
+
+  --accent: #0066cc;
+  --accent-hover: #0052a3;
+  --success: #22c55e;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --info: #3b82f6;
+
+  --chip-bg: #f1f5f9;
+  --chip-text: #475569;
+  --status-online: #22c55e;
+  --status-offline: #ef4444;
+  --status-unknown: #94a3b8;
+
+  --loader-track: #e2e8f0;
+  --scrollbar-thumb: #cbd5e1;
+  --scrollbar-thumb-hover: #94a3b8;
+}
+
+html.dark {
+  --bg-page: #0f172a;
+  --bg-card: #1e293b;
+  --bg-card-hover: #263448;
+  --bg-input: #1e293b;
+  --bg-sidebar: #1e293b;
+  --bg-nav: rgba(15,23,42,0.97);
+  --bg-nav-border: #334155;
+  --bg-overlay: rgba(0,0,0,0.7);
+  --bg-badge: #334155;
+  --bg-row-hover: #263448;
+  --bg-footer: #1a2740;
+  --bg-code: #0f172a;
+
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --text-label: #cbd5e1;
+  --text-heading: #f1f5f9;
+
+  --border: #334155;
+  --border-focus: #3b82f6;
+  --shadow: 0 1px 4px rgba(0,0,0,0.3);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.4);
+
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+
+  --chip-bg: #334155;
+  --chip-text: #cbd5e1;
+  --loader-track: #334155;
+  --scrollbar-thumb: #475569;
+  --scrollbar-thumb-hover: #64748b;
+}
+
+/* ===== RESET ===== */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -10,56 +90,153 @@ html {
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.25s, color 0.25s;
 }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  background: #f0f4f8;
-  color: #1e293b;
+  background: var(--bg-page);
+  color: var(--text-primary);
   line-height: 1.5;
   min-height: 100vh;
+  transition: background-color 0.25s, color 0.25s;
 }
 
-a {
-  color: #0066cc;
-  text-decoration: none;
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+input, select, textarea, button { font-family: inherit; }
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-page); }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
+
+/* ===== DARK MODE GLOBAL OVERRIDES ===== */
+/* Cards / panels */
+html.dark .card,
+html.dark .comp-card,
+html.dark .stat-card,
+html.dark .group-card,
+html.dark .history-card,
+html.dark .settings-card,
+html.dark .profile-card,
+html.dark .form-card,
+html.dark .admin-card,
+html.dark .section-card {
+  background: var(--bg-card) !important;
+  border-color: var(--border) !important;
+  color: var(--text-primary) !important;
 }
 
-a:hover {
-  text-decoration: underline;
+/* Navbar */
+html.dark .navbar {
+  background: var(--bg-nav) !important;
+  border-color: var(--bg-nav-border) !important;
 }
 
-input, select, textarea, button {
-  font-family: inherit;
+/* Tables */
+html.dark table, html.dark .table {
+  background: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+}
+html.dark th { background: var(--bg-page) !important; color: var(--text-secondary) !important; border-color: var(--border) !important; }
+html.dark td { border-color: var(--border) !important; color: var(--text-primary) !important; }
+html.dark tr:hover td { background: var(--bg-row-hover) !important; }
+
+/* Inputs & selects */
+html.dark input,
+html.dark select,
+html.dark textarea {
+  background: var(--bg-input) !important;
+  border-color: var(--border) !important;
+  color: var(--text-primary) !important;
+}
+html.dark input::placeholder, html.dark textarea::placeholder { color: var(--text-muted) !important; }
+html.dark input:focus, html.dark select:focus, html.dark textarea:focus {
+  border-color: var(--border-focus) !important;
 }
 
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+/* Modals */
+html.dark .modal-card,
+html.dark .modal-body,
+html.dark .modal-header,
+html.dark .modal-footer {
+  background: var(--bg-card) !important;
+  border-color: var(--border) !important;
+  color: var(--text-primary) !important;
+}
+html.dark .modal-footer { background: var(--bg-page) !important; }
+
+/* sidebar */
+html.dark .admin-sidebar { background: var(--bg-sidebar) !important; border-color: var(--border) !important; }
+html.dark .sidebar-link { color: var(--text-secondary) !important; }
+html.dark .sidebar-link.active, html.dark .sidebar-link:hover { background: var(--bg-row-hover) !important; color: var(--accent) !important; }
+
+/* Chips / badges */
+html.dark .computer-chip,
+html.dark .role-chip,
+html.dark .chip,
+html.dark .user-chip {
+  background: var(--chip-bg) !important;
+  color: var(--chip-text) !important;
 }
 
-::-webkit-scrollbar-track {
-  background: #f1f5f9;
+/* Buttons - outline variant */
+html.dark .btn-outline {
+  background: var(--bg-card) !important;
+  border-color: var(--border) !important;
+  color: var(--text-secondary) !important;
+}
+html.dark .btn-secondary {
+  background: var(--bg-badge) !important;
+  color: var(--text-secondary) !important;
 }
 
-::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
-}
+/* Status badges */
+html.dark .status-badge, html.dark .badge { border: 1px solid var(--border); }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
+/* Headings */
+html.dark h1, html.dark h2, html.dark h3, html.dark h4 { color: var(--text-heading) !important; }
+html.dark label, html.dark .label { color: var(--text-label) !important; }
+html.dark p, html.dark span { color: inherit; }
+html.dark .text-muted, html.dark .muted, html.dark small { color: var(--text-muted) !important; }
 
-/* Utility classes */
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 24px;
-}
+/* Page background */
+html.dark .app-main, html.dark .page-wrapper { background: var(--bg-page) !important; }
 
+/* Container sections */
+html.dark .section { background: transparent !important; }
+
+/* Loader track */
+html.dark .loader { border-color: var(--loader-track) !important; border-top-color: var(--accent) !important; }
+
+/* Dropdown menus */
+html.dark .dropdown, html.dark .nav-menu { background: var(--bg-card) !important; border-color: var(--border) !important; }
+
+/* Login page dark mode */
+html.dark .login-card {
+  background: rgba(30, 41, 59, 0.97) !important;
+  box-shadow: 0 25px 60px rgba(0,0,0,0.6) !important;
+}
+html.dark .login-header h1 { color: #f1f5f9 !important; }
+html.dark .login-header .subtitle { color: var(--text-secondary) !important; }
+html.dark .input-wrapper {
+  background: var(--bg-input) !important;
+  border-color: var(--border) !important;
+}
+html.dark .input-wrapper:focus-within {
+  border-color: var(--border-focus) !important;
+  background: var(--bg-card) !important;
+}
+html.dark .input-wrapper input { color: var(--text-primary) !important; }
+html.dark .form-group label { color: var(--text-label) !important; }
+html.dark .login-footer p { color: var(--text-muted) !important; }
+html.dark .checkbox-label { color: var(--text-secondary) !important; }
+
+/* ===== UTILITIES ===== */
+.container { max-width: 1200px; margin: 0 auto; padding: 24px; }
 .text-center { text-align: center; }
-.text-right { text-align: right; }
 .mt-1 { margin-top: 8px; }
 .mt-2 { margin-top: 16px; }
 .mt-3 { margin-top: 24px; }

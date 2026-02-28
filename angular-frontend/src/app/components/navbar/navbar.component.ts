@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { ThemeService } from '../../services/theme.service';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -9,7 +10,7 @@ import { Subscription } from 'rxjs';
   standalone: true,
   imports: [CommonModule, RouterModule],
   template: `
-    <nav class="navbar" *ngIf="isAuthenticated">
+    <nav class="navbar" [class.dark-nav]="isDark" *ngIf="isAuthenticated">
       <div class="navbar-content">
         <a routerLink="/dashboard" class="navbar-brand">
           <span class="brand-icon">⚡</span>
@@ -34,6 +35,12 @@ import { Subscription } from 'rxjs';
           <li><a routerLink="/profile" routerLinkActive="active" (click)="menuOpen = false">
             <i class="icon">👤</i> Profile
           </a></li>
+          <li>
+            <button class="theme-btn" (click)="toggleTheme()" [title]="isDark ? 'Svetla tema' : 'Tamna tema'">
+              <span *ngIf="isDark">☀️</span>
+              <span *ngIf="!isDark">🌙</span>
+            </button>
+          </li>
           <li><a class="logout" (click)="onLogout()">
             <i class="icon">🚪</i> Logout
           </a></li>
@@ -43,13 +50,14 @@ import { Subscription } from 'rxjs';
   `,
   styles: [`
     .navbar {
-      background: rgba(255,255,255,0.95);
+      background: var(--bg-nav);
       backdrop-filter: blur(20px);
       box-shadow: 0 1px 20px rgba(0,0,0,0.08);
       position: sticky;
       top: 0;
       z-index: 1000;
-      border-bottom: 1px solid rgba(0,0,0,0.05);
+      border-bottom: 1px solid var(--bg-nav-border);
+      transition: background 0.25s, border-color 0.25s;
     }
     .navbar-content {
       max-width: 1400px;
@@ -63,7 +71,7 @@ import { Subscription } from 'rxjs';
     .navbar-brand {
       font-size: 1.3rem;
       font-weight: 800;
-      color: #0066cc;
+      color: var(--accent);
       text-decoration: none;
       display: flex;
       align-items: center;
@@ -80,7 +88,7 @@ import { Subscription } from 'rxjs';
       align-items: center;
     }
     .navbar-menu a {
-      color: #4a5568;
+      color: var(--text-secondary);
       text-decoration: none;
       font-weight: 500;
       padding: 8px 16px;
@@ -93,20 +101,28 @@ import { Subscription } from 'rxjs';
       cursor: pointer;
     }
     .navbar-menu a:hover {
-      background: #f0f4ff;
-      color: #0066cc;
+      background: var(--bg-badge);
+      color: var(--accent);
     }
     .navbar-menu a.active {
-      background: #0066cc;
+      background: var(--accent);
       color: white;
     }
-    .navbar-menu .logout {
-      color: #e63946;
+    .navbar-menu .logout { color: #e63946; }
+    .navbar-menu .logout:hover { background: rgba(239,68,68,0.1); color: #dc2626; }
+    .theme-btn {
+      background: var(--bg-badge);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 7px 12px;
+      cursor: pointer;
+      font-size: 1.1rem;
+      line-height: 1;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
     }
-    .navbar-menu .logout:hover {
-      background: #fef2f2;
-      color: #dc2626;
-    }
+    .theme-btn:hover { background: var(--bg-card-hover); transform: scale(1.1); }
     .icon { font-style: normal; font-size: 1rem; }
     .mobile-toggle {
       display: none;
@@ -120,7 +136,7 @@ import { Subscription } from 'rxjs';
     .mobile-toggle span {
       width: 24px;
       height: 2px;
-      background: #4a5568;
+      background: var(--text-secondary);
       border-radius: 2px;
       transition: all 0.3s;
     }
@@ -132,11 +148,12 @@ import { Subscription } from 'rxjs';
         top: 64px;
         left: 0;
         right: 0;
-        background: white;
+        background: var(--bg-nav);
         flex-direction: column;
         padding: 16px;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        box-shadow: var(--shadow-lg);
         gap: 4px;
+        border-bottom: 1px solid var(--border);
       }
       .navbar-menu.open { display: flex; }
       .navbar-menu a { justify-content: center; padding: 12px; }
@@ -147,20 +164,26 @@ export class NavbarComponent implements OnInit, OnDestroy {
   isAuthenticated = false;
   isAdmin = false;
   menuOpen = false;
+  isDark = false;
   private sub!: Subscription;
+  private themeSub!: Subscription;
 
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(private authService: AuthService, private router: Router, private theme: ThemeService) {}
 
   ngOnInit(): void {
     this.sub = this.authService.currentUser$.subscribe(user => {
       this.isAuthenticated = !!user;
       this.isAdmin = user?.is_admin ?? false;
     });
+    this.themeSub = this.theme.theme$.subscribe(t => this.isDark = t === 'dark');
   }
 
   ngOnDestroy(): void {
     this.sub?.unsubscribe();
+    this.themeSub?.unsubscribe();
   }
+
+  toggleTheme(): void { this.theme.toggle(); }
 
   onLogout(): void {
     this.menuOpen = false;

@@ -18,7 +18,8 @@ import { ToastComponent } from './components/toast/toast.component';
     .app-main {
       padding-top: 70px;
       min-height: 100vh;
-      background: #f0f4f8;
+      background: var(--bg-page);
+      transition: background-color 0.25s;
     }
   `]
 })
