@@ -2156,6 +2156,633 @@ def wake_group(group_id):
         'results': results
     })
 
+# ==================== ANGULAR FRONTEND API ====================
+# JSON API endpoints for the Angular SPA frontend
+
+def _serialize_user(user):
+    """Serialize a User object to dict"""
+    return {
+        'id': user.id,
+        'username': user.username,
+        'email': user.email,
+        'is_admin': user.is_admin,
+        'can_view_groups': getattr(user, 'can_view_groups', True),
+        'created_at': user.created_at.isoformat() if user.created_at else None
+    }
+
+def _serialize_computer(computer, include_ssh=False):
+    """Serialize a Computer object to dict"""
+    data = {
+        'id': computer.id,
+        'name': computer.name,
+        'mac_address': computer.mac_address,
+        'ip_address': computer.ip_address,
+        'description': computer.description,
+        'status': computer.status or 'unknown',
+        'os_type': computer.os_type or 'linux',
+        'last_wol': computer.last_wol.isoformat() if computer.last_wol else None,
+        'last_shutdown': computer.last_shutdown.isoformat() if computer.last_shutdown else None,
+        'last_checked': computer.last_checked.isoformat() if computer.last_checked else None,
+        'created_at': computer.created_at.isoformat() if computer.created_at else None,
+        'has_ssh': bool(computer.ssh_username and computer._ssh_password_encrypted),
+        'ssh_auto_login': computer.ssh_auto_login,
+        'assigned_users': [{'id': u.id, 'username': u.username} for u in computer.assigned_users],
+        'groups': [{'id': g.id, 'name': g.name} for g in computer.groups]
+    }
+    if include_ssh:
+        data['ssh_host'] = computer.ssh_host
+        data['ssh_port'] = computer.ssh_port
+        data['ssh_username'] = computer.ssh_username
+        data['has_ssh_password'] = bool(computer._ssh_password_encrypted)
+    return data
+
+def _serialize_group(group, include_computers=True):
+    """Serialize a ComputerGroup object to dict"""
+    data = {
+        'id': group.id,
+        'name': group.name,
+        'description': group.description,
+        'color': group.color,
+        'icon': group.icon,
+        'allow_wake': group.allow_wake,
+        'allow_shutdown': group.allow_shutdown,
+        'created_at': group.created_at.isoformat() if group.created_at else None
+    }
+    if include_computers:
+        data['computers'] = [{'id': c.id, 'name': c.name, 'ip_address': c.ip_address, 'status': c.status} for c in group.computers]
+    return data
+
+
+# --- Auth ---
+@app.route('/api/angular/auth/me', methods=['GET'])
+@login_required
+def angular_auth_me():
+    """Get current user info"""
+    return jsonify({'success': True, 'data': _serialize_user(current_user)})
+
+@app.route('/api/angular/auth/login', methods=['POST'])
+def angular_auth_login():
+    """Login via JSON API"""
+    from flask_login import login_user
+    data = request.get_json() or {}
+    username = data.get('username', '').strip()
+    password = data.get('password', '')
+    remember = data.get('remember', False)
+
+    if not username or not password:
+        return jsonify({'success': False, 'message': 'Username and password required'}), 400
+
+    user = User.query.filter_by(username=username).first()
+    if not user or not user.check_password(password):
+        AuditLog.log_action(
+            action='login_failed',
+            user=None,
+            resource_type='auth',
+            status='failed',
+            details=f'Failed login attempt for "{username}"',
+            ip_address=request.remote_addr,
+            user_agent=request.headers.get('User-Agent')
+        )
+        return jsonify({'success': False, 'message': 'Invalid credentials'}), 401
+
+    login_user(user, remember=remember)
+
+    AuditLog.log_action(
+        action='login',
+        user=user,
+        resource_type='auth',
+        status='success',
+        details=f'User "{username}" logged in via Angular',
+        ip_address=request.remote_addr,
+        user_agent=request.headers.get('User-Agent')
+    )
+
+    return jsonify({'success': True, 'data': _serialize_user(user)})
+
+@app.route('/api/angular/auth/logout', methods=['POST'])
+@login_required
+def angular_auth_logout():
+    """Logout via JSON API"""
+    from flask_login import logout_user
+    username = current_user.username
+    logout_user()
+    return jsonify({'success': True, 'message': f'{username} logged out'})
+
+
+# --- Dashboard ---
+@app.route('/api/angular/dashboard', methods=['GET'])
+@login_required
+def angular_dashboard():
+    """Dashboard data as JSON"""
+    computers = current_user.computers
+    enable_groups = AppSettings.get_bool('enable_groups', default=True)
+    enable_search = AppSettings.get_bool('enable_search', default=True)
+    show_groups = enable_groups and (current_user.is_admin or current_user.can_view_groups)
+
+    groups = ComputerGroup.query.order_by(ComputerGroup.name).all() if show_groups else []
+
+    # Per-user roles
+    user_roles = {}
+    if computers:
+        comp_ids = [c.id for c in computers]
+        prefs = UserComputerPreference.query.filter(
+            UserComputerPreference.user_id == current_user.id,
+            UserComputerPreference.computer_id.in_(comp_ids)
+        ).all()
+        user_roles = {str(p.computer_id): (p.role or 'operator') for p in prefs}
+
+    return jsonify({
+        'success': True,
+        'data': {
+            'computers': [_serialize_computer(c) for c in computers],
+            'groups': [_serialize_group(g) for g in groups],
+            'enable_groups': show_groups,
+            'enable_search': enable_search,
+            'user_roles': user_roles
+        }
+    })
+
+
+# --- History ---
+@app.route('/api/angular/history', methods=['GET'])
+@login_required
+def angular_history():
+    """History data as JSON"""
+    search_query = request.args.get('search', '').strip()
+    date_from = request.args.get('date_from', '')
+    date_to = request.args.get('date_to', '')
+
+    # WOL logs
+    wol_query = WOLLog.query
+    if not current_user.is_admin:
+        wol_query = wol_query.filter(WOLLog.user_id == current_user.id)
+    if search_query:
+        wol_query = wol_query.join(Computer).join(User).filter(
+            db.or_(Computer.name.ilike(f'%{search_query}%'), User.username.ilike(f'%{search_query}%'))
+        )
+    if date_from:
+        try:
+            wol_query = wol_query.filter(WOLLog.timestamp >= datetime.strptime(date_from, '%Y-%m-%d'))
+        except ValueError:
+            pass
+    if date_to:
+        try:
+            to = datetime.strptime(date_to, '%Y-%m-%d').replace(hour=23, minute=59, second=59)
+            wol_query = wol_query.filter(WOLLog.timestamp <= to)
+        except ValueError:
+            pass
+
+    wol_logs = wol_query.order_by(WOLLog.timestamp.desc()).limit(500).all()
+
+    # Shutdown logs
+    sd_query = ShutdownLog.query
+    if not current_user.is_admin:
+        sd_query = sd_query.filter(ShutdownLog.user_id == current_user.id)
+    if search_query:
+        sd_query = sd_query.join(Computer).filter(Computer.name.ilike(f'%{search_query}%'))
+    if date_from:
+        try:
+            sd_query = sd_query.filter(ShutdownLog.timestamp >= datetime.strptime(date_from, '%Y-%m-%d'))
+        except ValueError:
+            pass
+    if date_to:
+        try:
+            to = datetime.strptime(date_to, '%Y-%m-%d').replace(hour=23, minute=59, second=59)
+            sd_query = sd_query.filter(ShutdownLog.timestamp <= to)
+        except ValueError:
+            pass
+
+    shutdown_logs = sd_query.order_by(ShutdownLog.timestamp.desc()).limit(500).all()
+
+    # Audit logs (admin only)
+    audit_logs = []
+    if current_user.is_admin:
+        aq = AuditLog.query
+        if search_query:
+            aq = aq.filter(db.or_(
+                AuditLog.action.ilike(f'%{search_query}%'),
+                AuditLog.username.ilike(f'%{search_query}%'),
+                AuditLog.details.ilike(f'%{search_query}%')
+            ))
+        if date_from:
+            try:
+                aq = aq.filter(AuditLog.timestamp >= datetime.strptime(date_from, '%Y-%m-%d'))
+            except ValueError:
+                pass
+        if date_to:
+            try:
+                to = datetime.strptime(date_to, '%Y-%m-%d').replace(hour=23, minute=59, second=59)
+                aq = aq.filter(AuditLog.timestamp <= to)
+            except ValueError:
+                pass
+        audit_logs = aq.order_by(AuditLog.timestamp.desc()).limit(500).all()
+
+    return jsonify({
+        'success': True,
+        'data': {
+            'wol_logs': [{
+                'id': l.id, 'computer_name': l.computer.name if l.computer else 'N/A',
+                'username': l.user.username if l.user else 'N/A',
+                'timestamp': l.timestamp.isoformat(), 'status': l.status
+            } for l in wol_logs],
+            'shutdown_logs': [{
+                'id': l.id, 'computer_name': l.computer.name if l.computer else 'N/A',
+                'username': l.user.username if l.user else 'N/A',
+                'timestamp': l.timestamp.isoformat(), 'status': l.status,
+                'error_message': l.error_message
+            } for l in shutdown_logs],
+            'audit_logs': [{
+                'id': l.id, 'action': l.action, 'username': l.username or 'N/A',
+                'timestamp': l.timestamp.isoformat(), 'status': l.status,
+                'resource_type': l.resource_type, 'details': l.details,
+                'ip_address': l.ip_address
+            } for l in audit_logs],
+            'is_admin': current_user.is_admin
+        }
+    })
+
+
+# --- Admin: Computers ---
+@app.route('/api/angular/admin/computers', methods=['GET'])
+@login_required
+def angular_admin_computers():
+    """Admin: list computers JSON"""
+    if not current_user.is_admin:
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    computers = Computer.query.order_by(Computer.name).all()
+    return jsonify({'success': True, 'data': {'computers': [_serialize_computer(c, include_ssh=True) for c in computers]}})
+
+@app.route('/api/angular/admin/computers/<int:cid>', methods=['GET'])
+@login_required
+def angular_admin_computer_detail(cid):
+    """Admin: computer detail JSON"""
+    if not current_user.is_admin:
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    computer = Computer.query.get_or_404(cid)
+    users = User.query.order_by(User.username).all()
+
+    # Get user roles
+    prefs = UserComputerPreference.query.filter_by(computer_id=cid).all()
+    user_roles = {str(p.user_id): p.role or 'operator' for p in prefs}
+
+    return jsonify({
+        'success': True,
+        'data': {
+            'computer': _serialize_computer(computer, include_ssh=True),
+            'users': [_serialize_user(u) for u in users],
+            'user_roles': user_roles
+        }
+    })
+
+@app.route('/api/angular/admin/computers', methods=['POST'])
+@login_required
+def angular_admin_create_computer():
+    """Admin: create computer JSON"""
+    if not current_user.is_admin:
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+
+    data = request.get_json() or {}
+    name = data.get('name', '').strip()
+    mac_address = data.get('mac_address', '').strip().upper()
+
+    if not name or not mac_address:
+        return jsonify({'success': False, 'message': 'Name and MAC address required'}), 400
+
+    if not validate_mac_address(mac_address):
+        return jsonify({'success': False, 'message': 'Invalid MAC address format'}), 400
+
+    if Computer.query.filter_by(mac_address=mac_address).first():
+        return jsonify({'success': False, 'message': 'MAC address already registered'}), 400
+
+    computer = Computer(
+        name=name, mac_address=mac_address,
+        ip_address=data.get('ip_address', '').strip() or None,
+        description=data.get('description', '').strip() or None,
+        os_type=data.get('os_type', 'linux'),
+        ssh_host=data.get('ssh_host', '').strip() or None,
+        ssh_port=int(data.get('ssh_port', 22)),
+        ssh_username=data.get('ssh_username', '').strip() or None,
+        ssh_password=data.get('ssh_password', '').strip() or None,
+        ssh_auto_login=data.get('ssh_auto_login', False),
+        created_by_id=None
+    )
+
+    db.session.add(computer)
+    db.session.flush()
+
+    # Assign users with roles
+    assigned_users = data.get('assigned_users', [])
+    owner_ids = []
+    for entry in assigned_users:
+        uid = entry.get('user_id') or entry
+        role = entry.get('role', 'operator') if isinstance(entry, dict) else 'operator'
+        user = User.query.get(int(uid))
+        if user:
+            computer.assigned_users.append(user)
+            if role == 'owner':
+                owner_ids.append(user.id)
+            pref = UserComputerPreference(user_id=user.id, computer_id=computer.id, role=role, ssh_auto_login=False)
+            db.session.add(pref)
+
+    if owner_ids:
+        computer.created_by_id = owner_ids[0]
+
+    db.session.commit()
+
+    AuditLog.log_action(
+        action='computer_create', user=current_user, resource_type='computer',
+        resource_id=computer.id, status='success',
+        details=f'Created computer "{name}" via Angular',
+        ip_address=request.remote_addr, user_agent=request.headers.get('User-Agent')
+    )
+
+    return jsonify({'success': True, 'message': f'Computer "{name}" created', 'data': {'id': computer.id}})
+
+@app.route('/api/angular/admin/computers/<int:cid>', methods=['PUT'])
+@login_required
+def angular_admin_update_computer(cid):
+    """Admin: update computer JSON"""
+    if not current_user.is_admin:
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+
+    computer = Computer.query.get_or_404(cid)
+    data = request.get_json() or {}
+
+    computer.name = data.get('name', computer.name).strip()
+    computer.ip_address = data.get('ip_address', '').strip() or None
+    computer.description = data.get('description', '').strip() or None
+    computer.os_type = data.get('os_type', computer.os_type)
+    computer.ssh_host = data.get('ssh_host', '').strip() or None
+    computer.ssh_port = int(data.get('ssh_port', computer.ssh_port or 22))
+    computer.ssh_username = data.get('ssh_username', '').strip() or None
+    computer.ssh_auto_login = data.get('ssh_auto_login', computer.ssh_auto_login)
+
+    new_password = data.get('ssh_password', '').strip()
+    if new_password:
+        computer.ssh_password = new_password
+
+    # Update user assignments
+    if 'assigned_users' in data:
+        # Clear existing
+        computer.assigned_users = []
+        UserComputerPreference.query.filter_by(computer_id=cid).delete()
+        db.session.flush()
+
+        owner_ids = []
+        for entry in data['assigned_users']:
+            uid = entry.get('user_id') or entry
+            role = entry.get('role', 'operator') if isinstance(entry, dict) else 'operator'
+            user = User.query.get(int(uid))
+            if user:
+                computer.assigned_users.append(user)
+                if role == 'owner':
+                    owner_ids.append(user.id)
+                pref = UserComputerPreference(user_id=user.id, computer_id=computer.id, role=role, ssh_auto_login=False)
+                db.session.add(pref)
+
+        if owner_ids:
+            computer.created_by_id = owner_ids[0]
+
+    db.session.commit()
+
+    AuditLog.log_action(
+        action='computer_update', user=current_user, resource_type='computer',
+        resource_id=computer.id, status='success',
+        details=f'Updated computer "{computer.name}" via Angular',
+        ip_address=request.remote_addr, user_agent=request.headers.get('User-Agent')
+    )
+
+    return jsonify({'success': True, 'message': f'Computer "{computer.name}" updated'})
+
+
+# --- Admin: Users ---
+@app.route('/api/angular/admin/users', methods=['GET'])
+@login_required
+def angular_admin_users():
+    """Admin: list users JSON"""
+    if not current_user.is_admin:
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    users = User.query.order_by(User.username).all()
+    return jsonify({'success': True, 'data': {'users': [_serialize_user(u) for u in users]}})
+
+@app.route('/api/angular/admin/users', methods=['POST'])
+@login_required
+def angular_admin_create_user():
+    """Admin: create user JSON"""
+    if not validate_admin_status(current_user.id):
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+
+    data = request.get_json() or {}
+    username = data.get('username', '').strip()
+    email = data.get('email', '').strip()
+    password = data.get('password', '')
+    is_admin = data.get('is_admin', False)
+
+    if not username or not email or not password:
+        return jsonify({'success': False, 'message': 'All fields required'}), 400
+    if len(username) < 3:
+        return jsonify({'success': False, 'message': 'Username must be at least 3 characters'}), 400
+    if len(password) < 6:
+        return jsonify({'success': False, 'message': 'Password must be at least 6 characters'}), 400
+    if User.query.filter_by(username=username).first():
+        return jsonify({'success': False, 'message': 'Username already exists'}), 400
+    if User.query.filter_by(email=email).first():
+        return jsonify({'success': False, 'message': 'Email already exists'}), 400
+
+    user = User(username=username, email=email, is_admin=is_admin)
+    user.set_password(password)
+    db.session.add(user)
+    db.session.commit()
+
+    AuditLog.log_action(
+        action='user_create', user=current_user, resource_type='user',
+        resource_id=user.id, status='success',
+        details=f'Created user "{username}" via Angular',
+        ip_address=request.remote_addr, user_agent=request.headers.get('User-Agent')
+    )
+
+    return jsonify({'success': True, 'message': f'User "{username}" created', 'data': {'id': user.id}})
+
+
+# --- Admin: Groups ---
+@app.route('/api/angular/admin/groups', methods=['GET'])
+@login_required
+def angular_admin_groups():
+    """Admin: list groups JSON"""
+    if not current_user.is_admin:
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    groups = ComputerGroup.query.order_by(ComputerGroup.name).all()
+    return jsonify({'success': True, 'data': {'groups': [_serialize_group(g) for g in groups]}})
+
+@app.route('/api/angular/admin/groups/<int:gid>', methods=['GET'])
+@login_required
+def angular_admin_group_detail(gid):
+    """Admin: group detail JSON"""
+    if not current_user.is_admin:
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    group = ComputerGroup.query.get_or_404(gid)
+    computers = Computer.query.order_by(Computer.name).all()
+    return jsonify({
+        'success': True,
+        'data': {
+            'group': _serialize_group(group),
+            'computers': [{'id': c.id, 'name': c.name, 'ip_address': c.ip_address} for c in computers]
+        }
+    })
+
+@app.route('/api/angular/admin/groups', methods=['POST'])
+@login_required
+def angular_admin_create_group():
+    """Admin: create group JSON"""
+    if not current_user.is_admin:
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+
+    data = request.get_json() or {}
+    name = data.get('name', '').strip()
+    if not name:
+        return jsonify({'success': False, 'message': 'Group name required'}), 400
+    if ComputerGroup.query.filter_by(name=name).first():
+        return jsonify({'success': False, 'message': 'Group name already exists'}), 400
+
+    group = ComputerGroup(
+        name=name, description=data.get('description', '').strip() or None,
+        color=data.get('color', '#0066cc'), icon=data.get('icon', 'fas fa-folder'),
+        allow_wake=data.get('allow_wake', True), allow_shutdown=data.get('allow_shutdown', True)
+    )
+
+    for cid in data.get('computer_ids', []):
+        c = Computer.query.get(int(cid))
+        if c:
+            group.computers.append(c)
+
+    db.session.add(group)
+    db.session.commit()
+
+    AuditLog.log_action(
+        action='group_create', user=current_user, resource_type='group',
+        resource_id=group.id, status='success',
+        details=f'Created group "{name}" via Angular',
+        ip_address=request.remote_addr, user_agent=request.headers.get('User-Agent')
+    )
+
+    return jsonify({'success': True, 'message': f'Group "{name}" created', 'data': {'id': group.id}})
+
+@app.route('/api/angular/admin/groups/<int:gid>', methods=['PUT'])
+@login_required
+def angular_admin_update_group(gid):
+    """Admin: update group JSON"""
+    if not current_user.is_admin:
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+
+    group = ComputerGroup.query.get_or_404(gid)
+    data = request.get_json() or {}
+
+    name = data.get('name', group.name).strip()
+    existing = ComputerGroup.query.filter_by(name=name).first()
+    if existing and existing.id != group.id:
+        return jsonify({'success': False, 'message': 'Group name already exists'}), 400
+
+    group.name = name
+    group.description = data.get('description', '').strip() or None
+    group.color = data.get('color', group.color)
+    group.icon = data.get('icon', group.icon)
+    group.allow_wake = data.get('allow_wake', group.allow_wake)
+    group.allow_shutdown = data.get('allow_shutdown', group.allow_shutdown)
+
+    if 'computer_ids' in data:
+        group.computers = []
+        for cid in data['computer_ids']:
+            c = Computer.query.get(int(cid))
+            if c:
+                group.computers.append(c)
+
+    db.session.commit()
+
+    AuditLog.log_action(
+        action='group_update', user=current_user, resource_type='group',
+        resource_id=group.id, status='success',
+        details=f'Updated group "{name}" via Angular',
+        ip_address=request.remote_addr, user_agent=request.headers.get('User-Agent')
+    )
+
+    return jsonify({'success': True, 'message': f'Group "{name}" updated'})
+
+
+# --- Admin: Settings ---
+@app.route('/api/angular/admin/settings', methods=['GET'])
+@login_required
+def angular_admin_settings_get():
+    """Admin: get settings JSON"""
+    if not current_user.is_admin:
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+
+    settings = {
+        'enable_groups': AppSettings.get_bool('enable_groups', default=True),
+        'enable_search': AppSettings.get_bool('enable_search', default=True),
+        'language': AppSettings.get('app_language', 'sr') or 'sr',
+        'app_title': AppSettings.get('app_title', 'WOL Manager') or 'WOL Manager',
+        'max_computers_per_page': int(AppSettings.get('max_computers_per_page', '20') or 20),
+    }
+
+    system_info = {
+        'total_users': User.query.count(),
+        'total_computers': Computer.query.count(),
+        'total_groups': ComputerGroup.query.count(),
+        'version': '1.0.0'
+    }
+
+    return jsonify({'success': True, 'data': {'settings': settings, 'system_info': system_info}})
+
+@app.route('/api/angular/admin/settings', methods=['POST'])
+@login_required
+def angular_admin_settings_save():
+    """Admin: save settings JSON"""
+    if not current_user.is_admin:
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+
+    data = request.get_json() or {}
+
+    if 'enable_groups' in data:
+        AppSettings.set('enable_groups', str(data['enable_groups']).lower(), 'Enable groups')
+    if 'enable_search' in data:
+        AppSettings.set('enable_search', str(data['enable_search']).lower(), 'Enable search')
+    if 'language' in data:
+        lang = data['language']
+        if lang in ('sr', 'en'):
+            AppSettings.set('app_language', lang, 'UI Language')
+    if 'app_title' in data:
+        AppSettings.set('app_title', data['app_title'], 'Application title')
+    if 'max_computers_per_page' in data:
+        AppSettings.set('max_computers_per_page', str(data['max_computers_per_page']), 'Max computers per page')
+
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Settings saved'})
+
+
+# --- Admin: Clear Logs ---
+@app.route('/api/angular/admin/clear-logs', methods=['POST'])
+@login_required
+def angular_admin_clear_logs():
+    """Admin: clear all logs"""
+    if not current_user.is_admin:
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+
+    try:
+        wol_count = WOLLog.query.count()
+        sd_count = ShutdownLog.query.count()
+        audit_count = AuditLog.query.count()
+
+        WOLLog.query.delete()
+        ShutdownLog.query.delete()
+        AuditLog.query.delete()
+        db.session.commit()
+
+        return jsonify({'success': True, 'message': f'Cleared {wol_count + sd_count + audit_count} logs'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
 # ==================== STATISTICS ====================
 
 @app.route('/statistics')
