@@ -1,0 +1,18 @@
+{
+  "name": "ComputerRunner - WoL Manager",
+  "short_name": "ComputerRunner",
+  "description": "Wake-on-LAN Manager - remotely wake and manage your computers",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a1628",
+  "theme_color": "#0066cc",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
