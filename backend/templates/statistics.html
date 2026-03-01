@@ -518,15 +518,15 @@ function renderStats(stats, days) {
                         const durationHours = (durationMs / 3600000).toFixed(1);
                         const durationDays = (durationMs / 86400000).toFixed(1);
                         segments.push({ 
-                            status: lastStatus, 
+                            status: entry.status, 
                             pct: pct,
                             durationHours: durationHours,
                             durationDays: durationDays
                         });
                     }
                     lastTime = t;
+                    lastStatus = entry.status;
                 }
-                lastStatus = entry.status;
             });
             
             // Final segment

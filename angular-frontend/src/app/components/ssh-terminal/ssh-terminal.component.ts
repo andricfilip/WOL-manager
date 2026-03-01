@@ -23,7 +23,7 @@ import { FitAddon } from 'xterm-addon-fit';
           <p>Enter SSH password for <strong>{{ computer.name }}</strong></p>
           <div class="form-group">
             <label>Password</label>
-            <input type="password" [(ngModel)]="sshPassword" placeholder="SSH Password"
+            <input #passwordInput type="password" [(ngModel)]="sshPassword" placeholder="SSH Password"
                    (keydown.enter)="connectWithPassword()" autofocus>
           </div>
         </div>
@@ -182,6 +182,7 @@ export class SshTerminalComponent implements OnInit, OnDestroy, AfterViewInit {
   showTerminal = false;
   isConnected = false;
   sshPassword = '';
+  @ViewChild('passwordInput') passwordInput!: ElementRef;
 
   private terminal: Terminal | null = null;
   private fitAddon: FitAddon | null = null;
@@ -202,12 +203,22 @@ export class SshTerminalComponent implements OnInit, OnDestroy, AfterViewInit {
       setTimeout(() => this.initTerminal(), 0);
     } else {
       this.showPasswordModal = true;
+      // Focus password input after modal renders
+      setTimeout(() => {
+        this.passwordInput?.nativeElement?.focus();
+      }, 100);
     }
   }
 
   ngAfterViewInit(): void {
     if (this.showTerminal) {
       this.initTerminal();
+    }
+    // Additional focus attempt for password input if modal is visible
+    if (this.showPasswordModal && this.passwordInput) {
+      setTimeout(() => {
+        this.passwordInput.nativeElement.focus();
+      }, 50);
     }
   }
 

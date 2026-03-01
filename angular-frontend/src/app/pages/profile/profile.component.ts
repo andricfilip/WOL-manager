@@ -96,7 +96,7 @@ import { User } from '../../models/user.model';
   `,
   styles: [`
     .profile-page { padding: 24px; max-width: 1200px; margin: 0 auto; }
-    .page-header h1 { font-size: 2rem; font-weight: 800; color: var(--text-heading); margin: 0 0 32px; }
+    .page-header h1 { font-size: 1.75rem; font-weight: 800; color: var(--text-heading); margin: 0 0 24px; }
 
     .profile-grid {
       display: grid;
@@ -147,7 +147,11 @@ import { User } from '../../models/user.model';
       color: var(--text-secondary);
       width: fit-content;
     }
-    .role-badge.admin { background: #eff6ff; color: #1e40af; }
+    .role-badge.admin { 
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--accent);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
 
     .form-group { margin-bottom: 18px; }
     .form-group label {

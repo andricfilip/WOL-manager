@@ -31,8 +31,8 @@ import { DatePickerComponent } from '../../components/datepicker/datepicker.comp
           </button>
         </div>
         <div class="filter-controls">
-          <input type="text" [(ngModel)]="search" placeholder="Search..." class="filter-input"
-                 (keydown.enter)="loadHistory()">
+          <input type="text" [(ngModel)]="search" placeholder="🔍 Search..." class="filter-input"
+                 (ngModelChange)="onSearchChange()">
           <app-datepicker [(ngModel)]="dateFrom" placeholder="From date" (ngModelChange)="loadHistory()"></app-datepicker>
           <app-datepicker [(ngModel)]="dateTo" placeholder="To date" (ngModelChange)="loadHistory()"></app-datepicker>
           <button class="btn btn-outline btn-sm" (click)="clearFilters()">Clear</button>
@@ -46,8 +46,8 @@ import { DatePickerComponent } from '../../components/datepicker/datepicker.comp
         <div class="loader"></div>
       </div>
 
-      <!-- WoL Logs Table -->
-      <div *ngIf="!loading && activeTab === 'wol'" class="table-container">
+      <!-- WoL Logs -->
+      <div *ngIf="!loading && activeTab === 'wol'" class="table-container desktop-table">
         <div *ngIf="wolLogs.length === 0" class="empty-table">No WoL logs found</div>
         <table *ngIf="wolLogs.length > 0">
           <thead>
@@ -73,9 +73,25 @@ import { DatePickerComponent } from '../../components/datepicker/datepicker.comp
           </tbody>
         </table>
       </div>
+      <!-- WoL mobile cards -->
+      <ng-container *ngIf="!loading && activeTab === 'wol'">
+        <div class="mobile-cards">
+          <div *ngIf="wolLogs.length === 0" class="empty-table">No WoL logs found</div>
+          <div class="log-card" *ngFor="let log of wolLogs">
+            <div class="lc-header">
+              <span class="lc-title">{{ log.computer_name }}</span>
+              <span class="badge" [class.badge-success]="log.status === 'sent'" [class.badge-danger]="log.status === 'failed'">{{ log.status }}</span>
+            </div>
+            <div class="lc-meta">
+              <span class="lc-user">👤 {{ log.username }}</span>
+              <span class="lc-time">{{ formatTime(log.timestamp) }}</span>
+            </div>
+          </div>
+        </div>
+      </ng-container>
 
-      <!-- Shutdown Logs Table -->
-      <div *ngIf="!loading && activeTab === 'shutdown'" class="table-container">
+      <!-- Shutdown Logs -->
+      <div *ngIf="!loading && activeTab === 'shutdown'" class="table-container desktop-table">
         <div *ngIf="shutdownLogs.length === 0" class="empty-table">No shutdown logs found</div>
         <table *ngIf="shutdownLogs.length > 0">
           <thead>
@@ -103,9 +119,26 @@ import { DatePickerComponent } from '../../components/datepicker/datepicker.comp
           </tbody>
         </table>
       </div>
+      <!-- Shutdown mobile cards -->
+      <ng-container *ngIf="!loading && activeTab === 'shutdown'">
+        <div class="mobile-cards">
+          <div *ngIf="shutdownLogs.length === 0" class="empty-table">No shutdown logs found</div>
+          <div class="log-card" *ngFor="let log of shutdownLogs">
+            <div class="lc-header">
+              <span class="lc-title">{{ log.computer_name }}</span>
+              <span class="badge" [class.badge-success]="log.status === 'success'" [class.badge-danger]="log.status === 'failed'">{{ log.status }}</span>
+            </div>
+            <div class="lc-meta">
+              <span class="lc-user">👤 {{ log.username }}</span>
+              <span class="lc-time">{{ formatTime(log.timestamp) }}</span>
+            </div>
+            <div *ngIf="log.error_message" class="lc-error">⚠️ {{ log.error_message }}</div>
+          </div>
+        </div>
+      </ng-container>
 
-      <!-- Audit Logs Table -->
-      <div *ngIf="!loading && activeTab === 'audit'" class="table-container">
+      <!-- Audit Logs -->
+      <div *ngIf="!loading && activeTab === 'audit'" class="table-container desktop-table">
         <div *ngIf="auditLogs.length === 0" class="empty-table">No audit logs found</div>
         <table *ngIf="auditLogs.length > 0">
           <thead>
@@ -138,8 +171,27 @@ import { DatePickerComponent } from '../../components/datepicker/datepicker.comp
           </tbody>
         </table>
       </div>
-
-      <!-- Delete Modal -->
+      <!-- Audit mobile cards -->
+      <ng-container *ngIf="!loading && activeTab === 'audit'">
+        <div class="mobile-cards">
+          <div *ngIf="auditLogs.length === 0" class="empty-table">No audit logs found</div>
+          <div class="log-card" *ngFor="let log of auditLogs">
+            <div class="lc-header">
+              <span class="lc-title">{{ log.action }}</span>
+              <span class="badge"
+                [class.badge-success]="log.status === 'success'"
+                [class.badge-danger]="log.status === 'failed'"
+                [class.badge-warning]="log.status === 'denied'">{{ log.status }}</span>
+            </div>
+            <div class="lc-meta">
+              <span class="lc-user">👤 {{ log.username }}</span>
+              <span class="lc-time">{{ formatTime(log.timestamp) }}</span>
+            </div>
+            <div class="lc-detail" *ngIf="log.details">{{ log.details }}</div>
+            <div class="lc-ip" *ngIf="log.ip_address">🌐 {{ log.ip_address }} · {{ log.resource_type }}</div>
+          </div>
+        </div>
+      </ng-container>
       <div *ngIf="showDeleteModal" class="modal-overlay" (click)="showDeleteModal = false">
         <div class="modal-card" (click)="$event.stopPropagation()">
           <div class="modal-header">
@@ -173,7 +225,7 @@ import { DatePickerComponent } from '../../components/datepicker/datepicker.comp
   `,
   styles: [`
     .history-page { padding: 24px; max-width: 1400px; margin: 0 auto; }
-    .page-header h1 { font-size: 2rem; font-weight: 800; color: var(--text-heading); margin: 0 0 24px; }
+    .page-header h1 { font-size: 1.75rem; font-weight: 800; color: var(--text-heading); margin: 0 0 24px; }
 
     .filters-bar {
       background: var(--bg-card);
@@ -183,7 +235,7 @@ import { DatePickerComponent } from '../../components/datepicker/datepicker.comp
       box-shadow: var(--shadow);
       border: 1px solid var(--border);
     }
-    .tabs { display: flex; gap: 4px; margin-bottom: 16px; }
+    .tabs { display: flex; gap: 4px; margin-bottom: 16px; flex-wrap: wrap; }
     .tab {
       padding: 7px 16px;
       border: none;
@@ -194,10 +246,14 @@ import { DatePickerComponent } from '../../components/datepicker/datepicker.comp
       cursor: pointer;
       transition: all 0.2s;
       font-size: 0.85rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
     }
     .tab.active { background: var(--accent); color: white; }
     .tab:hover:not(.active) { background: var(--bg-row-hover); color: var(--text-primary); }
-    .filter-controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .filter-controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: stretch; }
     .filter-input {
       padding: 8px 14px;
       border: 2px solid var(--border);
@@ -207,9 +263,49 @@ import { DatePickerComponent } from '../../components/datepicker/datepicker.comp
       background: var(--bg-input);
       color: var(--text-primary);
       transition: border-color 0.2s;
+      flex: 1 1 200px;
+      min-width: 0;
     }
     .filter-input:focus { border-color: var(--accent); }
     .filter-input::placeholder { color: var(--text-muted); }
+
+    /* Desktop table: always visible on >=769 */
+    .desktop-table { display: block; }
+    /* Mobile cards: always hidden on >=769 */
+    .mobile-cards { display: none; }
+
+    @media (max-width: 768px) {
+      .desktop-table { display: none !important; }
+      .mobile-cards {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .history-page { padding: 16px; }
+      .filters-bar { padding: 12px; }
+      .tab { font-size: 0.78rem; padding: 6px 10px; flex: 1; min-width: 0; text-align: center; }
+      .filter-controls { gap: 8px; }
+      .filter-controls > * { flex: 1 1 100%; min-width: 0; }
+      .filter-input { flex: 1 1 100%; }
+      .btn { width: 100%; justify-content: center; }
+    }
+
+    /* Log cards */
+    .log-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      box-shadow: var(--shadow);
+    }
+    .lc-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .lc-title { font-weight: 700; color: var(--text-primary); font-size: 0.95rem; }
+    .lc-meta { display: flex; justify-content: space-between; align-items: center; }
+    .lc-user { font-size: 0.8rem; color: var(--text-secondary); }
+    .lc-time { font-size: 0.75rem; color: var(--text-muted); }
+    .lc-detail { margin-top: 6px; font-size: 0.8rem; color: var(--text-secondary); }
+    .lc-ip { margin-top: 4px; font-size: 0.75rem; color: var(--text-muted); font-family: monospace; }
+    .lc-error { margin-top: 4px; font-size: 0.8rem; color: #ef4444; }
 
     .btn {
       padding: 10px 20px;
@@ -325,8 +421,6 @@ import { DatePickerComponent } from '../../components/datepicker/datepicker.comp
     @media (max-width: 768px) {
       .filter-controls { flex-direction: column; }
       .tabs { flex-wrap: wrap; }
-      .table-container { overflow-x: auto; }
-      table { min-width: 600px; }
     }
   `]
 })
@@ -340,6 +434,7 @@ export class HistoryComponent implements OnInit {
   shutdownLogs: ShutdownLogEntry[] = [];
   auditLogs: AuditLogEntry[] = [];
   isAdmin = false;
+  private searchTimeout: any = null;
 
   // Delete modal
   showDeleteModal = false;
@@ -387,6 +482,11 @@ export class HistoryComponent implements OnInit {
     this.dateFrom = '';
     this.dateTo = '';
     this.loadHistory();
+  }
+
+  onSearchChange(): void {
+    clearTimeout(this.searchTimeout);
+    this.searchTimeout = setTimeout(() => this.loadHistory(), 350);
   }
 
   deleteLogs(): void {

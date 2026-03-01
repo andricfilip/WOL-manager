@@ -4,6 +4,15 @@ from models import db, User, AuditLog
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
+
+def get_real_ip():
+    """Get real client IP from X-Forwarded-For (nginx proxy) or remote_addr."""
+    fwd = request.headers.get('X-Forwarded-For')
+    if fwd:
+        return fwd.split(',')[0].strip()
+    return request.headers.get('X-Real-IP', request.remote_addr).strip()
+
+
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     """Login user"""
@@ -30,7 +39,7 @@ def login():
                 resource_type='auth',
                 status='success',
                 details='User login successful',
-                ip_address=request.remote_addr,
+                ip_address=get_real_ip(),
                 user_agent=request.headers.get('User-Agent')
             )
             flash(f'Dobrodošli nazad, {user.username}!', 'success')
@@ -45,7 +54,7 @@ def login():
                 resource_type='auth',
                 status='failed',
                 details=f'Failed login attempt for username: {username}',
-                ip_address=request.remote_addr,
+                ip_address=get_real_ip(),
                 user_agent=request.headers.get('User-Agent')
             )
             flash('Pogrešno korisničko ime ili lozinka', 'error')
@@ -62,7 +71,7 @@ def logout():
         resource_type='auth',
         status='success',
         details='User logout',
-        ip_address=request.remote_addr,
+        ip_address=get_real_ip(),
         user_agent=request.headers.get('User-Agent')
     )
     logout_user()

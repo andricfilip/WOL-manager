@@ -128,7 +128,7 @@ Chart.register(...registerables);
       flex-wrap: wrap;
       gap: 16px;
     }
-    .page-header h1 { font-size: 2rem; font-weight: 800; color: var(--text-heading); margin: 0; }
+    .page-header h1 { font-size: 1.75rem; font-weight: 800; color: var(--text-heading); margin: 0; }
     .period-selector { display: flex; gap: 3px; background: var(--bg-badge); border-radius: 10px; padding: 3px; }
     .period-btn {
       padding: 6px 13px;

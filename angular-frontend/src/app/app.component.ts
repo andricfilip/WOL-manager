@@ -11,7 +11,7 @@ import { AuthService } from './services/auth.service';
   imports: [CommonModule, RouterOutlet, NavbarComponent, ToastComponent],
   template: `
     <app-navbar></app-navbar>
-    <main class="app-main" [class.has-nav]="isAuthenticated">
+    <main class="app-main" [class.with-sidebar]="isAuthenticated">
       <router-outlet></router-outlet>
     </main>
     <app-toast></app-toast>
@@ -22,8 +22,17 @@ import { AuthService } from './services/auth.service';
       background: var(--bg-page);
       transition: background-color 0.25s;
     }
-    .app-main.has-nav {
-      padding-top: 70px;
+    /* Desktop: sidebar visible, push content right */
+    @media (min-width: 769px) {
+      .app-main.with-sidebar {
+        margin-left: 230px;
+      }
+    }
+    /* Mobile: topbar instead of sidebar */
+    @media (max-width: 768px) {
+      .app-main.with-sidebar {
+        padding-top: 56px;
+      }
     }
   `]
 })

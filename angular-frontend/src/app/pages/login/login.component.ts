@@ -197,12 +197,44 @@ import { NotificationService } from '../../services/notification.service';
     .checkbox-label {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       color: #64748b;
       font-size: 0.9rem;
       cursor: pointer;
+      user-select: none;
+      position: relative;
     }
-    .checkbox-label input[type="checkbox"] { accent-color: #0066cc; }
+    .checkbox-label input[type="checkbox"] {
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border: 2px solid #cbd5e1;
+      border-radius: 6px;
+      background: #f8fafc;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .checkbox-label input[type="checkbox"]:hover {
+      border-color: #0066cc;
+      background: #fff;
+    }
+    .checkbox-label input[type="checkbox"]:checked {
+      background: linear-gradient(135deg, #0066cc, #0052a3);
+      border-color: #0066cc;
+    }
+    .checkbox-label input[type="checkbox"]:checked::after {
+      content: '';
+      position: absolute;
+      left: 5px;
+      top: 2px;
+      width: 5px;
+      height: 9px;
+      border: solid white;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
     .btn-login {
       width: 100%;
       padding: 16px;

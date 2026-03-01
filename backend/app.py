@@ -23,6 +23,15 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
+def get_real_ip():
+    """Get real client IP from X-Forwarded-For (nginx proxy) or remote_addr."""
+    fwd = request.headers.get('X-Forwarded-For')
+    if fwd:
+        return fwd.split(',')[0].strip()
+    return request.headers.get('X-Real-IP', request.remote_addr).strip()
+
+
 app = Flask(__name__)
 app.config.from_object(config[os.environ.get('FLASK_ENV', 'development')])
 
@@ -888,7 +897,7 @@ def shutdown_computer():
                 resource_id=computer_id,
                 status='denied',
                 details=f'User attempted to shutdown computer without access',
-                ip_address=request.remote_addr,
+                ip_address=get_real_ip(),
                 user_agent=request.headers.get('User-Agent')
             )
             return jsonify({'success': False, 'message': 'Pristup odbijen'}), 403
@@ -923,7 +932,7 @@ def shutdown_computer():
             resource_id=computer_id,
             status='success' if success else 'failed',
             details=f'Computer: {computer.name}, Result: {message}',
-            ip_address=request.remote_addr,
+            ip_address=get_real_ip(),
             user_agent=request.headers.get('User-Agent')
         )
         
@@ -1054,7 +1063,7 @@ def admin_add_computer():
             resource_id=computer.id,
             status='success',
             details=f'Created computer "{name}" (MAC: {mac_address}, owner_id: {computer.created_by_id})',
-            ip_address=request.remote_addr,
+            ip_address=get_real_ip(),
             user_agent=request.headers.get('User-Agent')
         )
         
@@ -1183,7 +1192,7 @@ def admin_edit_computer(computer_id):
             resource_id=computer.id,
             status='success',
             details=f'Updated computer "{computer.name}" (MAC: {mac_address})',
-            ip_address=request.remote_addr,
+            ip_address=get_real_ip(),
             user_agent=request.headers.get('User-Agent')
         )
         
@@ -1221,7 +1230,7 @@ def admin_delete_computer(computer_id):
         resource_id=computer_id,
         status='success',
         details=f'Deleted computer "{name}"',
-        ip_address=request.remote_addr,
+        ip_address=get_real_ip(),
         user_agent=request.headers.get('User-Agent')
     )
     
@@ -1290,7 +1299,7 @@ def admin_add_user():
             resource_id=user.id,
             status='success',
             details=f'Created user "{username}" (admin: {is_admin})',
-            ip_address=request.remote_addr,
+            ip_address=get_real_ip(),
             user_agent=request.headers.get('User-Agent')
         )
         
@@ -1325,7 +1334,7 @@ def toggle_admin(user_id):
         resource_id=user.id,
         status='success',
         details=f'Changed {user.username} admin status to {user.is_admin}',
-        ip_address=request.remote_addr,
+        ip_address=get_real_ip(),
         user_agent=request.headers.get('User-Agent')
     )
     
@@ -1342,7 +1351,7 @@ def toggle_admin(user_id):
         resource_id=user.id,
         status='success',
         details=f'Changed {user.username} group viewing to {user.can_view_groups}',
-        ip_address=request.remote_addr,
+        ip_address=get_real_ip(),
         user_agent=request.headers.get('User-Agent')
     )
     
@@ -1389,7 +1398,7 @@ def delete_user(user_id):
         resource_id=user_id,
         status='success',
         details=f'Deleted user "{username}"',
-        ip_address=request.remote_addr,
+        ip_address=get_real_ip(),
         user_agent=request.headers.get('User-Agent')
     )
     
@@ -1435,7 +1444,7 @@ def admin_edit_user(user_id):
         resource_id=user.id,
         status='success',
         details=f'Updated user "{old_username}" -> "{new_username}", email: {new_email}',
-        ip_address=request.remote_addr,
+        ip_address=get_real_ip(),
         user_agent=request.headers.get('User-Agent')
     )
     
@@ -1641,7 +1650,7 @@ def edit_computer(computer_id):
             resource_id=computer.id,
             status='success',
             details=f'User updated computer "{computer.name}"',
-            ip_address=request.remote_addr,
+            ip_address=get_real_ip(),
             user_agent=request.headers.get('User-Agent')
         )
 
@@ -1942,7 +1951,7 @@ def admin_add_group():
             resource_id=group.id,
             status='success',
             details=f'Created group "{name}" with {len(computer_ids)} computers',
-            ip_address=request.remote_addr,
+            ip_address=get_real_ip(),
             user_agent=request.headers.get('User-Agent')
         )
         
@@ -2003,7 +2012,7 @@ def admin_edit_group(group_id):
             resource_id=group.id,
             status='success',
             details=f'Updated group "{name}" with {len(computer_ids)} computers',
-            ip_address=request.remote_addr,
+            ip_address=get_real_ip(),
             user_agent=request.headers.get('User-Agent')
         )
         
@@ -2033,7 +2042,7 @@ def admin_delete_group(group_id):
         resource_id=group_id,
         status='success',
         details=f'Deleted group "{name}"',
-        ip_address=request.remote_addr,
+        ip_address=get_real_ip(),
         user_agent=request.headers.get('User-Agent')
     )
     
@@ -2240,7 +2249,7 @@ def angular_auth_login():
             resource_type='auth',
             status='failed',
             details=f'Failed login attempt for "{username}"',
-            ip_address=request.remote_addr,
+            ip_address=get_real_ip(),
             user_agent=request.headers.get('User-Agent')
         )
         return jsonify({'success': False, 'message': 'Invalid credentials'}), 401
@@ -2252,8 +2261,8 @@ def angular_auth_login():
         user=user,
         resource_type='auth',
         status='success',
-        details=f'User "{username}" logged in via Angular',
-        ip_address=request.remote_addr,
+        details=f'User "{username}" logged in via web interface',
+        ip_address=get_real_ip(),
         user_agent=request.headers.get('User-Agent')
     )
 
@@ -2492,8 +2501,8 @@ def angular_admin_create_computer():
     AuditLog.log_action(
         action='computer_create', user=current_user, resource_type='computer',
         resource_id=computer.id, status='success',
-        details=f'Created computer "{name}" via Angular',
-        ip_address=request.remote_addr, user_agent=request.headers.get('User-Agent')
+        details=f'Created computer "{name}" via admin panel',
+        ip_address=get_real_ip(), user_agent=request.headers.get('User-Agent')
     )
 
     return jsonify({'success': True, 'message': f'Computer "{name}" created', 'data': {'id': computer.id}})
@@ -2548,8 +2557,8 @@ def angular_admin_update_computer(cid):
     AuditLog.log_action(
         action='computer_update', user=current_user, resource_type='computer',
         resource_id=computer.id, status='success',
-        details=f'Updated computer "{computer.name}" via Angular',
-        ip_address=request.remote_addr, user_agent=request.headers.get('User-Agent')
+        details=f'Updated computer "{computer.name}" via admin panel',
+        ip_address=get_real_ip(), user_agent=request.headers.get('User-Agent')
     )
 
     return jsonify({'success': True, 'message': f'Computer "{computer.name}" updated'})
@@ -2597,8 +2606,8 @@ def angular_admin_create_user():
     AuditLog.log_action(
         action='user_create', user=current_user, resource_type='user',
         resource_id=user.id, status='success',
-        details=f'Created user "{username}" via Angular',
-        ip_address=request.remote_addr, user_agent=request.headers.get('User-Agent')
+        details=f'Created user "{username}" via admin panel',
+        ip_address=get_real_ip(), user_agent=request.headers.get('User-Agent')
     )
 
     return jsonify({'success': True, 'message': f'User "{username}" created', 'data': {'id': user.id}})
@@ -2661,8 +2670,8 @@ def angular_admin_create_group():
     AuditLog.log_action(
         action='group_create', user=current_user, resource_type='group',
         resource_id=group.id, status='success',
-        details=f'Created group "{name}" via Angular',
-        ip_address=request.remote_addr, user_agent=request.headers.get('User-Agent')
+        details=f'Created group "{name}" via admin panel',
+        ip_address=get_real_ip(), user_agent=request.headers.get('User-Agent')
     )
 
     return jsonify({'success': True, 'message': f'Group "{name}" created', 'data': {'id': group.id}})
@@ -2701,8 +2710,8 @@ def angular_admin_update_group(gid):
     AuditLog.log_action(
         action='group_update', user=current_user, resource_type='group',
         resource_id=group.id, status='success',
-        details=f'Updated group "{name}" via Angular',
-        ip_address=request.remote_addr, user_agent=request.headers.get('User-Agent')
+        details=f'Updated group "{name}" via admin panel',
+        ip_address=get_real_ip(), user_agent=request.headers.get('User-Agent')
     )
 
     return jsonify({'success': True, 'message': f'Group "{name}" updated'})
@@ -3262,7 +3271,7 @@ def handle_terminal_connect(data):
                 resource_id=computer.id,
                 status='success',
                 details=f'SSH terminal opened to {computer.name} ({ssh_host})',
-                ip_address=request.remote_addr if hasattr(request, 'remote_addr') else None,
+                ip_address=get_real_ip() if hasattr(request, 'remote_addr') else None,
             )
 
             emit('terminal_ready', {'message': f'Connected to {computer.name}'})

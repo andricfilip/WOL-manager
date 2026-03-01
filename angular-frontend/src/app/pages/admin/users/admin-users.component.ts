@@ -17,9 +17,15 @@ import { User } from '../../../models/user.model';
         <button class="btn btn-primary btn-sm" (click)="showAddModal = true">+ Add User</button>
       </div>
 
+      <div class="search-row">
+        <input type="text" [(ngModel)]="search" placeholder="🔍 Search users..."
+               class="search-input" (ngModelChange)="onSearch()">
+      </div>
+
       <div *ngIf="loading" class="loading"><div class="loader"></div></div>
 
-      <div *ngIf="!loading && users.length > 0" class="table-container">
+      <!-- Desktop table -->
+      <div *ngIf="!loading && filtered.length > 0" class="table-container desktop-only">
         <table>
           <thead>
             <tr>
@@ -32,7 +38,7 @@ import { User } from '../../../models/user.model';
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let u of users">
+            <tr *ngFor="let u of filtered">
               <td class="bold">{{ u.username }}</td>
               <td>{{ u.email }}</td>
               <td>
@@ -60,6 +66,40 @@ import { User } from '../../../models/user.model';
             </tr>
           </tbody>
         </table>
+      </div>
+
+      <!-- Mobile user cards -->
+      <div *ngIf="!loading" class="mobile-only">
+        <div *ngIf="filtered.length === 0" class="empty">No users found</div>
+        <div class="user-card" *ngFor="let u of filtered">
+          <div class="uc-header">
+            <div class="uc-avatar">{{ u.username.charAt(0).toUpperCase() }}</div>
+            <div class="uc-info">
+              <div class="uc-name">{{ u.username }}</div>
+              <div class="uc-email">{{ u.email }}</div>
+            </div>
+            <span class="badge" [class.badge-admin]="u.is_admin" [class.badge-user]="!u.is_admin">
+              {{ u.is_admin ? '🛡️ Admin' : '👤 User' }}
+            </span>
+          </div>
+          <div class="uc-meta">
+            <span class="uc-joined">Joined {{ formatDate(u.created_at) }}</span>
+            <span class="badge" [class.badge-success]="u.can_view_groups" [class.badge-muted]="!u.can_view_groups">
+              Groups: {{ u.can_view_groups ? '✅' : '❌' }}
+            </span>
+          </div>
+          <div class="uc-actions">
+            <button class="btn btn-outline btn-sm" (click)="openEditModal(u)">✏️ Edit</button>
+            <button class="btn btn-sm" [class.btn-warning]="u.is_admin" [class.btn-success]="!u.is_admin"
+                    (click)="toggleAdmin(u)" [disabled]="u.id === currentUserId">
+              {{ u.is_admin ? '⬇️ Revoke Admin' : '⬆️ Make Admin' }}
+            </button>
+            <button class="btn btn-outline btn-sm" (click)="toggleGroups(u)">
+              {{ u.can_view_groups ? '🔒 Groups' : '🔓 Groups' }}
+            </button>
+            <button class="btn btn-danger btn-sm" (click)="deleteUser(u)" [disabled]="u.id === currentUserId">🗑️</button>
+          </div>
+        </div>
       </div>
 
       <!-- Add User Modal -->
@@ -129,8 +169,47 @@ import { User } from '../../../models/user.model';
     </div>
   `,
   styles: [`
-    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
     .section-header h2 { margin: 0; font-size: 1.3rem; font-weight: 700; color: var(--text-heading); }
+    .search-row { margin-bottom: 16px; }
+    .search-input {
+      width: 100%; padding: 10px 14px;
+      border: 2px solid var(--border); border-radius: 10px;
+      font-size: 0.875rem; outline: none;
+      background: var(--bg-input); color: var(--text-primary);
+      transition: border-color 0.2s; box-sizing: border-box;
+    }
+    .search-input:focus { border-color: var(--accent); }
+    .search-input::placeholder { color: var(--text-muted); }
+    .empty { text-align: center; padding: 40px; color: var(--text-muted); }
+    /* Desktop/Mobile visibility */
+    .desktop-only { display: block; }
+    .mobile-only { display: none; }
+    /* User cards */
+    .user-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 16px; margin-bottom: 12px;
+      box-shadow: var(--shadow);
+    }
+    .uc-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .uc-avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), #00a8e8);
+      color: white; font-weight: 700; font-size: 1.1rem;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .uc-info { flex: 1; min-width: 0; }
+    .uc-name { font-weight: 700; color: var(--text-primary); }
+    .uc-email { font-size: 0.8rem; color: var(--text-muted); }
+    .uc-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .uc-joined { font-size: 0.78rem; color: var(--text-muted); }
+    .uc-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .uc-actions .btn { justify-content: center; }
+    @media (max-width: 768px) {
+      .desktop-only { display: none !important; }
+      .mobile-only { display: block !important; }
+    }
     .btn { padding: 10px 20px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 0.85rem; transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px; }
     .btn-sm { padding: 8px 16px; font-size: 0.8rem; }
     .btn-xs { padding: 6px 10px; font-size: 0.75rem; }
@@ -158,13 +237,14 @@ import { User } from '../../../models/user.model';
     .badge-muted { background: var(--bg-badge); color: var(--text-muted); }
     .actions { display: flex; gap: 6px; }
 
-    .modal-overlay { position: fixed; inset: 0; background: var(--bg-overlay); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 10000; }
-    .modal-card { background: var(--bg-card); border-radius: 16px; width: 90%; max-width: 440px; overflow: hidden; border: 1px solid var(--border); }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid var(--border); }
+    .modal-overlay { position: fixed; inset: 0; background: var(--bg-overlay); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 10000; padding: 16px; }
+    .modal-card { background: var(--bg-card); border-radius: 16px; width: 100%; max-width: 440px; overflow: hidden; border: 1px solid var(--border); max-height: calc(100vh - 32px); display: flex; flex-direction: column; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
     .modal-header h2 { margin: 0; font-size: 1.1rem; color: var(--text-heading); }
-    .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted); }
-    .modal-body { padding: 24px; }
-    .modal-footer { display: flex; gap: 10px; justify-content: flex-end; padding: 16px 24px; background: var(--bg-page); border-top: 1px solid var(--border); }
+    .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted); padding: 4px; line-height: 1; }
+    .modal-close:hover { color: var(--text-primary); }
+    .modal-body { padding: 24px; overflow-y: auto; flex: 1; }
+    .modal-footer { display: flex; gap: 10px; justify-content: flex-end; padding: 16px 24px; background: var(--bg-page); border-top: 1px solid var(--border); flex-shrink: 0; }
     .form-group { margin-bottom: 16px; }
     .form-group label { display: block; font-weight: 600; margin-bottom: 6px; color: var(--text-label); font-size: 0.85rem; }
     .form-group input[type=text], .form-group input[type=email], .form-group input[type=password] {
@@ -178,12 +258,13 @@ import { User } from '../../../models/user.model';
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 12px;
       padding: 12px 0;
       border-top: 1px solid var(--border);
       margin-top: 4px;
     }
-    .toggle-label { font-weight: 600; color: var(--text-label); font-size: 0.85rem; }
-    .toggle-switch { display: inline-flex; align-items: center; cursor: pointer; }
+    .toggle-label { font-weight: 600; color: var(--text-label); font-size: 0.85rem; flex: 1; min-width: 0; }
+    .toggle-switch { display: inline-flex; align-items: center; cursor: pointer; flex-shrink: 0; }
     .toggle-switch input { display: none; }
     .toggle-track {
       width: 44px; height: 24px;
@@ -191,6 +272,7 @@ import { User } from '../../../models/user.model';
       border-radius: 12px;
       position: relative;
       transition: background 0.25s;
+      flex-shrink: 0;
     }
     .toggle-switch input:checked + .toggle-track { background: var(--accent); }
     .toggle-thumb {
@@ -207,9 +289,12 @@ import { User } from '../../../models/user.model';
 })
 export class AdminUsersComponent implements OnInit {
   users: User[] = [];
+  filtered: User[] = [];
   loading = true;
   saving = false;
   currentUserId = 0;
+  search = '';
+  private searchTimeout: any = null;
 
   showAddModal = false;
   showEditModal = false;
@@ -231,9 +316,24 @@ export class AdminUsersComponent implements OnInit {
   load(): void {
     this.loading = true;
     this.api.getAdminUsers().subscribe({
-      next: (res) => { this.users = res.data?.users || []; this.loading = false; },
+      next: (res) => { this.users = res.data?.users || []; this.applySearch(); this.loading = false; },
       error: () => { this.notify.error('Failed to load users'); this.loading = false; }
     });
+  }
+
+  onSearch(): void {
+    clearTimeout(this.searchTimeout);
+    this.searchTimeout = setTimeout(() => this.applySearch(), 300);
+  }
+
+  applySearch(): void {
+    const q = this.search.toLowerCase();
+    this.filtered = q
+      ? this.users.filter(u =>
+          u.username.toLowerCase().includes(q) ||
+          u.email.toLowerCase().includes(q)
+        )
+      : [...this.users];
   }
 
   addUser(): void {

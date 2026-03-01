@@ -74,13 +74,15 @@ import { ComputerGroup, GroupFormData, Computer } from '../../../models/computer
               <input type="text" [(ngModel)]="form.icon" placeholder="fas fa-folder">
             </div>
             <div class="form-grid">
-              <label class="checkbox-label">
+              <label class="check-label">
                 <input type="checkbox" [(ngModel)]="form.allow_wake">
-                <span>Allow Wake</span>
+                <span class="checkmark"></span>
+                <span class="check-text">Allow Wake</span>
               </label>
-              <label class="checkbox-label">
+              <label class="check-label">
                 <input type="checkbox" [(ngModel)]="form.allow_shutdown">
-                <span>Allow Shutdown</span>
+                <span class="checkmark"></span>
+                <span class="check-text">Allow Shutdown</span>
               </label>
             </div>
 
@@ -88,10 +90,11 @@ import { ComputerGroup, GroupFormData, Computer } from '../../../models/computer
               <label>Assign Computers</label>
               <div class="computers-list">
                 <div *ngFor="let c of allComputers" class="computer-row">
-                  <label class="checkbox-label">
+                  <label class="check-label">
                     <input type="checkbox" [checked]="form.computer_ids.includes(c.id)"
                            (change)="toggleComputer(c.id, $event)">
-                    <span>{{ c.name }} <small>({{ c.ip_address || c.mac_address }})</small></span>
+                    <span class="checkmark"></span>
+                    <span class="check-text">{{ c.name }} <small>({{ c.ip_address || c.mac_address }})</small></span>
                   </label>
                 </div>
               </div>
@@ -109,55 +112,87 @@ import { ComputerGroup, GroupFormData, Computer } from '../../../models/computer
   `,
   styles: [`
     .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    .section-header h2 { margin: 0; font-size: 1.3rem; font-weight: 700; color: #1e293b; }
+    .section-header h2 { margin: 0; font-size: 1.3rem; font-weight: 700; color: var(--text-heading); }
     .btn { padding: 10px 20px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 0.85rem; transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px; }
     .btn-sm { padding: 8px 16px; font-size: 0.8rem; }
     .btn-xs { padding: 6px 10px; font-size: 0.75rem; }
-    .btn-primary { background: #0066cc; color: white; }
-    .btn-outline { background: white; border: 1px solid #e2e8f0; color: #475569; }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-outline { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-secondary); }
     .btn-danger { background: #ef4444; color: white; }
-    .btn-secondary { background: #e2e8f0; color: #475569; }
+    .btn-secondary { background: var(--bg-badge); color: var(--text-secondary); }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .loading { text-align: center; padding: 60px; }
-    .loader { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top-color: #0066cc; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto; }
+    .loader { width: 40px; height: 40px; border: 4px solid var(--loader-track); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .empty { text-align: center; padding: 60px; color: #94a3b8; }
+    .empty { text-align: center; padding: 60px; color: var(--text-muted); }
 
     .groups-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
-    .group-card { background: white; border-radius: 14px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; display: flex; }
+    .group-card { background: var(--bg-card); border-radius: 14px; overflow: hidden; box-shadow: var(--shadow); border: 1px solid var(--border); display: flex; }
     .group-color { width: 6px; flex-shrink: 0; }
     .group-body { padding: 18px; flex: 1; }
     .group-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
-    .group-top h3 { margin: 0; font-size: 1.05rem; font-weight: 700; color: #1e293b; }
+    .group-top h3 { margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text-heading); }
     .group-actions { display: flex; gap: 6px; }
-    .group-desc { font-size: 0.85rem; color: #64748b; margin: 0 0 10px; }
+    .group-desc { font-size: 0.85rem; color: var(--text-muted); margin: 0 0 10px; }
     .group-meta { display: flex; gap: 12px; margin-bottom: 10px; }
-    .meta-item { font-size: 0.75rem; color: #94a3b8; }
+    .meta-item { font-size: 0.75rem; color: var(--text-muted); }
     .group-computers { display: flex; flex-wrap: wrap; gap: 4px; }
-    .computer-chip { background: #f1f5f9; color: #475569; padding: 3px 8px; border-radius: 6px; font-size: 0.7rem; }
-    .more-chip { font-size: 0.7rem; color: #94a3b8; padding: 3px 0; }
+    .computer-chip { background: var(--chip-bg); color: var(--chip-text); padding: 3px 8px; border-radius: 6px; font-size: 0.7rem; }
+    .more-chip { font-size: 0.7rem; color: var(--text-muted); padding: 3px 0; }
 
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 10000; }
-    .modal-card { background: white; border-radius: 16px; width: 90%; max-width: 440px; overflow: hidden; max-height: 90vh; display: flex; flex-direction: column; }
+    .modal-overlay { position: fixed; inset: 0; background: var(--bg-overlay); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 10000; padding: 16px; }
+    .modal-card { background: var(--bg-card); border-radius: 16px; width: 100%; max-width: 440px; overflow: hidden; max-height: calc(100vh - 32px); display: flex; flex-direction: column; border: 1px solid var(--border); }
     .modal-card.large { max-width: 560px; }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid #e2e8f0; flex-shrink: 0; }
-    .modal-header h2 { margin: 0; font-size: 1.1rem; }
-    .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #94a3b8; }
-    .modal-body { padding: 24px; overflow-y: auto; }
-    .modal-footer { display: flex; gap: 10px; justify-content: flex-end; padding: 16px 24px; background: #f8fafc; flex-shrink: 0; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .modal-header h2 { margin: 0; font-size: 1.1rem; color: var(--text-heading); }
+    .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted); padding: 4px; line-height: 1; }
+    .modal-close:hover { color: var(--text-primary); }
+    .modal-body { padding: 24px; overflow-y: auto; flex: 1; }
+    .modal-footer { display: flex; gap: 10px; justify-content: flex-end; padding: 16px 24px; background: var(--bg-page); border-top: 1px solid var(--border); flex-shrink: 0; }
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
     .form-group { margin-bottom: 14px; }
-    .form-group label { display: block; font-weight: 600; margin-bottom: 6px; color: #334155; font-size: 0.8rem; }
-    .form-group input, .form-group textarea { width: 100%; padding: 10px 14px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 0.9rem; outline: none; box-sizing: border-box; }
-    .form-group input:focus, .form-group textarea:focus { border-color: #0066cc; }
+    .form-group label { display: block; font-weight: 600; margin-bottom: 6px; color: var(--text-label); font-size: 0.8rem; }
+    .form-group input, .form-group textarea {
+      width: 100%; padding: 10px 14px; border: 2px solid var(--border); border-radius: 10px;
+      font-size: 0.9rem; outline: none; box-sizing: border-box;
+      background: var(--bg-input); color: var(--text-primary); transition: border-color 0.2s;
+    }
+    .form-group input:focus, .form-group textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
     .form-group textarea { resize: vertical; font-family: inherit; }
     .color-input { height: 44px; padding: 4px !important; cursor: pointer; }
-    .checkbox-label { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.9rem; color: #475569; }
-    .checkbox-label input { accent-color: #0066cc; }
-    .computers-list { max-height: 200px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px; }
+
+    /* Custom checkbox */
+    .check-label {
+      display: flex; align-items: center; gap: 10px;
+      cursor: pointer; font-size: 0.9rem; color: var(--text-secondary); user-select: none;
+    }
+    .check-label input { position: absolute; opacity: 0; width: 0; height: 0; }
+    .checkmark {
+      width: 20px; height: 20px; border: 2px solid var(--border); border-radius: 6px;
+      background: var(--bg-input); flex-shrink: 0; transition: all 0.2s; position: relative;
+    }
+    .check-label input:checked ~ .checkmark { background: var(--accent); border-color: var(--accent); }
+    .checkmark::after {
+      content: ''; position: absolute; display: none;
+      left: 6px; top: 2px; width: 5px; height: 10px;
+      border: solid white; border-width: 0 2px 2px 0; transform: rotate(45deg);
+    }
+    .check-label input:checked ~ .checkmark::after { display: block; }
+    .check-text { font-weight: 500; color: var(--text-primary); }
+    .check-text small { color: var(--text-muted); }
+
+    .computers-list {
+      max-height: 200px; overflow-y: auto;
+      border: 1px solid var(--border); border-radius: 10px; padding: 8px;
+      background: var(--bg-page);
+    }
     .computer-row { padding: 6px 8px; border-radius: 6px; }
-    .computer-row:hover { background: #f8fafc; }
-    .computer-row small { color: #94a3b8; }
+    .computer-row:hover { background: var(--bg-row-hover); }
+
+    @media (max-width: 768px) {
+      .groups-grid { grid-template-columns: 1fr; }
+      .form-grid { grid-template-columns: 1fr; }
+    }
   `]
 })
 export class AdminGroupsComponent implements OnInit {

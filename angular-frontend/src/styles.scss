@@ -159,6 +159,28 @@ html.dark input:focus, html.dark select:focus, html.dark textarea:focus {
   border-color: var(--border-focus) !important;
 }
 
+/* Custom select dropdown styling */
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2364748b' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 10px;
+  padding-right: 36px !important;
+  cursor: pointer;
+}
+html.dark select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2394a3b8' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+}
+select:hover {
+  border-color: var(--accent) !important;
+}
+select option {
+  padding: 8px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+}
+
 /* Modals */
 html.dark .modal-card,
 html.dark .modal-body,

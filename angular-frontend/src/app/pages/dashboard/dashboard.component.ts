@@ -164,7 +164,7 @@ import { SshTerminalComponent } from '../../components/ssh-terminal/ssh-terminal
       gap: 16px;
     }
     .header-left { display: flex; align-items: baseline; gap: 12px; }
-    .header-left h1 { font-size: 2rem; font-weight: 800; color: var(--text-heading); margin: 0; }
+    .header-left h1 { font-size: 1.75rem; font-weight: 800; color: var(--text-heading); margin: 0; }
     .computer-count {
       background: var(--bg-badge);
       color: var(--text-secondary);
@@ -173,7 +173,7 @@ import { SshTerminalComponent } from '../../components/ssh-terminal/ssh-terminal
       font-size: 0.85rem;
       font-weight: 600;
     }
-    .header-actions { display: flex; gap: 12px; align-items: center; }
+    .header-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
     .search-box {
       display: flex;
       align-items: center;
@@ -182,6 +182,8 @@ import { SshTerminalComponent } from '../../components/ssh-terminal/ssh-terminal
       border-radius: 12px;
       padding: 0 12px;
       transition: all 0.2s;
+      flex: 1;
+      min-width: 200px;
     }
     .search-box:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,102,204,0.1); }
     .search-icon { margin-right: 8px; }
@@ -190,7 +192,7 @@ import { SshTerminalComponent } from '../../components/ssh-terminal/ssh-terminal
       padding: 10px 0;
       font-size: 0.9rem;
       outline: none;
-      min-width: 200px;
+      width: 100%;
       background: transparent;
       color: var(--text-primary);
     }
@@ -214,14 +216,21 @@ import { SshTerminalComponent } from '../../components/ssh-terminal/ssh-terminal
       display: inline-flex;
       align-items: center;
       gap: 6px;
+      white-space: nowrap;
     }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .btn-outline {
       background: var(--bg-card);
       border: 2px solid var(--border);
       color: var(--text-secondary);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
-    .btn-outline:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+    .btn-outline:hover:not(:disabled) { 
+      border-color: var(--accent); 
+      color: var(--accent);
+      box-shadow: 0 4px 8px rgba(0,102,204,0.15);
+      transform: translateY(-1px);
+    }
     .btn-success { background: linear-gradient(135deg, #10b981, #059669); color: white; }
     .btn-success:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(16,185,129,0.4); }
     .btn-sm { padding: 8px 16px; font-size: 0.8rem; }
