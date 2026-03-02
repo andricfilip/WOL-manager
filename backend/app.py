@@ -2392,17 +2392,17 @@ def angular_history():
             'wol_logs': [{
                 'id': l.id, 'computer_name': l.computer.name if l.computer else 'N/A',
                 'username': l.user.username if l.user else 'N/A',
-                'timestamp': l.timestamp.isoformat(), 'status': l.status
+                'timestamp': l.timestamp.isoformat() + 'Z', 'status': l.status
             } for l in wol_logs],
             'shutdown_logs': [{
                 'id': l.id, 'computer_name': l.computer.name if l.computer else 'N/A',
                 'username': l.user.username if l.user else 'N/A',
-                'timestamp': l.timestamp.isoformat(), 'status': l.status,
+                'timestamp': l.timestamp.isoformat() + 'Z', 'status': l.status,
                 'error_message': l.error_message
             } for l in shutdown_logs],
             'audit_logs': [{
                 'id': l.id, 'action': l.action, 'username': l.username or 'N/A',
-                'timestamp': l.timestamp.isoformat(), 'status': l.status,
+                'timestamp': l.timestamp.isoformat() + 'Z', 'status': l.status,
                 'resource_type': l.resource_type, 'details': l.details,
                 'ip_address': l.ip_address
             } for l in audit_logs],

@@ -166,7 +166,7 @@ import { FitAddon } from 'xterm-addon-fit';
     .terminal-close:hover { background: rgba(255,255,255,0.2); }
     .terminal-body {
       flex: 1;
-      background: #0d1117;
+      background: #282a36;
       padding: 8px;
     }
     :host ::ng-deep .xterm { height: 100%; }
@@ -200,7 +200,7 @@ export class SshTerminalComponent implements OnInit, OnDestroy, AfterViewInit {
 
     if (this.computer.ssh_auto_login) {
       this.showTerminal = true;
-      setTimeout(() => this.initTerminal(), 0);
+      // initTerminal() is called from ngAfterViewInit once the DOM is ready
     } else {
       this.showPasswordModal = true;
       // Focus password input after modal renders
@@ -212,7 +212,7 @@ export class SshTerminalComponent implements OnInit, OnDestroy, AfterViewInit {
 
   ngAfterViewInit(): void {
     if (this.showTerminal) {
-      this.initTerminal();
+      setTimeout(() => this.initTerminal(), 0);
     }
     // Additional focus attempt for password input if modal is visible
     if (this.showPasswordModal && this.passwordInput) {
@@ -242,24 +242,41 @@ export class SshTerminalComponent implements OnInit, OnDestroy, AfterViewInit {
 
     this.terminal = new Terminal({
       theme: {
-        background: '#0d1117',
-        foreground: '#c9d1d9',
-        cursor: '#58a6ff',
-        cursorAccent: '#0d1117',
-        selectionBackground: '#264f78',
-        black: '#0d1117',
-        red: '#ff7b72',
-        green: '#7ee787',
-        yellow: '#d29922',
-        blue: '#58a6ff',
-        magenta: '#bc8cff',
-        cyan: '#39c5cf',
-        white: '#b1bac4',
+        background: '#282a36',
+        foreground: '#f8f8f2',
+        cursor: '#f8f8f2',
+        cursorAccent: '#282a36',
+        selectionBackground: '#44475a',
+        selectionForeground: '#f8f8f2',
+        // Normal colors
+        black:   '#21222c',
+        red:     '#ff5555',
+        green:   '#50fa7b',
+        yellow:  '#f1fa8c',
+        blue:    '#61bfff',
+        magenta: '#ff79c6',
+        cyan:    '#8be9fd',
+        white:   '#f8f8f2',
+        // Bright colors (used for bold text, highlights, dir listings, etc.)
+        brightBlack:   '#6272a4',
+        brightRed:     '#ff6e6e',
+        brightGreen:   '#69ff94',
+        brightYellow:  '#ffffa5',
+        brightBlue:    '#d6acff',
+        brightMagenta: '#ff92df',
+        brightCyan:    '#a4ffff',
+        brightWhite:   '#ffffff',
       },
-      fontFamily: '"Cascadia Code", "Fira Code", monospace',
+      fontFamily: '"Cascadia Code", "Fira Code", "JetBrains Mono", "Consolas", monospace',
       fontSize: 14,
+      lineHeight: 1.25,
+      letterSpacing: 0.5,
       cursorBlink: true,
       cursorStyle: 'bar',
+      cursorWidth: 2,
+      scrollback: 5000,
+      convertEol: true,
+      allowTransparency: false,
     });
 
     this.fitAddon = new FitAddon();
