@@ -13,7 +13,7 @@ import { ComputerGroup, GroupFormData, Computer } from '../../../models/computer
   template: `
     <div class="section">
       <div class="section-header">
-        <h2>📁 Groups</h2>
+        <h2>Groups</h2>
         <button class="btn btn-primary btn-sm" (click)="showForm = true; resetForm()">+ Add Group</button>
       </div>
 
@@ -29,15 +29,15 @@ import { ComputerGroup, GroupFormData, Computer } from '../../../models/computer
             <div class="group-top">
               <h3>{{ g.name }}</h3>
               <div class="group-actions">
-                <button class="btn btn-outline btn-xs" (click)="editGroup(g)">✏️</button>
-                <button class="btn btn-danger btn-xs" (click)="deleteGroup(g)">🗑️</button>
+                <button class="btn btn-outline btn-xs" (click)="editGroup(g)"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg></button>
+                <button class="btn btn-danger btn-xs" (click)="deleteGroup(g)"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6m4-6v6"/><path d="M15 6V4a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v2"/></svg></button>
               </div>
             </div>
             <p *ngIf="g.description" class="group-desc">{{ g.description }}</p>
             <div class="group-meta">
-              <span class="meta-item">💻 {{ g.computers?.length || 0 }} computers</span>
-              <span class="meta-item" *ngIf="g.allow_wake">⚡ Wake</span>
-              <span class="meta-item" *ngIf="g.allow_shutdown">🔌 Shutdown</span>
+              <span class="meta-item"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> {{ g.computers?.length || 0 }} computers</span>
+              <span class="meta-item" *ngIf="g.allow_wake"><svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4.09 12.97H11L9 22 19.91 10H13z"/></svg> Wake</span>
+              <span class="meta-item" *ngIf="g.allow_shutdown"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg> Shutdown</span>
             </div>
             <div class="group-computers" *ngIf="g.computers?.length">
               <span *ngFor="let c of g.computers.slice(0, 5)" class="computer-chip">{{ c.name }}</span>
@@ -51,7 +51,7 @@ import { ComputerGroup, GroupFormData, Computer } from '../../../models/computer
       <div *ngIf="showForm" class="modal-overlay" (click)="showForm = false">
         <div class="modal-card large" (click)="$event.stopPropagation()">
           <div class="modal-header">
-            <h2>{{ isEditing ? '✏️ Edit Group' : '➕ Add Group' }}</h2>
+            <h2>{{ isEditing ? 'Edit Group' : 'Add Group' }}</h2>
             <button class="modal-close" (click)="showForm = false">×</button>
           </div>
           <div class="modal-body">

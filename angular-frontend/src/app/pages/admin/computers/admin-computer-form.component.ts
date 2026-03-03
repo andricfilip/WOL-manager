@@ -15,7 +15,7 @@ import { Computer, ComputerFormData } from '../../../models/computer.model';
     <div class="form-page">
       <div class="form-header">
         <button class="btn-back" (click)="goBack()">← Back</button>
-        <h2>{{ isEdit ? '✏️ Edit Computer' : '➕ Add Computer' }}</h2>
+        <h2>{{ isEdit ? 'Edit Computer' : 'Add Computer' }}</h2>
       </div>
 
       <div class="form-card">
@@ -37,9 +37,9 @@ import { Computer, ComputerFormData } from '../../../models/computer.model';
             <div class="form-group">
               <label>OS Type</label>
               <select [(ngModel)]="form.os_type">
-                <option value="linux">🐧 Linux</option>
-                <option value="windows">🪟 Windows</option>
-                <option value="unknown">❓ Unknown</option>
+                <option value="linux">Linux</option>
+                <option value="windows">Windows</option>
+                <option value="unknown">Unknown</option>
               </select>
             </div>
           </div>
@@ -50,7 +50,7 @@ import { Computer, ComputerFormData } from '../../../models/computer.model';
         </div>
 
         <div class="form-section">
-          <h3>🔐 SSH Configuration</h3>
+          <h3>SSH Configuration</h3>
           <div class="form-grid">
             <div class="form-group">
               <label>SSH Host</label>
@@ -81,7 +81,7 @@ import { Computer, ComputerFormData } from '../../../models/computer.model';
         </div>
 
         <div class="form-section" *ngIf="allUsers.length > 0">
-          <h3>👥 User Assignment</h3>
+          <h3>User Assignment</h3>
           <div class="users-list">
             <div *ngFor="let user of allUsers" class="user-row">
               <label class="check-label">
@@ -104,7 +104,7 @@ import { Computer, ComputerFormData } from '../../../models/computer.model';
         <div class="form-actions">
           <button class="btn btn-secondary" (click)="goBack()">Cancel</button>
           <button class="btn btn-primary" (click)="submit()" [disabled]="saving">
-            {{ saving ? 'Saving...' : (isEdit ? '💾 Update' : '➕ Create') }}
+            {{ saving ? 'Saving...' : (isEdit ? 'Update' : 'Create') }}
           </button>
         </div>
       </div>

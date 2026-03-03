@@ -1,6 +1,6 @@
 {
-  "name": "ComputerRunner - WoL Manager",
-  "short_name": "ComputerRunner",
+  "name": "WoL Manager",
+  "short_name": "WoL Manager",
   "description": "Wake-on-LAN Manager - remotely wake and manage your computers",
   "start_url": "/",
   "display": "standalone",

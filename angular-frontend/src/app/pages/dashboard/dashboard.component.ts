@@ -8,11 +8,12 @@ import { AuthService } from '../../services/auth.service';
 import { DashboardComputer, DashboardGroup, DashboardData } from '../../models/api.model';
 import { Subscription } from 'rxjs';
 import { SshTerminalComponent } from '../../components/ssh-terminal/ssh-terminal.component';
+import { OsIconComponent } from '../../components/os-icon/os-icon.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, SshTerminalComponent],
+  imports: [CommonModule, FormsModule, SshTerminalComponent, OsIconComponent],
   template: `
     <div class="dashboard">
       <!-- Header -->
@@ -25,14 +26,15 @@ import { SshTerminalComponent } from '../../components/ssh-terminal/ssh-terminal
         </div>
         <div class="header-actions">
           <div class="search-box" *ngIf="enableSearch">
-            <span class="search-icon">🔍</span>
+            <span class="search-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
             <input type="text" [(ngModel)]="searchTerm" placeholder="Search computers..."
                    (input)="filterComputers()">
             <button *ngIf="searchTerm" class="search-clear" (click)="searchTerm = ''; filterComputers()">×</button>
           </div>
           <button class="btn btn-outline" (click)="refreshStatuses()" [disabled]="refreshing">
             <span *ngIf="refreshing" class="spinner-sm"></span>
-            {{ refreshing ? 'Checking...' : '🔄 Refresh Status' }}
+            <svg *ngIf="!refreshing" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            {{ refreshing ? 'Checking...' : 'Refresh Status' }}
           </button>
         </div>
       </div>
@@ -45,7 +47,7 @@ import { SshTerminalComponent } from '../../components/ssh-terminal/ssh-terminal
 
       <!-- Empty state -->
       <div *ngIf="!loading && computers.length === 0" class="empty-state">
-        <div class="empty-icon">💻</div>
+        <div class="empty-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
         <h2>No computers assigned</h2>
         <p>Contact your administrator to get computers assigned to your account.</p>
       </div>
@@ -61,7 +63,9 @@ import { SshTerminalComponent } from '../../components/ssh-terminal/ssh-terminal
             </div>
             <button *ngIf="group.allow_wake" class="btn btn-success btn-sm"
                     (click)="wakeGroup(group)" [disabled]="wakingGroup === group.id">
-              {{ wakingGroup === group.id ? '⏳ Waking...' : '⚡ Wake All' }}
+              <span *ngIf="wakingGroup === group.id" class="spinner-sm"></span>
+              <svg *ngIf="wakingGroup !== group.id" class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4.09 12.97H11L9 22 19.91 10H13z"/></svg>
+              {{ wakingGroup === group.id ? 'Waking...' : 'Wake All' }}
             </button>
           </div>
           <div class="computer-grid">
@@ -79,7 +83,7 @@ import { SshTerminalComponent } from '../../components/ssh-terminal/ssh-terminal
       <div *ngIf="!loading && filteredUngrouped.length > 0" class="group-section">
         <div class="group-header" style="border-left-color: #64748b">
           <div class="group-info">
-            <span class="group-icon">💻</span>
+            <span class="group-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span>
             <h2 class="group-name">{{ enableGroups ? 'Ungrouped' : 'My Computers' }}</h2>
             <span class="group-badge">{{ filteredUngrouped.length }}</span>
           </div>
@@ -117,7 +121,10 @@ import { SshTerminalComponent } from '../../components/ssh-terminal/ssh-terminal
         </div>
         <div class="detail-row" *ngIf="computer.os_type !== 'unknown'">
           <span class="detail-label">OS</span>
-          <span class="detail-value">{{ computer.os_type === 'windows' ? '🪟 Windows' : '🐧 Linux' }}</span>
+          <span class="detail-value os-display">
+            <app-os-icon [type]="computer.os_type"></app-os-icon>
+            {{ computer.os_type === 'windows' ? 'Windows' : computer.os_type === 'linux' ? 'Linux' : computer.os_type === 'macos' ? 'macOS' : computer.os_type }}
+          </span>
         </div>
         <div class="detail-row" *ngIf="computer.description">
           <span class="detail-label">Info</span>
@@ -132,17 +139,22 @@ import { SshTerminalComponent } from '../../components/ssh-terminal/ssh-terminal
         <button class="btn btn-wake" (click)="wakeComputer(computer)"
                 [disabled]="computer.status === 'online' || wakingComputers[computer.id]"
                 *ngIf="canOperate(computer, group)">
-          {{ wakingComputers[computer.id] ? '⏳ Sending...' : '⚡ Wake Up' }}
+          <span *ngIf="wakingComputers[computer.id]" class="spinner-sm"></span>
+          <svg *ngIf="!wakingComputers[computer.id]" class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4.09 12.97H11L9 22 19.91 10H13z"/></svg>
+          {{ wakingComputers[computer.id] ? 'Sending...' : 'Wake Up' }}
         </button>
         <button class="btn btn-shutdown" (click)="shutdownComputer(computer)"
                 [disabled]="computer.status !== 'online' || shuttingDown[computer.id]"
                 *ngIf="computer.has_ssh && canOperate(computer, group)">
-          {{ shuttingDown[computer.id] ? '⏳ Shutting down...' : '🔌 Shutdown' }}
+          <span *ngIf="shuttingDown[computer.id]" class="spinner-sm"></span>
+          <svg *ngIf="!shuttingDown[computer.id]" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
+          {{ shuttingDown[computer.id] ? 'Shutting down...' : 'Shutdown' }}
         </button>
         <button class="btn btn-terminal" (click)="openTerminal(computer)"
                 [disabled]="computer.status !== 'online'"
                 *ngIf="computer.has_ssh && canOperate(computer, group)">
-          💻 Terminal
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+          Terminal
         </button>
       </div>
     </ng-template>
@@ -363,6 +375,7 @@ import { SshTerminalComponent } from '../../components/ssh-terminal/ssh-terminal
     .detail-value { color: var(--text-secondary); }
     .detail-value.mac { font-family: 'Consolas', monospace; font-size: 0.8rem; }
     .detail-value.time { font-size: 0.8rem; color: #94a3b8; }
+    .detail-value.os-display { display: flex; align-items: center; gap: 5px; }
 
     .card-actions {
       display: flex;

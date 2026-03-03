@@ -14,30 +14,31 @@ import { DatePickerComponent } from '../../components/datepicker/datepicker.comp
   template: `
     <div class="history-page">
       <div class="page-header">
-        <h1>📋 History</h1>
+        <h1><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> History</h1>
       </div>
 
       <!-- Filters -->
       <div class="filters-bar">
         <div class="tabs">
           <button class="tab" [class.active]="activeTab === 'wol'" (click)="activeTab = 'wol'; loadHistory()">
-            ⚡ WoL Logs
+            <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4.09 12.97H11L9 22 19.91 10H13z"/></svg> WoL Logs
           </button>
           <button class="tab" [class.active]="activeTab === 'shutdown'" (click)="activeTab = 'shutdown'; loadHistory()">
-            🔌 Shutdown Logs
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg> Shutdown Logs
           </button>
           <button class="tab" [class.active]="activeTab === 'audit'" (click)="activeTab = 'audit'; loadHistory()">
-            🔍 Audit Logs
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Audit Logs
           </button>
         </div>
         <div class="filter-controls">
-          <input type="text" [(ngModel)]="search" placeholder="🔍 Search..." class="filter-input"
+          <input type="text" [(ngModel)]="search" placeholder="Search..." class="filter-input"
                  (ngModelChange)="onSearchChange()">
           <app-datepicker [(ngModel)]="dateFrom" placeholder="From date" (ngModelChange)="loadHistory()"></app-datepicker>
           <app-datepicker [(ngModel)]="dateTo" placeholder="To date" (ngModelChange)="loadHistory()"></app-datepicker>
           <button class="btn btn-outline btn-sm" (click)="clearFilters()">Clear</button>
           <button *ngIf="isAdmin" class="btn btn-danger btn-sm" (click)="showDeleteModal = true">
-            🗑️ Delete Logs
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6m4-6v6"/><path d="M15 6V4a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v2"/></svg>
+            Delete Logs
           </button>
         </div>
       </div>
@@ -83,7 +84,7 @@ import { DatePickerComponent } from '../../components/datepicker/datepicker.comp
               <span class="badge" [class.badge-success]="log.status === 'sent'" [class.badge-danger]="log.status === 'failed'">{{ log.status }}</span>
             </div>
             <div class="lc-meta">
-              <span class="lc-user">👤 {{ log.username }}</span>
+              <span class="lc-user"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> {{ log.username }}</span>
               <span class="lc-time">{{ formatTime(log.timestamp) }}</span>
             </div>
           </div>
@@ -129,10 +130,10 @@ import { DatePickerComponent } from '../../components/datepicker/datepicker.comp
               <span class="badge" [class.badge-success]="log.status === 'success'" [class.badge-danger]="log.status === 'failed'">{{ log.status }}</span>
             </div>
             <div class="lc-meta">
-              <span class="lc-user">👤 {{ log.username }}</span>
+              <span class="lc-user"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> {{ log.username }}</span>
               <span class="lc-time">{{ formatTime(log.timestamp) }}</span>
             </div>
-            <div *ngIf="log.error_message" class="lc-error">⚠️ {{ log.error_message }}</div>
+            <div *ngIf="log.error_message" class="lc-error"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> {{ log.error_message }}</div>
           </div>
         </div>
       </ng-container>
@@ -184,18 +185,18 @@ import { DatePickerComponent } from '../../components/datepicker/datepicker.comp
                 [class.badge-warning]="log.status === 'denied'">{{ log.status }}</span>
             </div>
             <div class="lc-meta">
-              <span class="lc-user">👤 {{ log.username }}</span>
+              <span class="lc-user"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> {{ log.username }}</span>
               <span class="lc-time">{{ formatTime(log.timestamp) }}</span>
             </div>
             <div class="lc-detail" *ngIf="log.details">{{ log.details }}</div>
-            <div class="lc-ip" *ngIf="log.ip_address">🌐 {{ log.ip_address }} · {{ log.resource_type }}</div>
+            <div class="lc-ip" *ngIf="log.ip_address">{{ log.ip_address }} · {{ log.resource_type }}</div>
           </div>
         </div>
       </ng-container>
       <div *ngIf="showDeleteModal" class="modal-overlay" (click)="showDeleteModal = false">
         <div class="modal-card" (click)="$event.stopPropagation()">
           <div class="modal-header">
-            <h2>🗑️ Delete Logs</h2>
+            <h2><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6m4-6v6"/><path d="M15 6V4a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v2"/></svg> Delete Logs</h2>
             <button class="modal-close" (click)="showDeleteModal = false">×</button>
           </div>
           <div class="modal-body">

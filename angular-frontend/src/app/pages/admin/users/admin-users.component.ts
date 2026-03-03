@@ -13,12 +13,12 @@ import { User } from '../../../models/user.model';
   template: `
     <div class="section">
       <div class="section-header">
-        <h2>👥 Users</h2>
+        <h2><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Users</h2>
         <button class="btn btn-primary btn-sm" (click)="showAddModal = true">+ Add User</button>
       </div>
 
       <div class="search-row">
-        <input type="text" [(ngModel)]="search" placeholder="🔍 Search users..."
+        <input type="text" [(ngModel)]="search" placeholder="Search users..."
                class="search-input" (ngModelChange)="onSearch()">
       </div>
 
@@ -43,25 +43,27 @@ import { User } from '../../../models/user.model';
               <td>{{ u.email }}</td>
               <td>
                 <span class="badge" [class.badge-admin]="u.is_admin" [class.badge-user]="!u.is_admin">
-                  {{ u.is_admin ? '🛡️ Admin' : '👤 User' }}
+                  {{ u.is_admin ? 'Admin' : 'User' }}
                 </span>
               </td>
               <td>
                 <span class="badge" [class.badge-success]="u.can_view_groups" [class.badge-muted]="!u.can_view_groups">
-                  {{ u.can_view_groups ? '✅' : '❌' }}
+                  {{ u.can_view_groups ? 'Yes' : 'No' }}
                 </span>
               </td>
               <td class="time">{{ formatDate(u.created_at) }}</td>
               <td class="actions">
-                <button class="btn btn-outline btn-xs" (click)="openEditModal(u)">✏️</button>
+                <button class="btn btn-outline btn-xs" (click)="openEditModal(u)"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg></button>
                 <button class="btn btn-xs" [class.btn-warning]="u.is_admin" [class.btn-success]="!u.is_admin"
                         (click)="toggleAdmin(u)" [disabled]="u.id === currentUserId">
-                  {{ u.is_admin ? '⬇️' : '⬆️' }}
+                  <svg *ngIf="u.is_admin" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="17 11 12 6 7 11"/><polyline points="17 18 12 13 7 18"/></svg>
+                  <svg *ngIf="!u.is_admin" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="7 13 12 18 17 13"/><polyline points="7 6 12 11 17 6"/></svg>
                 </button>
                 <button class="btn btn-outline btn-xs" (click)="toggleGroups(u)">
-                  {{ u.can_view_groups ? '🔒' : '🔓' }}
+                  <svg *ngIf="u.can_view_groups" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  <svg *ngIf="!u.can_view_groups" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
                 </button>
-                <button class="btn btn-danger btn-xs" (click)="deleteUser(u)" [disabled]="u.id === currentUserId">🗑️</button>
+                <button class="btn btn-danger btn-xs" (click)="deleteUser(u)" [disabled]="u.id === currentUserId"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6m4-6v6"/><path d="M15 6V4a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v2"/></svg></button>
               </td>
             </tr>
           </tbody>
@@ -79,25 +81,29 @@ import { User } from '../../../models/user.model';
               <div class="uc-email">{{ u.email }}</div>
             </div>
             <span class="badge" [class.badge-admin]="u.is_admin" [class.badge-user]="!u.is_admin">
-              {{ u.is_admin ? '🛡️ Admin' : '👤 User' }}
+              {{ u.is_admin ? 'Admin' : 'User' }}
             </span>
           </div>
           <div class="uc-meta">
             <span class="uc-joined">Joined {{ formatDate(u.created_at) }}</span>
             <span class="badge" [class.badge-success]="u.can_view_groups" [class.badge-muted]="!u.can_view_groups">
-              Groups: {{ u.can_view_groups ? '✅' : '❌' }}
+              Groups: {{ u.can_view_groups ? 'Yes' : 'No' }}
             </span>
           </div>
           <div class="uc-actions">
-            <button class="btn btn-outline btn-sm" (click)="openEditModal(u)">✏️ Edit</button>
+            <button class="btn btn-outline btn-sm" (click)="openEditModal(u)">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg> Edit
+            </button>
             <button class="btn btn-sm" [class.btn-warning]="u.is_admin" [class.btn-success]="!u.is_admin"
                     (click)="toggleAdmin(u)" [disabled]="u.id === currentUserId">
-              {{ u.is_admin ? '⬇️ Revoke Admin' : '⬆️ Make Admin' }}
+              {{ u.is_admin ? 'Revoke Admin' : 'Make Admin' }}
             </button>
             <button class="btn btn-outline btn-sm" (click)="toggleGroups(u)">
-              {{ u.can_view_groups ? '🔒 Groups' : '🔓 Groups' }}
+              {{ u.can_view_groups ? 'Lock Groups' : 'Enable Groups' }}
             </button>
-            <button class="btn btn-danger btn-sm" (click)="deleteUser(u)" [disabled]="u.id === currentUserId">🗑️</button>
+            <button class="btn btn-danger btn-sm" (click)="deleteUser(u)" [disabled]="u.id === currentUserId">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6m4-6v6"/><path d="M15 6V4a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v2"/></svg>
+            </button>
           </div>
         </div>
       </div>
@@ -106,7 +112,7 @@ import { User } from '../../../models/user.model';
       <div *ngIf="showAddModal" class="modal-overlay" (click)="showAddModal = false">
         <div class="modal-card" (click)="$event.stopPropagation()">
           <div class="modal-header">
-            <h2>➕ Add User</h2>
+            <h2>Add User</h2>
             <button class="modal-close" (click)="showAddModal = false">×</button>
           </div>
           <div class="modal-body">
@@ -145,7 +151,7 @@ import { User } from '../../../models/user.model';
       <div *ngIf="showEditModal" class="modal-overlay" (click)="showEditModal = false">
         <div class="modal-card" (click)="$event.stopPropagation()">
           <div class="modal-header">
-            <h2>✏️ Edit User</h2>
+            <h2>Edit User</h2>
             <button class="modal-close" (click)="showEditModal = false">×</button>
           </div>
           <div class="modal-body">

@@ -5,20 +5,21 @@ import { RouterModule } from '@angular/router';
 import { ApiService } from '../../../services/api.service';
 import { NotificationService } from '../../../services/notification.service';
 import { Computer } from '../../../models/computer.model';
+import { OsIconComponent } from '../../../components/os-icon/os-icon.component';
 
 @Component({
   selector: 'app-admin-computers',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, OsIconComponent],
   template: `
     <div class="section">
       <div class="section-header">
-        <h2>💻 Computers</h2>
+        <h2><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> Computers</h2>
         <a routerLink="add" class="btn btn-primary btn-sm">+ Add Computer</a>
       </div>
 
       <div class="search-row">
-        <input type="text" [(ngModel)]="search" placeholder="🔍 Search computers..."
+        <input type="text" [(ngModel)]="search" placeholder="Search computers..."
                class="search-input" (ngModelChange)="onSearch()">
       </div>
 
@@ -45,7 +46,7 @@ import { Computer } from '../../../models/computer.model';
               <td class="bold">{{ c.name }}</td>
               <td class="mono">{{ c.mac_address }}</td>
               <td>{{ c.ip_address || '-' }}</td>
-              <td>{{ c.os_type === 'windows' ? '🪟' : c.os_type === 'linux' ? '🐧' : '❓' }}</td>
+              <td><app-os-icon [type]="c.os_type"></app-os-icon></td>
               <td>
                 <span class="badge" [class.badge-success]="c.status === 'online'"
                       [class.badge-danger]="c.status === 'offline'">
@@ -61,8 +62,12 @@ import { Computer } from '../../../models/computer.model';
                 </span>
               </td>
               <td class="actions">
-                <a [routerLink]="[c.id, 'edit']" class="btn btn-outline btn-xs">✏️ Edit</a>
-                <button class="btn btn-danger btn-xs" (click)="deleteComputer(c)">🗑️</button>
+                <a [routerLink]="[c.id, 'edit']" class="btn btn-outline btn-xs">
+                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>
+                </a>
+                <button class="btn btn-danger btn-xs" (click)="deleteComputer(c)">
+                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6m4-6v6"/><path d="M15 6V4a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v2"/></svg>
+                </button>
               </td>
             </tr>
           </tbody>
@@ -75,7 +80,7 @@ import { Computer } from '../../../models/computer.model';
         <div class="comp-card" *ngFor="let c of filtered">
           <div class="cc-header">
             <div class="cc-title">
-              {{ c.os_type === 'windows' ? '🪟' : c.os_type === 'linux' ? '🐧' : '❓' }}
+              <app-os-icon [type]="c.os_type"></app-os-icon>
               {{ c.name }}
             </div>
             <span class="badge" [class.badge-success]="c.status === 'online'"
@@ -96,8 +101,12 @@ import { Computer } from '../../../models/computer.model';
             </span>
           </div>
           <div class="cc-actions">
-            <a [routerLink]="[c.id, 'edit']" class="btn btn-outline btn-sm">✏️ Edit</a>
-            <button class="btn btn-danger btn-sm" (click)="deleteComputer(c)">🗑️ Delete</button>
+            <a [routerLink]="[c.id, 'edit']" class="btn btn-outline btn-sm">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg> Edit
+            </a>
+            <button class="btn btn-danger btn-sm" (click)="deleteComputer(c)">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6m4-6v6"/><path d="M15 6V4a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v2"/></svg> Delete
+            </button>
           </div>
         </div>
       </div>

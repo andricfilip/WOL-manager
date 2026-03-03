@@ -19,11 +19,12 @@ import { Subscription, filter } from 'rxjs';
           </span>
         </button>
         <a routerLink="/dashboard" class="topbar-brand">
-          <span class="brand-icon">⚡</span>
-          <span class="brand-text">ComputerRunner</span>
+          <span class="brand-icon"><svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4.09 12.97H11L9 22 19.91 10H13z"/></svg></span>
+          <span class="brand-text">WoL Manager</span>
         </a>
         <button class="topbar-theme" (click)="toggleTheme()">
-          <span>{{ isDark ? '☀️' : '🌙' }}</span>
+          <svg *ngIf="!isDark" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg *ngIf="isDark" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
         </button>
       </div>
 
@@ -34,8 +35,8 @@ import { Subscription, filter } from 'rxjs';
       <nav class="sidebar" [class.open]="menuOpen">
         <!-- Brand -->
         <div class="sidebar-brand">
-          <span class="brand-icon">⚡</span>
-          <span class="brand-name">ComputerRunner</span>
+          <span class="brand-icon"><svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4.09 12.97H11L9 22 19.91 10H13z"/></svg></span>
+          <span class="brand-name">WoL Manager</span>
         </div>
 
         <!-- Nav links -->
@@ -43,21 +44,21 @@ import { Subscription, filter } from 'rxjs';
           <span class="nav-section">Main</span>
           <a class="sidebar-link" routerLink="/dashboard" routerLinkActive="active"
              [routerLinkActiveOptions]="{exact:true}" (click)="close()">
-            <span class="link-icon">📊</span>
+            <span class="link-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span>
             <span class="link-label">Dashboard</span>
           </a>
           <a class="sidebar-link" routerLink="/statistics" routerLinkActive="active" (click)="close()">
-            <span class="link-icon">📈</span>
+            <span class="link-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg></span>
             <span class="link-label">Statistics</span>
           </a>
           <a class="sidebar-link" routerLink="/history" routerLinkActive="active" (click)="close()">
-            <span class="link-icon">📋</span>
+            <span class="link-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
             <span class="link-label">History</span>
           </a>
           <ng-container *ngIf="isAdmin">
             <span class="nav-section" style="margin-top:8px">Admin</span>
             <a class="sidebar-link" routerLink="/admin" routerLinkActive="active" (click)="close()">
-              <span class="link-icon">⚙️</span>
+              <span class="link-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
               <span class="link-label">Admin Panel</span>
             </a>
           </ng-container>
@@ -66,15 +67,18 @@ import { Subscription, filter } from 'rxjs';
         <!-- Bottom section -->
         <div class="sidebar-bottom">
           <a class="sidebar-link" routerLink="/profile" routerLinkActive="active" (click)="close()">
-            <span class="link-icon">👤</span>
+            <span class="link-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
             <span class="link-label">{{ username }}</span>
           </a>
           <button class="sidebar-link theme-link" (click)="toggleTheme()">
-            <span class="link-icon">{{ isDark ? '☀️' : '🌙' }}</span>
+            <span class="link-icon">
+              <svg *ngIf="!isDark" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+              <svg *ngIf="isDark" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+            </span>
             <span class="link-label">{{ isDark ? 'Light mode' : 'Dark mode' }}</span>
           </button>
           <button class="sidebar-link logout-link" (click)="onLogout()">
-            <span class="link-icon">🚪</span>
+            <span class="link-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>
             <span class="link-label">Logout</span>
           </button>
         </div>

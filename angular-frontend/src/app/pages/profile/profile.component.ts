@@ -12,7 +12,7 @@ import { User } from '../../models/user.model';
   template: `
     <div class="profile-page">
       <div class="page-header">
-        <h1>👤 Profile</h1>
+        <h1><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Profile</h1>
       </div>
 
       <div class="profile-grid" *ngIf="user">
@@ -37,7 +37,7 @@ import { User } from '../../models/user.model';
               <div class="info-item">
                 <span class="info-label">Role</span>
                 <span class="role-badge" [class.admin]="user.is_admin">
-                  {{ user.is_admin ? '🛡️ Admin' : '👤 User' }}
+                  {{ user.is_admin ? 'Admin' : 'User' }}
                 </span>
               </div>
               <div class="info-item">
@@ -63,7 +63,7 @@ import { User } from '../../models/user.model';
               <input type="email" [(ngModel)]="editEmail" placeholder="Email">
             </div>
             <button class="btn btn-primary" (click)="updateProfile()" [disabled]="savingProfile">
-              {{ savingProfile ? 'Saving...' : '💾 Save Changes' }}
+              {{ savingProfile ? 'Saving...' : 'Save Changes' }}
             </button>
           </div>
         </div>

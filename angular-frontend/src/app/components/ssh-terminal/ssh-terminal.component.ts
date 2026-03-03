@@ -16,7 +16,7 @@ import { FitAddon } from 'xterm-addon-fit';
     <div class="modal-overlay" *ngIf="showPasswordModal" (click)="onClose()">
       <div class="modal-card" (click)="$event.stopPropagation()">
         <div class="modal-header">
-          <h2>🔐 SSH Authentication</h2>
+          <h2><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> SSH Authentication</h2>
           <button class="modal-close" (click)="onClose()">×</button>
         </div>
         <div class="modal-body">
@@ -38,7 +38,7 @@ import { FitAddon } from 'xterm-addon-fit';
     <div class="terminal-overlay" *ngIf="showTerminal">
       <div class="terminal-container">
         <div class="terminal-header">
-          <span class="terminal-title">💻 {{ computer.name }}</span>
+          <span class="terminal-title"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg> {{ computer.name }}</span>
           <div class="terminal-status" [class.connected]="isConnected">
             <span class="status-dot"></span>
             {{ isConnected ? 'Connected' : 'Connecting...' }}

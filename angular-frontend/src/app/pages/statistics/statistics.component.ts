@@ -4,17 +4,18 @@ import { ApiService } from '../../services/api.service';
 import { NotificationService } from '../../services/notification.service';
 import { StatEntry } from '../../models/api.model';
 import { Chart, registerables } from 'chart.js';
+import { OsIconComponent } from '../../components/os-icon/os-icon.component';
 
 Chart.register(...registerables);
 
 @Component({
   selector: 'app-statistics',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, OsIconComponent],
   template: `
     <div class="statistics-page">
       <div class="page-header">
-        <h1>📈 Statistics</h1>
+        <h1><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg> Statistics</h1>
         <div class="period-selector">
           <button *ngFor="let p of periods" class="period-btn"
                   [class.active]="selectedPeriod === p.days"
@@ -33,28 +34,28 @@ Chart.register(...registerables);
         <!-- Summary Cards -->
         <div class="stats-summary">
           <div class="stat-card">
-            <div class="stat-icon online">🟢</div>
+            <div class="stat-icon online"><svg class="icon" viewBox="0 0 24 24" fill="currentColor" style="color:#10b981"><circle cx="12" cy="12" r="10"/></svg></div>
             <div class="stat-info">
               <span class="stat-value">{{ onlineCount }}</span>
               <span class="stat-label">Currently Online</span>
             </div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon wol">⚡</div>
+            <div class="stat-icon wol"><svg class="icon" viewBox="0 0 24 24" fill="currentColor" style="color:#3b82f6"><path d="M13 2 4.09 12.97H11L9 22 19.91 10H13z"/></svg></div>
             <div class="stat-info">
               <span class="stat-value">{{ totalWol }}</span>
               <span class="stat-label">WoL Packets</span>
             </div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon shutdown">🔌</div>
+            <div class="stat-icon shutdown"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="color:#ef4444"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg></div>
             <div class="stat-info">
               <span class="stat-value">{{ totalShutdowns }}</span>
               <span class="stat-label">Shutdowns</span>
             </div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon uptime">📊</div>
+            <div class="stat-icon uptime"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="color:#f59e0b"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
             <div class="stat-info">
               <span class="stat-value">{{ avgUptime }}%</span>
               <span class="stat-label">Avg Uptime</span>
@@ -70,7 +71,9 @@ Chart.register(...registerables);
           </div>
           <div class="chart-card wide">
             <h3>Activity Overview</h3>
-            <canvas #barChart></canvas>
+            <div class="chart-wrap">
+              <canvas #barChart></canvas>
+            </div>
           </div>
         </div>
 
@@ -81,7 +84,7 @@ Chart.register(...registerables);
             <div *ngFor="let stat of stats" class="stat-detail-card">
               <div class="stat-detail-header">
                 <div class="stat-name">
-                  <span class="os-icon">{{ stat.os_type === 'windows' ? '🪟' : stat.os_type === 'linux' ? '🐧' : '💻' }}</span>
+                  <app-os-icon [type]="stat.os_type"></app-os-icon>
                   {{ stat.name }}
                 </div>
                 <div class="stat-status" [class.online]="stat.current_status === 'online'"
@@ -191,7 +194,7 @@ Chart.register(...registerables);
     }
     .chart-card h3 { margin: 0 0 16px; font-size: 1rem; color: var(--text-secondary); font-weight: 700; }
     .chart-card.wide { }
-    .chart-card canvas { max-height: 300px; }
+    .chart-wrap { position: relative; height: 260px; }
 
     .computer-stats h2 { font-size: 1.3rem; font-weight: 700; color: var(--text-heading); margin-bottom: 16px; }
     .stats-grid {
@@ -255,6 +258,7 @@ Chart.register(...registerables);
       .period-selector { justify-content: stretch; }
       .period-btn { flex: 1; text-align: center; }
       .charts-row { grid-template-columns: 1fr; }
+      .chart-wrap { height: 220px; }
       .stats-grid { grid-template-columns: 1fr; }
     }
   `]
@@ -350,43 +354,90 @@ export class StatisticsComponent implements OnInit, AfterViewInit {
   private renderBarChart(): void {
     if (!this.barChartRef?.nativeElement) return;
     this.barChart?.destroy();
-    const textColor  = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim();
-    const gridColor  = getComputedStyle(document.documentElement).getPropertyValue('--border').trim();
+    const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim() || '#94a3b8';
+    const gridColor = getComputedStyle(document.documentElement).getPropertyValue('--border').trim() || '#1e293b';
+
+    const truncate = (name: string) => name.length > 12 ? name.substring(0, 10) + '…' : name;
+    const labels = this.stats.map(s => truncate(s.name));
 
     this.barChart = new Chart(this.barChartRef.nativeElement, {
       type: 'bar',
       data: {
-        labels: this.stats.map(s => s.name),
+        labels,
         datasets: [
           {
+            type: 'bar' as any,
             label: 'WoL Sent',
             data: this.stats.map(s => s.wol_count),
-            backgroundColor: '#3b82f6',
-            borderRadius: 6,
+            backgroundColor: 'rgba(59,130,246,0.85)',
+            borderRadius: 5,
+            yAxisID: 'y',
+            order: 2,
           },
           {
+            type: 'bar' as any,
             label: 'Shutdowns',
             data: this.stats.map(s => s.shutdown_count),
-            backgroundColor: '#ef4444',
-            borderRadius: 6,
+            backgroundColor: 'rgba(239,68,68,0.85)',
+            borderRadius: 5,
+            yAxisID: 'y',
+            order: 2,
           },
           {
+            type: 'line' as any,
             label: 'Uptime %',
             data: this.stats.map(s => s.uptime_pct),
-            backgroundColor: '#10b981',
-            borderRadius: 6,
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16,185,129,0.12)',
+            borderWidth: 2.5,
+            pointRadius: 4,
+            pointBackgroundColor: '#10b981',
+            fill: true,
+            tension: 0.35,
+            yAxisID: 'y1',
+            order: 1,
           }
         ]
       },
       options: {
         responsive: true,
-        maintainAspectRatio: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
         plugins: {
-          legend: { position: 'bottom', labels: { padding: 16, color: textColor } }
+          legend: {
+            position: 'bottom',
+            labels: { padding: 16, color: textColor, boxWidth: 14, font: { size: 12 } }
+          },
+          tooltip: {
+            callbacks: {
+              title: (items: any[]) => this.stats[items[0].dataIndex]?.name || '',
+              label: (item: any) => {
+                if (item.dataset.label === 'Uptime %') return ` ${item.dataset.label}: ${(item.raw as number).toFixed(1)}%`;
+                return ` ${item.dataset.label}: ${item.raw}`;
+              }
+            }
+          }
         },
         scales: {
-          y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor } },
-          x: { grid: { display: false }, ticks: { color: textColor } }
+          x: {
+            grid: { display: false },
+            ticks: { color: textColor, maxRotation: 40, minRotation: 0, font: { size: 11 } }
+          },
+          y: {
+            position: 'left',
+            beginAtZero: true,
+            grid: { color: gridColor },
+            ticks: { color: textColor, precision: 0, font: { size: 11 } },
+            title: { display: true, text: 'Count', color: textColor, font: { size: 11 } }
+          },
+          y1: {
+            position: 'right',
+            beginAtZero: true,
+            max: 100,
+            grid: { drawOnChartArea: false },
+            ticks: { color: '#10b981', callback: (v: any) => v + '%', font: { size: 11 } },
+            title: { display: true, text: 'Uptime %', color: '#10b981', font: { size: 11 } }
+          }
         }
       }
     });

@@ -55,6 +55,13 @@ login_manager.init_app(app)
 login_manager.login_view = 'auth.login'
 login_manager.login_message = 'Molim prijavite se da pristupite ovoj stranici'
 
+@login_manager.unauthorized_handler
+def unauthorized_callback():
+    """Return 401 JSON for API routes instead of redirect to login page"""
+    if request.path.startswith('/api/'):
+        return jsonify({'success': False, 'message': 'Authentication required'}), 401
+    return redirect(url_for('auth.login', next=request.url))
+
 # Register blueprints
 app.register_blueprint(auth.auth_bp)
 
@@ -2224,9 +2231,14 @@ def _serialize_group(group, include_computers=True):
 
 # --- Auth ---
 @app.route('/api/angular/auth/me', methods=['GET'])
-@login_required
+@limiter.exempt
 def angular_auth_me():
-    """Get current user info"""
+    """Get current user info — always returns 200, never 401.
+    Returns success=False when not authenticated so the browser console
+    stays clean (no scary 401 errors just because the user is on the login page).
+    """
+    if not current_user.is_authenticated:
+        return jsonify({'success': False, 'data': None})
     return jsonify({'success': True, 'data': _serialize_user(current_user)})
 
 @app.route('/api/angular/auth/login', methods=['POST'])
@@ -3318,6 +3330,7 @@ if __name__ == '__main__':
     # use_reloader=False is required by Flask-SocketIO - the Werkzeug reloader
     # restarts the process on every file save, causing 502 errors and dropped
     # Socket.IO connections. Templates still update live (Jinja2 reads from disk).
-    socketio.run(app, host='0.0.0.0', port=5000, debug=True,
+    port = int(os.environ.get('PORT', 5000))
+    socketio.run(app, host='0.0.0.0', port=port, debug=True,
                  allow_unsafe_werkzeug=True, use_reloader=False)
 

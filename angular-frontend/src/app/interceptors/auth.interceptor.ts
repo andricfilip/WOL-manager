@@ -16,7 +16,11 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(modifiedReq).pipe(
     catchError(error => {
-      if (error.status === 401) {
+      // Skip redirect for auth endpoints — login/me/logout handle 401 themselves.
+      // Without this, a failed login (wrong password → 401) triggers a redirect
+      // loop while still on the login page.
+      const isAuthEndpoint = req.url.includes('/api/angular/auth/');
+      if (error.status === 401 && !isAuthEndpoint) {
         router.navigate(['/login']);
       }
       return throwError(() => error);

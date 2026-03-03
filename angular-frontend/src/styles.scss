@@ -108,6 +108,23 @@ a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
 input, select, textarea, button { font-family: inherit; }
 
+/* ===== SVG ICON SYSTEM ===== */
+svg.icon {
+  width: 1em;
+  height: 1em;
+  display: inline-block;
+  vertical-align: -0.125em;
+  flex-shrink: 0;
+}
+.empty-icon svg.icon { width: 64px; height: 64px; }
+.stat-icon svg.icon { width: 2rem; height: 2rem; }
+.logo-icon svg.icon { width: 2.5rem; height: 2.5rem; }
+.link-icon svg.icon { width: 18px; height: 18px; vertical-align: middle; }
+.brand-icon svg.icon { width: 1.3em; height: 1.3em; vertical-align: -0.2em; }
+.topbar-theme svg.icon { width: 22px; height: 22px; vertical-align: middle; color: var(--text-primary); }
+.os-icon svg.icon { width: 1rem; height: 1rem; vertical-align: -0.1em; }
+.group-icon svg.icon { width: 1.2em; height: 1.2em; vertical-align: -0.15em; }
+
 /* ===== SCROLLBAR ===== */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: var(--bg-page); }
