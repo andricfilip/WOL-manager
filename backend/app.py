@@ -1037,6 +1037,9 @@ def admin_add_computer():
             if user:
                 computer.assigned_users.append(user)
                 role = request.form.get(f'role_{user_id}', 'operator')
+                # Automatically set admins as owners
+                if user.is_admin:
+                    role = 'owner'
                 if role == 'owner':
                     owner_ids.append(user.id)
                 pref = UserComputerPreference(
@@ -2500,6 +2503,9 @@ def angular_admin_create_computer():
         user = User.query.get(int(uid))
         if user:
             computer.assigned_users.append(user)
+            # Automatically set admins as owners
+            if user.is_admin:
+                role = 'owner'
             if role == 'owner':
                 owner_ids.append(user.id)
             pref = UserComputerPreference(user_id=user.id, computer_id=computer.id, role=role, ssh_auto_login=False)
@@ -2556,6 +2562,9 @@ def angular_admin_update_computer(cid):
             user = User.query.get(int(uid))
             if user:
                 computer.assigned_users.append(user)
+                # Automatically set admins as owners
+                if user.is_admin:
+                    role = 'owner'
                 if role == 'owner':
                     owner_ids.append(user.id)
                 pref = UserComputerPreference(user_id=user.id, computer_id=computer.id, role=role, ssh_auto_login=False)
