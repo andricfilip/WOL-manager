@@ -1,0 +1,88 @@
+# Usage: docker compose up -d --build   (requires .env, see .env.example)
+# Frontend: http://localhost:13223
+# Backend uses host networking so WoL UDP broadcast reaches the LAN.
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: wol_db
+    environment:
+      POSTGRES_DB: wol_db
+      POSTGRES_USER: wol_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wol_user -d wol_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - wol-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: wol-manager-backend:latest
+    container_name: wol_backend
+    network_mode: host
+    privileged: true
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    environment:
+      - FLASK_ENV=production
+      - SECRET_KEY=${SECRET_KEY:?set SECRET_KEY in .env}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:?set ENCRYPTION_KEY in .env}
+      - DATABASE_URL=postgresql://wol_user:${POSTGRES_PASSWORD}@localhost:5432/wol_db
+      - SESSION_COOKIE_SECURE=false
+      - SESSION_COOKIE_HTTPONLY=true
+      - SESSION_COOKIE_SAMESITE=Lax
+      - COMPANY_NAME=WoL Manager
+      - APP_NAME=WoL Manager
+      - APP_DESCRIPTION=Wake-on-LAN Manager
+      - LOGO_URL=
+      - PRIMARY_COLOR=#0066cc
+      - FOOTER_TEXT=
+      - PORT=5000
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  angular-frontend:
+    build:
+      context: ./angular-frontend
+      dockerfile: Dockerfile
+      args:
+        - BACKEND_HOST=backend
+    image: wol-manager-frontend:latest
+    container_name: wol_angular_frontend
+    ports:
+      - "13223:80"
+    extra_hosts:
+      - "backend:host-gateway"
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - wol-network
+
+networks:
+  wol-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local

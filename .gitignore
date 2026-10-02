@@ -1,0 +1,43 @@
+# Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+frontend/ssl/*
+!frontend/ssl/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+
+# Database / runtime data
+backend/instance/
+instance/
+*.db
+*.sqlite
+*.sqlite3
+*.log
+
+# Node / Angular
+node_modules/
+angular-frontend/dist/
+angular-frontend/.angular/
+
+# Personal docs
+*.md
+!/README.md
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Personal scripts
+*.ps1
+update_deploy.sh
+dist/
